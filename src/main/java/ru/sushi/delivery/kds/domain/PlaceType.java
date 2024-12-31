@@ -3,6 +3,7 @@ package ru.sushi.delivery.kds.domain;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 @Data

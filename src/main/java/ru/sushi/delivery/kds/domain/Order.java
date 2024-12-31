@@ -14,5 +14,4 @@ public class Order {
     private final List<Item> items;
     private final Instant createdAt;
     private final Instant finishedAt;
-    private final LinkedList<Long> screensFlow;
 }
