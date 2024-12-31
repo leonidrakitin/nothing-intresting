@@ -9,7 +9,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.persist.model.OrderItem;
+import ru.sushi.delivery.kds.domain.Item;
 import ru.sushi.delivery.kds.persist.model.ScreenSettings;
 import ru.sushi.delivery.kds.service.ChefScreenService;
 
@@ -80,14 +80,14 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
             if (col != null) col.removeAll();
         }
 
-        List<OrderItem> orders = chefScreenService.getScreenOrders(this.currentScreenId);
+        List<Item> orders = chefScreenService.getScreenOrders(this.currentScreenId);
         if (orders == null || orders.isEmpty()) {
             add("Заказов нет");
             return;
         }
 
         int index = 0;
-        for (OrderItem order : orders) {
+        for (Item order : orders) {
             VerticalLayout col = columns[index % 6];
             index++;
 
@@ -98,7 +98,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         }
     }
 
-    private Div buildOrderComponent(OrderItem order) {
+    private Div buildOrderComponent(Item order) {
         Div container = new Div();
         container.getStyle().set("border", "1px solid #ccc");
         container.getStyle().set("padding", "10px");
@@ -108,7 +108,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         // Заголовок: "Заказ #id: <имя>"
         Div title = new Div(new Text("Заказ #" + order.getId() + ": " + order.getName()));
         Div details = new Div();
-        for (var ingredient : order.getDetails()) {
+        for (var ingredient : order.getIngredients()) {
             details.add(new Div(new Text("- " + ingredient.toString())));
         }
         // Время готовки: текущее время - время создания

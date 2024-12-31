@@ -1,9 +1,8 @@
 package ru.sushi.delivery.kds.service;
 
 import lombok.Data;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.persist.model.OrderItem;
+import ru.sushi.delivery.kds.domain.Item;
 import ru.sushi.delivery.kds.persist.model.ScreenSettings;
 
 import java.util.*;
@@ -18,7 +17,7 @@ public class ChefScreenService {
         return screenHolder.createNewSession();
     }
 
-    public List<OrderItem> getScreenOrders(Long screenId) {
+    public List<Item> getScreenOrders(Long screenId) {
         return screenHolder.getOrdersForScreen(screenId);
     }
 
@@ -27,16 +26,16 @@ public class ChefScreenService {
     }
 
     // Добавить заказ в конкретный экран
-    public void addOrder(Long screenId, OrderItem order) {
+    public void addOrder(Long screenId, Item order) {
         screenHolder.getOrdersForScreen(screenId).add(order);
     }
 
     // Удалить заказ
     public void removeOrder(long screenId, long orderId) {
-        OrderItem order = screenHolder.getScreenOrder(screenId, orderId);
+        Item order = screenHolder.getScreenOrder(screenId, orderId);
         if (order.getNextScreen() != null) {
             screenHolder.getOrdersForScreen(order.getNextScreen())
-                    .add(new OrderItem(order.getName(), order.getDetails()));
+                    .add(new Item(order.getName(), order.getIngredients()));
         }
         screenHolder.getOrdersForScreen(screenId).remove(order);
     }
