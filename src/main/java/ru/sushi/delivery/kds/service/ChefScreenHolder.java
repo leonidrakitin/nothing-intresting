@@ -36,8 +36,7 @@ public class ChefScreenHolder {
                 .orElse(null);
     }
 
-    public Long createNewSession() {
-        Long newId = ThreadLocalRandom.current().nextLong();
+    public Long createNewSession(long newId) {
         screenOrdersMap.put(newId, new ArrayList<>());
         screenSettingsMap.put(newId, new ScreenSettings());
         return newId;

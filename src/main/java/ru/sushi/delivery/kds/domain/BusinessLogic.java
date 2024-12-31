@@ -10,9 +10,16 @@ public class BusinessLogic {
     public static final Measurement MEASUREMENT_AMOUNT = new Measurement(2, "шт");
 
     public static final PlaceType PLACE_TYPE_DEFAULT = new PlaceType(1, "NULL");
-    public static final PlaceType PLACE_TYPE_COLD = new PlaceType(1, "ХОЛОДНЫЙ ЦЕХ");
-    public static final PlaceType PLACE_TYPE_HOT = new PlaceType(1, "ГОРЯЧИЙ ЦЕХ");
-    public static final PlaceType PLACE_TYPE_COLLECT = new PlaceType(1, "СБОР ЗАКАЗА");
+    public static final PlaceType PLACE_TYPE_COLD = new PlaceType(2, "ХОЛОДНЫЙ ЦЕХ");
+
+    public static final PlaceType PLACE_TYPE_HOT = new PlaceType(3, "ГОРЯЧИЙ ЦЕХ");
+    public static final PlaceType PLACE_TYPE_COLLECT = new PlaceType(4, "СБОР ЗАКАЗА");
+
+    static {
+        PLACE_TYPE_COLD.getDisplays().add(1L);
+        PLACE_TYPE_HOT.getDisplays().add(2L);
+        PLACE_TYPE_COLLECT.getDisplays().add(3L);
+    }
 
     public static final Ingredient INGREDIENT_RICE_150 = new Ingredient(1, "Рис", MEASUREMENT_GRAMS, 150);
     public static final Ingredient INGREDIENT_RICE_100 = new Ingredient(6, "Рис", MEASUREMENT_GRAMS, 100);

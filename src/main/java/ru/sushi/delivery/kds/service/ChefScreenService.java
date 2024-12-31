@@ -13,8 +13,8 @@ public class ChefScreenService {
 
     private final ChefScreenHolder screenHolder = new ChefScreenHolder();
 
-    public Long createNewScreen() {
-        return screenHolder.createNewSession();
+    public Long createNewScreen(long id) {
+        return screenHolder.createNewSession(id);
     }
 
     public List<Item> getScreenOrders(Long screenId) {
@@ -33,7 +33,7 @@ public class ChefScreenService {
     // Удалить заказ
     public void removeOrder(long screenId, long orderId) {
         Item order = screenHolder.getScreenOrder(screenId, orderId);
-        if (order.getPlacesFlow().isEmpty()) {
+        if (!order.getPlacesFlow().isEmpty()) {
             int next = order.getNextStep();
             order.setNextStep(next + 1);
             for (var displayId : order.getPlacesFlow().get(next).getDisplays()) {
