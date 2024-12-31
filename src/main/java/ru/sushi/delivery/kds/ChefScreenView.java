@@ -37,9 +37,9 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         setSizeFull();
 
        //  Инициализируем 6 "вертикальных колонок"
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 5; i++) {
             VerticalLayout col = new VerticalLayout();
-            col.setWidth("16.6%");  // примерно 1/6 ширины
+            col.setWidth("20.0%");  // примерно 1/6 ширины
             col.setSpacing(true);
             columns[i] = col;
             add(col);
@@ -98,7 +98,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         }
     }
 
-    private Div buildOrderComponent(Item order) {
+    private Div buildOrderComponent(Item item) {
         Div container = new Div();
         container.getStyle().set("border", "1px solid #ccc");
         container.getStyle().set("padding", "10px");
@@ -106,22 +106,22 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         container.setWidthFull();
 
         // Заголовок: "Заказ #id: <имя>"
-        Div title = new Div(new Text("Заказ #" + order.getId() + ": " + order.getName()));
+        Div title = new Div(new Text("Заказ #" + item.getId() + ": " + item.getName()));
         Div details = new Div();
-        for (var ingredient : order.getIngredients()) {
+        for (var ingredient : item.getIngredients()) {
             details.add(new Div(new Text("- " + ingredient.toString())));
         }
         // Время готовки: текущее время - время создания
-        long seconds = Duration.between(order.getCreatedAt(), Instant.now()).toSeconds();
-        Div timer = new Div(new Text("Время готовки: " + seconds + " сек"));
+//        long seconds = Duration.between(item.getCreatedAt(), Instant.now()).toSeconds();
+//        Div timer = new Div(new Text("Время готовки: " + seconds + " сек"));
 
         title.getStyle().set("font-weight", "bold");
-        timer.getStyle().set("font-weight", "bold");
+//        timer.getStyle().set("font-weight", "bold");
 
-        container.add(title, details, timer);
+        container.add(title, details);
 
         container.addClickListener(e -> {
-            chefScreenService.removeOrder(this.currentScreenId, order.getId());
+            chefScreenService.removeOrder(this.currentScreenId, item.getId());
             refreshOrders();
         });
 

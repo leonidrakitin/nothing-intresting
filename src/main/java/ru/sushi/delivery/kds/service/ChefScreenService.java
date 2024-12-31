@@ -33,9 +33,12 @@ public class ChefScreenService {
     // Удалить заказ
     public void removeOrder(long screenId, long orderId) {
         Item order = screenHolder.getScreenOrder(screenId, orderId);
-        if (order.getNextScreen() != null) {
-            screenHolder.getOrdersForScreen(order.getNextScreen())
-                    .add(new Item(order.getName(), order.getIngredients()));
+        if (order.getPlacesFlow().isEmpty()) {
+            int next = order.getNextStep();
+            order.setNextStep(next + 1);
+            for (var displayId : order.getPlacesFlow().get(next).getDisplays()) {
+                screenHolder.getOrdersForScreen(displayId).add(order);
+            }
         }
         screenHolder.getOrdersForScreen(screenId).remove(order);
     }

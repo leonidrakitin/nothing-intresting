@@ -11,5 +11,5 @@ public class Item {
     private final String name;
     private final LinkedList<PlaceType> placesFlow;
     private final List<Ingredient> ingredients;
-    private final PlaceType currentStep = BusinessLogic.PLACE_TYPE_DEFAULT;
+    private int nextStep = 1;
 }
