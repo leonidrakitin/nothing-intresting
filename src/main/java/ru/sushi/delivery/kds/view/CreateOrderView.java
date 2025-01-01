@@ -1,4 +1,4 @@
-package ru.sushi.delivery.kds;
+package ru.sushi.delivery.kds.view;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -8,9 +8,9 @@ import com.vaadin.flow.component.orderedlayout.*;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.BusinessLogic;
-import ru.sushi.delivery.kds.domain.Item;
-import ru.sushi.delivery.kds.service.ChefScreenService;
+import ru.sushi.delivery.kds.domain.util.BusinessLogic;
+import ru.sushi.delivery.kds.domain.persist.entity.Item;
+import ru.sushi.delivery.kds.service.ViewService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,13 +19,13 @@ import java.util.List;
 public class CreateOrderView extends HorizontalLayout {
 
     private final List<Item> chosenItems = new ArrayList<>();
-    private final ChefScreenService chefScreenService;
+    private final ViewService viewService;
 
-
-    public CreateOrderView(@Autowired ChefScreenService chefScreenService) {
+    @Autowired
+    public CreateOrderView(ViewService viewService) {
         setSizeFull();
 
-        this.chefScreenService = chefScreenService;
+        this.viewService = viewService;
 
         List<Item> menuItems = BusinessLogic.items;
 
@@ -91,11 +91,12 @@ public class CreateOrderView extends HorizontalLayout {
                     return;
                 }
 
-                for (var item : chosenItems) {
-                    var place = item.getPlacesFlow().get(0);
-                    item.setNextStep(item.getNextStep() + 1);
-                    chefScreenService.addOrder(place.getDisplays().get(0), item);
-                }
+                this.viewService.createOrder(chosenItems);
+//                for (var item : chosenItems) {
+//                    viewS/ervic
+//                    Station place = item.getStationsIterator().next();
+//                    screenService.updateStatus(place.getDisplays().get(0).getId(), item.ge);
+//                }
 
                 // Здесь логика создания заказа в системе.
                 // Например, можно вызвать ваш сервис: orderService.save(chosenItems);

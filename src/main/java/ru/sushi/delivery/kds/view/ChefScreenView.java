@@ -1,42 +1,39 @@
-package ru.sushi.delivery.kds;
+package ru.sushi.delivery.kds.view;
 
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.Item;
-import ru.sushi.delivery.kds.persist.model.ScreenSettings;
-import ru.sushi.delivery.kds.service.ChefScreenService;
+import ru.sushi.delivery.kds.dto.OrderItemDto;
+import ru.sushi.delivery.kds.service.ViewService;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-//@Push
 @Route("screen")
-public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<Long> {
+public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<String> {
 
-    private final ChefScreenService chefScreenService;
+    private final ViewService viewService;
 
     // 6 колонок (ячейки)
-    private final VerticalLayout[] columns = new VerticalLayout[6];
-
-    private Long currentScreenId;
-    private ScreenSettings screenSettings;
+    private final VerticalLayout[] columns;
+    private String currentScreenId;
 
     @Autowired
-    public ChefScreenView(ChefScreenService chefScreenService) {
-        this.chefScreenService = chefScreenService;
-//        chefScreenService.generateOrderEveryMinute();
+    public ChefScreenView(ViewService viewService) {
+        this.viewService = viewService;
 
         setSizeFull();
 
        //  Инициализируем 6 "вертикальных колонок"
+        columns = new VerticalLayout[5];
         for (int i = 0; i < 5; i++) {
             VerticalLayout col = new VerticalLayout();
             col.setWidth("20.0%");  // примерно 1/6 ширины
@@ -49,20 +46,22 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         // чтобы «свежие» заказы отобразились без перезагрузки страницы.
         // Это один из вариантов (Vaadin Poll); другой – Push (WebSocket).
         getUI().ifPresent(ui -> {
-            ui.setPollInterval(5000); // каждые 5 сек
+            ui.access(this::refreshPage);
+            ui.setPollInterval(1000); // каждые 5 сек
         });
+        // не работает??
     }
 
     @Override
-    public void setParameter(BeforeEvent event, @OptionalParameter Long screenId) {
+    public void setParameter(BeforeEvent event, @OptionalParameter String screenId) {
 
-        this.screenSettings = chefScreenService.getScreenSettings(screenId);
-        if (screenSettings == null) {
-            add("Страница не найдена");
+        if (!this.viewService.checkScreenExists(screenId)) {
+            removeAll();
+            add(new H1("Страница не найдена"));
             return;
         }
         this.currentScreenId = screenId;
-        refreshOrders();
+        refreshPage();
     }
 
     // Переопределяем метод, чтобы при каждом "poll" обновлять заказы
@@ -70,35 +69,31 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         UI ui = attachEvent.getUI();
-        refreshOrders();
-        ui.addPollListener(e -> refreshOrders());
+        refreshPage();
+        ui.addPollListener(e -> refreshPage());
     }
 
-    private void refreshOrders() {
+    public void refreshPage() {
 
         for (VerticalLayout col : columns) {
-            if (col != null) col.removeAll();
+            col.removeAll();
         }
 
-        List<Item> orders = chefScreenService.getScreenOrders(this.currentScreenId);
+        List<OrderItemDto> orders = this.viewService.getScreenOrderItems(this.currentScreenId);
         if (orders == null || orders.isEmpty()) {
-            add("Заказов нет");
+            columns[0].add("Заказов нет");
             return;
         }
 
         int index = 0;
-        for (Item order : orders) {
+        for (OrderItemDto order : orders) {
             VerticalLayout col = columns[index % 6];
             index++;
-
-            // Построим компонент, отображающий заказ
-            Div orderDiv = buildOrderComponent(order);
-
-            col.add(orderDiv);
+            col.add(buildOrderComponent(order));
         }
     }
 
-    private Div buildOrderComponent(Item item) {
+    private Div buildOrderComponent(OrderItemDto item) {
         Div container = new Div();
         container.getStyle().set("border", "1px solid #ccc");
         container.getStyle().set("padding", "10px");
@@ -106,23 +101,23 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         container.setWidthFull();
 
         // Заголовок: "Заказ #id: <имя>"
-        Div title = new Div(new Text("Заказ #" + item.getId() + ": " + item.getName()));
+        Div title = new Div(new Text("Заказ #" + item.getOrderId() + ": " + item.getName()));
         Div details = new Div();
         for (var ingredient : item.getIngredients()) {
-            details.add(new Div(new Text("- " + ingredient.toString())));
+            details.add(new Div(new Text("- " + ingredient)));
         }
         // Время готовки: текущее время - время создания
-//        long seconds = Duration.between(item.getCreatedAt(), Instant.now()).toSeconds();
-//        Div timer = new Div(new Text("Время готовки: " + seconds + " сек"));
+        long seconds = Duration.between(item.getCreatedAt(), Instant.now()).toSeconds();
+        Div timer = new Div(new Text("Время готовки: " + seconds + " сек"));
 
         title.getStyle().set("font-weight", "bold");
-//        timer.getStyle().set("font-weight", "bold");
+        timer.getStyle().set("font-weight", "bold");
 
-        container.add(title, details);
+        container.add(title, details, timer);
 
         container.addClickListener(e -> {
-            chefScreenService.removeOrder(this.currentScreenId, item.getId());
-            refreshOrders();
+            this.viewService.updateStatus(item.getId());
+            refreshPage();
         });
 
         return container;
