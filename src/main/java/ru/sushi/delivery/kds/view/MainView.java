@@ -1,4 +1,4 @@
-package ru.sushi.delivery.kds;
+package ru.sushi.delivery.kds.view;
 
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;

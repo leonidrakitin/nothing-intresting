@@ -21,12 +21,13 @@ public class OrderItem implements Identifiable<Long> {
     private final Instant statusUpdatedAt;
 
     public OrderItem(Long orderId, Item item) {
-        this.id = new Double(Math.random()*1000000).longValue();
+        this.id = (long) (Math.random() * 1000000);
         this.orderId = orderId;
         this.item = item;
         this.stationsIterator = item.getStationsIterator().listIterator();
         this.status = OrderItemStationStatus.ADDED;
         this.statusUpdatedAt = Instant.now();
+        stationsIterator.next();
     }
 
     //todo workflow!!

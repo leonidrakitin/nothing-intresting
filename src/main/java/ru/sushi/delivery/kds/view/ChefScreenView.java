@@ -20,6 +20,7 @@ import java.util.List;
 @Route("screen")
 public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<String> {
 
+    public static final int GRID_SIZE = 3;
     private final ViewService viewService;
 
     // 6 колонок (ячейки)
@@ -33,10 +34,10 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         setSizeFull();
 
        //  Инициализируем 6 "вертикальных колонок"
-        columns = new VerticalLayout[5];
-        for (int i = 0; i < 5; i++) {
+        columns = new VerticalLayout[GRID_SIZE];
+        for (int i = 0; i < GRID_SIZE; i++) {
             VerticalLayout col = new VerticalLayout();
-            col.setWidth("20.0%");  // примерно 1/6 ширины
+            col.setWidth(String.format("%f%%", 100.0/GRID_SIZE));  // примерно 1/6 ширины
             col.setSpacing(true);
             columns[i] = col;
             add(col);
@@ -87,7 +88,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
 
         int index = 0;
         for (OrderItemDto order : orders) {
-            VerticalLayout col = columns[index % 6];
+            VerticalLayout col = columns[index % GRID_SIZE];
             index++;
             col.add(buildOrderComponent(order));
         }

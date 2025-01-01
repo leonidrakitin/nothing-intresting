@@ -12,6 +12,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.Station;
 import ru.sushi.delivery.kds.domain.persist.holder.OrderHolder;
 import ru.sushi.delivery.kds.domain.persist.holder.OrderItemHolder;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -40,8 +41,14 @@ public class OrderService {
         OrderItem orderItem = this.orderItemHolder.getOrThrow(orderItemId);
 
         orderItem = switch (orderItem.getStatus()) {
-            case ADDED -> orderItem.toBuilder().status(OrderItemStationStatus.STARTED).build();
-            case STARTED -> orderItem.toBuilder().status(OrderItemStationStatus.COMPLETED).build();
+            case ADDED -> orderItem.toBuilder()
+                    .status(OrderItemStationStatus.STARTED)
+                    .statusUpdatedAt(Instant.now())
+                    .build();
+            case STARTED -> orderItem.toBuilder()
+                    .status(OrderItemStationStatus.COMPLETED)
+                    .statusUpdatedAt(Instant.now())
+                    .build();
             case COMPLETED -> orderItem;
         };
         if (orderItem.getStatus() == OrderItemStationStatus.COMPLETED) {
