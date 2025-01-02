@@ -1,0 +1,16 @@
+application:
+  version: '0.0.1'
+  name: 'kds-system'
+vaadin:
+  launch-browser: true
+server:
+  port: 8000
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+spring:
+  liquibase:
+    enabled: true
+    change-log: classpath:/liquibase/db.changelog-master.yaml

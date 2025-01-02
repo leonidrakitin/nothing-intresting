@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: order.02.01.24.22.35
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: order
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    autoIncrement: true
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status_update_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false

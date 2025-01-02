@@ -2,27 +2,27 @@ package ru.sushi.delivery.kds.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.Screen;
-import ru.sushi.delivery.kds.domain.persist.holder.ScreenHolder;
+import ru.sushi.delivery.kds.domain.persist.repository.ScreenRepository;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ScreenService {
 
-    private final ScreenHolder screenHolder;
+    private final ScreenRepository screenRepository;
 
     public Optional<Screen> get(String id) {
-        return screenHolder.get(id);
+        return screenRepository.findById(id);
     }
 
     public Screen getOrThrow(String id) {
-        return screenHolder.getOrThrow(id);
+        return screenRepository.getReferenceById(id);
     }
 
     public Collection<Screen> getAll() {
-        return screenHolder.findAll();
+        return screenRepository.findAll();
     }
 }

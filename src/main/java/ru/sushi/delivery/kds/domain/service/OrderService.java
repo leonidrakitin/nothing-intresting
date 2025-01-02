@@ -1,45 +1,45 @@
 package ru.sushi.delivery.kds.domain.service;
 
-import lombok.Data;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.domain.model.OrderItemStationStatus;
-import ru.sushi.delivery.kds.domain.model.OrderStatus;
+import ru.sushi.delivery.kds.domain.persist.entity.FlowStep;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.Station;
-import ru.sushi.delivery.kds.domain.persist.holder.OrderHolder;
-import ru.sushi.delivery.kds.domain.persist.holder.OrderItemHolder;
+import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
+import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
+import ru.sushi.delivery.kds.model.FlowStepType;
+import ru.sushi.delivery.kds.model.OrderItemStationStatus;
+import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
 public class OrderService {
 
-    private final OrderHolder orderHolder;
-    private final OrderItemHolder orderItemHolder;
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final FlowCacheService flowCacheService;
 
-    public void createOrder(List<Item> items) {
-        Order order = orderHolder.save(new Order("23123-31313", List.of()));
+    public void createOrder(String name, List<Item> items) {
+        Order order = orderRepository.save(Order.of(name));
         List<OrderItem> orderItems = items.stream()
-                .map(item -> new OrderItem(order.getId(), item))
+                .map(item -> OrderItem.of(order, item))
                 .toList();
-        orderItems.forEach(orderItemHolder::save);
-        orderHolder.save(order.toBuilder().items(orderItems).build());
+        orderItemRepository.saveAll(orderItems);
     }
 
-    public Collection<OrderItem> getOrderItems() {
-        return this.orderItemHolder.findAll();
+    public List<OrderItem> getAllItemsByStationId(Long stationId) {
+        return this.orderItemRepository.findAllItemsByStationId(stationId);
     }
 
+    @Transactional
     public void updateOrderItem(Long orderItemId) {
-        OrderItem orderItem = this.orderItemHolder.getOrThrow(orderItemId);
-
+        OrderItem orderItem = this.orderItemRepository.getReferenceById(orderItemId);
         orderItem = switch (orderItem.getStatus()) {
             case ADDED -> orderItem.toBuilder()
                     .status(OrderItemStationStatus.STARTED)
@@ -52,28 +52,40 @@ public class OrderService {
             case COMPLETED -> orderItem;
         };
         if (orderItem.getStatus() == OrderItemStationStatus.COMPLETED) {
-            if (orderItem.getStationsIterator().hasNext()) {
-                orderItem.toBuilder().status(OrderItemStationStatus.ADDED).build();
-                Station station = orderItem.getStationsIterator().next();
+            FlowStep flowStep = this.flowCacheService.getNextStep(
+                    orderItem.getFlowId(),
+                    orderItem.getCurrentFlowStepId()
+            );
+            if (flowStep.getStepType() != FlowStepType.FINAL_STEP) {
+                orderItem = orderItem.toBuilder()
+                        .status(OrderItemStationStatus.ADDED)
+                        .currentFlowStepId(flowStep.getId())
+                        .build();
+
+                    Station station = flowStep.getStation();
                 //add notification to all station displays
             }
         }
-        this.orderItemHolder.save(orderItem);
-
-        Order order = orderHolder.getOrThrow(orderItem.getOrderId());
-        this.updateOrderStatus(order);
+        this.orderItemRepository.save(orderItem);
+        this.updateOrderStatus(orderItem.getOrder());
     }
 
-    public Order updateOrderStatus(Order order) {
+    @Transactional
+    public void updateOrderStatus(Order order) {
 
         if (OrderStatus.READY == order.getStatus()) {
-            return order;
+            return;
         }
 
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
         int minimumStatus = 1;
 
-        for (OrderItem orderItem : order.getItems()) {
-            Station currentStation = orderItem.getCurrentStation();
+        for (OrderItem orderItem : orderItems) {
+            Station currentStation = this.flowCacheService.getCurrentStep(
+                            orderItem.getFlowId(),
+                            orderItem.getCurrentFlowStepId()
+                    )
+                    .getStation();
             int currentPriorityStatus = this.definePriorityByOrderStatus(currentStation.getOrderStatusAtStation());
             if (currentPriorityStatus > 0 && minimumStatus == 0) {
                 minimumStatus = 1;
@@ -85,13 +97,12 @@ public class OrderService {
         OrderStatus newOrderStatus = this.defineOrderStatusByPriority(minimumStatus);
 
         if (newOrderStatus != order.getStatus()) {
-            return orderHolder.save(order.toBuilder()
+            orderRepository.save(order.toBuilder()
                     .status(newOrderStatus)
                     .build()
             );
         }
 
-        return order;
     }
 
     private int definePriorityByOrderStatus(OrderStatus orderStatus) {

@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: flow.02.01.24.22.33
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    autoIncrement: true
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false

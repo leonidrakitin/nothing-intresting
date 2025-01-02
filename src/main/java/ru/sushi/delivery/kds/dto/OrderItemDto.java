@@ -2,7 +2,7 @@ package ru.sushi.delivery.kds.dto;
 
 import lombok.Builder;
 import lombok.Data;
-import ru.sushi.delivery.kds.domain.model.OrderItemStationStatus;
+import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 
 import java.time.Instant;
 import java.util.List;

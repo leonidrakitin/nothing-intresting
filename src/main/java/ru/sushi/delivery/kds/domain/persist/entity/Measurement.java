@@ -1,18 +1,31 @@
 package ru.sushi.delivery.kds.domain.persist.entity;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@AllArgsConstructor
+@Entity
+@Getter
+@Setter
 @Builder(toBuilder = true)
-public class Measurement implements Identifiable<Long> {
-    private final Long id;
-    private final String name;
+@NoArgsConstructor(force = true)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class Measurement {
 
-    public Measurement(String name) {
-        this.id = (long) (Math.random()*100000);
-        this.name = name;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    public static Measurement of (String name) {
+        return Measurement.builder().name(name).build();
     }
 }

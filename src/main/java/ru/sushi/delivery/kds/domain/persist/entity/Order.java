@@ -1,28 +1,41 @@
 package ru.sushi.delivery.kds.domain.persist.entity;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import ru.sushi.delivery.kds.domain.model.OrderStatus;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.time.Instant;
-import java.util.List;
 
-@Data
-@AllArgsConstructor
+@Entity
+@Getter
+@Setter
 @Builder(toBuilder = true)
-public class Order implements Identifiable<Long> {
-    private final Long id;
-    private final String name;
-    private final List<OrderItem> items; //todo remove it
-    private final OrderStatus status;
-    private final Instant statusUpdateAt;
+@NoArgsConstructor(force = true)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class Order {
 
-    public Order(String name, List<OrderItem> items) {
-        this.id = new Double(Math.random()*1000000).longValue();
-        this.name = name;
-        this.items = items;
-        this.status = OrderStatus.CREATED;
-        this.statusUpdateAt = Instant.now();
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    private OrderStatus status;
+
+    private Instant statusUpdateAt;
+
+    public static Order of(String name) {
+        return Order.builder()
+                .name(name)
+                .status(OrderStatus.CREATED)
+                .build();
     }
 }

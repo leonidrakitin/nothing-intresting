@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: screen.02.01.24.22.38
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: screen
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    autoIncrement: true
+              - column:
+                  name: station_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: screen
+            baseColumnNames: station_id
+            referencedTableName: station
+            referencedColumnNames: id

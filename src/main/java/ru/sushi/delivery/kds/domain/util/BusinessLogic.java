@@ -1,19 +1,17 @@
 package ru.sushi.delivery.kds.domain.util;
 
 import lombok.experimental.UtilityClass;
-import ru.sushi.delivery.kds.domain.model.OrderStatus;
 import ru.sushi.delivery.kds.domain.persist.entity.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemSet;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.Station;
+import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
-import static ru.sushi.delivery.kds.domain.util.IngredientsCatalog.*;
 
 @UtilityClass
 public class BusinessLogic {

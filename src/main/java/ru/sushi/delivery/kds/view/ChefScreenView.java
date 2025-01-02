@@ -10,12 +10,16 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.*;
+import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.HasUrlParameter;
+import com.vaadin.flow.router.OptionalParameter;
+import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.UIScope;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.model.OrderItemStationStatus;
-import ru.sushi.delivery.kds.domain.util.Broadcaster;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
+import ru.sushi.delivery.kds.model.OrderItemStationStatus;
+import ru.sushi.delivery.kds.service.BroadcastListener;
+import ru.sushi.delivery.kds.service.ChefScreenOrderChangesListener;
 import ru.sushi.delivery.kds.service.ViewService;
 
 import java.time.Duration;
@@ -24,7 +28,7 @@ import java.util.List;
 
 @Route("screen")
 @UIScope
-public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<String>, Broadcaster.BroadcastListener {
+public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<String>, BroadcastListener {
 
     public static final int GRID_SIZE = 3;
     private final ViewService viewService;
@@ -65,18 +69,13 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-
-        // Регистрируемся, чтобы получать сообщения от Broadcaster
-        Broadcaster.register(this);
-
-        // При attach сразу подгружаем заказы
+        ChefScreenOrderChangesListener.register(this);
         refreshPage();
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
-        // Отписываемся, чтобы не утекали ссылки
-        Broadcaster.unregister(this);
+        ChefScreenOrderChangesListener.unregister(this);
         super.onDetach(detachEvent);
     }
 
@@ -89,9 +88,10 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
 
         ui.access(() -> {
             // Обновляем страницу
-            refreshPage();
-            // Показываем уведомление
             if (!message.equals("$timer")) {
+                refreshPage();
+            } else {
+                // Показываем уведомление
                 Notification.show("Новый заказ: " + message);
                 ui.getPage().executeJs("new Audio($0).play();",
                         "https://commondatastorage.googleapis.com/codeskulptor-assets/jump.ogg");

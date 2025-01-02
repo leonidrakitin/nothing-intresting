@@ -1,0 +1,50 @@
+databaseChangeLog:
+  - changeSet:
+      id: flow.step.02.01.24.22.36
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: flow_step
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    autoIncrement: true
+              - column:
+                  name: flow_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: station_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: step_type
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: step_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: step_order
+                  type: INT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: flow_step
+            baseColumnNames: flow_id
+            referencedTableName: flow
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: flow_step
+            baseColumnNames: station_id
+            referencedTableName: station
+            referencedColumnNames: id

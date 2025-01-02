@@ -5,7 +5,8 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.*;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextField;
@@ -14,8 +15,8 @@ import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemSet;
-import ru.sushi.delivery.kds.domain.util.Broadcaster;
 import ru.sushi.delivery.kds.domain.util.BusinessLogic;
+import ru.sushi.delivery.kds.service.ChefScreenOrderChangesListener;
 import ru.sushi.delivery.kds.service.ViewService;
 
 import java.util.ArrayList;
@@ -203,9 +204,10 @@ public class CreateOrderView extends HorizontalLayout {
                 Notification.show("Корзина пуста, нельзя создать заказ");
                 return;
             }
-            viewService.createOrder(chosenItems);
-            Broadcaster.broadcast("Новый заказ");
+            //todo name заполнить
+            viewService.createOrder("#123123", chosenItems);
 
+            ChefScreenOrderChangesListener.broadcast("Новый заказ");
             Notification.show("Заказ создан! Позиции: " + chosenItems.size());
 
             chosenItems.clear();

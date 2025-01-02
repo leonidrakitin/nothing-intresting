@@ -1,18 +1,37 @@
 package ru.sushi.delivery.kds.domain.persist.entity;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@AllArgsConstructor
+@Entity
+@Getter
+@Setter
 @Builder(toBuilder = true)
-public class Screen implements Identifiable<String> {
-    private final String id;
-    private final Station station;
+@NoArgsConstructor(force = true)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class Screen {
 
-    public Screen(Station station) {
-        this.id = new Double(Math.random()*1000000).toString();
-        this.station = station;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "station_id")
+    private Station station;
+
+    public static Screen of(Station station) {
+        return Screen.builder()
+                .station(station)
+                .build();
     }
 }

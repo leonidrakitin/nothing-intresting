@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: order.item.02.01.24.22.38
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: order_item
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    autoIncrement: true
+              - column:
+                  name: order_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current_flow_step_id
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: flow_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status_updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: order_item
+            baseColumnNames: order_id
+            referencedTableName: order
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: order_item
+            baseColumnNames: item_id
+            referencedTableName: item
+            referencedColumnNames: id

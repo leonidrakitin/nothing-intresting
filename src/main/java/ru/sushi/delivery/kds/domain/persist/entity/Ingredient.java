@@ -1,23 +1,41 @@
 package ru.sushi.delivery.kds.domain.persist.entity;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.text.DecimalFormat;
 
-@Data
-@AllArgsConstructor //todo remove
+@Entity
+@Getter
+@Setter
 @Builder(toBuilder = true)
-public class Ingredient implements Identifiable<Long> {
+@NoArgsConstructor(force = true)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class Ingredient {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private final Long id;
-    private final String name;
-    private final Measurement measurementUnit;
-    private final double amount;
+    private String name;
+
+    @ManyToOne
+    @JoinColumn(name = "measurement_unit_id")
+    private Measurement measurementUnit;
+
+    private Double amount;
 
     @Override
     public String toString() {
-        return String.format("%s %s%s", name, new DecimalFormat("#.##########").format(amount), measurementUnit.getName());
+        return String.format("%s %s%s", name, new DecimalFormat("#.#").format(amount), measurementUnit.getName());
     }
 }

@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class KitchenDisplayInfoDto {
-    private final String screenId;
+    private final Long screenId;
     private final String stationName;
 }

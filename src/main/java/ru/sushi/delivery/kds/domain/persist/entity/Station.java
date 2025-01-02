@@ -1,19 +1,30 @@
 package ru.sushi.delivery.kds.domain.persist.entity;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import ru.sushi.delivery.kds.domain.model.OrderStatus;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import ru.sushi.delivery.kds.model.OrderStatus;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@Data
-@AllArgsConstructor
+@Entity
+@Getter
+@Setter
 @Builder(toBuilder = true)
-public class Station implements Identifiable<Long> {
-    private final Long id;
-    private final String name;
-    private final OrderStatus orderStatusAtStation;
-//    private final List<Screen> displays = new ArrayList<>();
+@NoArgsConstructor(force = true)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class Station {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    private OrderStatus orderStatusAtStation;
 }

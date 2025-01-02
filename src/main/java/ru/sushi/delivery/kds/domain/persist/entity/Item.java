@@ -1,18 +1,39 @@
 package ru.sushi.delivery.kds.domain.persist.entity;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.Iterator;
 import java.util.List;
 
-@Data
-@AllArgsConstructor //todo remove
+@Entity
+@Getter
+@Setter
 @Builder(toBuilder = true)
-public class Item implements Identifiable<Long> {
-    private final Long id;
-    private final String name;
-    private final List<Station> stationsIterator;
-    private final List<Ingredient> ingredients;
+@NoArgsConstructor(force = true)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class Item {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    @OneToMany
+    @JoinColumn(name = "station_id")
+    private List<Station> stationsIterator;
+
+    @OneToMany
+    @JoinColumn(name = "ingredient_id")
+    private List<Ingredient> ingredients;
 }

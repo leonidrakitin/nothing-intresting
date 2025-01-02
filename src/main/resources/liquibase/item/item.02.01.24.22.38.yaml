@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: item.02.01.24.22.38
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: item
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    autoIncrement: true
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false

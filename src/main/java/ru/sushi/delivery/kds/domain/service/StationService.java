@@ -2,21 +2,18 @@ package ru.sushi.delivery.kds.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.domain.persist.entity.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.Station;
-import ru.sushi.delivery.kds.domain.persist.holder.ScreenHolder;
-import ru.sushi.delivery.kds.domain.persist.holder.StationHolder;
+import ru.sushi.delivery.kds.domain.persist.repository.StationRepository;
 
 import java.util.Collection;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class StationService {
 
-    private final StationHolder stationHolder;
+    private final StationRepository stationRepository;
 
     public Collection<Station> getAll() {
-        return stationHolder.findAll();
+        return stationRepository.findAll();
     }
 }
