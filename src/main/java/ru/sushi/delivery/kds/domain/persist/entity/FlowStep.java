@@ -39,7 +39,5 @@ public class FlowStep {
     @Enumerated(EnumType.STRING)
     private FlowStepType stepType;
 
-    private String stepName;
-
     private int stepOrder;
 }
