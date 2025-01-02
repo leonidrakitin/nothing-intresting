@@ -52,6 +52,7 @@ public class ViewService {
                         .orderId(item.getOrderId())
                         .name(item.getItem().getName())
                         .ingredients(item.getItem().getIngredients().stream().map(Ingredient::toString).toList())
+                        .status(item.getStatus())
                         .createdAt(item.getStatusUpdatedAt())
                         .build()
                 )

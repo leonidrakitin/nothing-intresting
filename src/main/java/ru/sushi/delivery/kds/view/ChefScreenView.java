@@ -2,14 +2,19 @@ package ru.sushi.delivery.kds.view;
 
 
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.spring.annotation.UIScope;
 import org.springframework.beans.factory.annotation.Autowired;
+import ru.sushi.delivery.kds.domain.model.OrderItemStationStatus;
+import ru.sushi.delivery.kds.domain.util.Broadcaster;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.service.ViewService;
 
@@ -18,7 +23,8 @@ import java.time.Instant;
 import java.util.List;
 
 @Route("screen")
-public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<String> {
+@UIScope
+public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<String>, Broadcaster.BroadcastListener {
 
     public static final int GRID_SIZE = 3;
     private final ViewService viewService;
@@ -42,15 +48,6 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
             columns[i] = col;
             add(col);
         }
-
-        // Регулярно (каждые X секунд) обновлять UI (pull) –
-        // чтобы «свежие» заказы отобразились без перезагрузки страницы.
-        // Это один из вариантов (Vaadin Poll); другой – Push (WebSocket).
-        getUI().ifPresent(ui -> {
-            ui.access(this::refreshPage);
-            ui.setPollInterval(1000); // каждые 5 сек
-        });
-        // не работает??
     }
 
     @Override
@@ -65,17 +62,42 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         refreshPage();
     }
 
-    // Переопределяем метод, чтобы при каждом "poll" обновлять заказы
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        UI ui = attachEvent.getUI();
+
+        // Регистрируемся, чтобы получать сообщения от Broadcaster
+        Broadcaster.register(this);
+
+        // При attach сразу подгружаем заказы
         refreshPage();
-        ui.addPollListener(e -> refreshPage());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        // Отписываемся, чтобы не утекали ссылки
+        Broadcaster.unregister(this);
+        super.onDetach(detachEvent);
+    }
+
+    // Этот метод вызывается, когда получаем broadcast "new order"
+    @Override
+    public void receiveBroadcast(String message) {
+        // «Входим» в UI-поток Vaadin
+        UI ui = getUI().orElse(null);
+        if (ui == null) return;
+
+        ui.access(() -> {
+            // Обновляем страницу
+            refreshPage();
+            // Показываем уведомление
+            Notification.show("Новый заказ: " + message);
+            ui.getPage().executeJs("new Audio($0).play();",
+                "https://commondatastorage.googleapis.com/codeskulptor-assets/jump.ogg");
+        });
     }
 
     public void refreshPage() {
-
         for (VerticalLayout col : columns) {
             col.removeAll();
         }
@@ -115,6 +137,10 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         timer.getStyle().set("font-weight", "bold");
 
         container.add(title, details, timer);
+
+        if (item.getStatus() == OrderItemStationStatus.STARTED) {
+            container.getStyle().set("background-color", "lightblue");
+        }
 
         container.addClickListener(e -> {
             this.viewService.updateStatus(item.getId());

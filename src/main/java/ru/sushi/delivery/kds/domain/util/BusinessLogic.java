@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 import ru.sushi.delivery.kds.domain.model.OrderStatus;
 import ru.sushi.delivery.kds.domain.persist.entity.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
+import ru.sushi.delivery.kds.domain.persist.entity.ItemSet;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.Station;
@@ -510,6 +511,18 @@ public class BusinessLogic {
                     )
             )
     ));
+
+        public static final List<ItemSet> itemSets = new ArrayList<>(List.of(
+            new ItemSet(
+                1L,
+                "Сет Тест",
+                List.of(
+                    items.get(0),
+                    items.get(1),
+                    items.get(2)
+                )
+            )
+        ));
 
         // Объединённый список со всеми статическими переменными (по желанию)
         public static final List<Ingredient> ALL_INGREDIENTS = List.of(
