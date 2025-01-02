@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "order")
+@Table(name = "measurement")
 @Getter
 @Setter
 @Builder(toBuilder = true)
@@ -27,7 +27,7 @@ public class Measurement {
 
     private String name;
 
-    public static Measurement of (String name) {
+    public static Measurement of(String name) {
         return Measurement.builder().name(name).build();
     }
 }

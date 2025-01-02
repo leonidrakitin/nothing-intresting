@@ -9,8 +9,7 @@ databaseChangeLog:
               - column:
                   name: id
                   type: BIGINT
-                  autoIncrement: true # Добавляем автоинкремент
-
+                  autoIncrement: true
                   constraints:
                     primaryKey: true
                     nullable: false

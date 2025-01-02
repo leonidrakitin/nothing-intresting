@@ -30,9 +30,11 @@ public class Order {
 
     private String name;
 
-    private OrderStatus status;
+    @Builder.Default
+    private OrderStatus status = OrderStatus.CREATED;
 
-    private Instant statusUpdateAt;
+    @Builder.Default
+    private Instant statusUpdateAt = Instant.now();
 
     public static Order of(String name) {
         return Order.builder().name(name).build();

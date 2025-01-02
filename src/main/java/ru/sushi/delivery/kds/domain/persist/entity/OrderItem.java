@@ -40,12 +40,15 @@ public class OrderItem {
     @JoinColumn(name = "item_id")
     private Item item;
 
-    private Integer currentFlowStepId;
+    @Builder.Default
+    private Integer currentFlowStepId = 0;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    private OrderItemStationStatus status;
+    private OrderItemStationStatus status = OrderItemStationStatus.ADDED;
 
-    private Instant statusUpdatedAt;
+    @Builder.Default
+    private Instant statusUpdatedAt = Instant.now();
 
     public static OrderItem of(Order order, Item item) {
         return OrderItem.builder()
