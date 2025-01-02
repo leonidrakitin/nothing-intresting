@@ -1,9 +1,6 @@
 package ru.sushi.delivery.kds.domain.persist.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import ru.sushi.delivery.kds.domain.persist.entity.ItemSet;
-
-@Repository
-public interface itemSetRepository extends JpaRepository<ItemSet, Long> {
-}
+//todo сначала надо сделать @entity как все другие entity
+//@Repository
+//public interface itemSetRepository extends JpaRepository<ItemSet, Long> {
+//}

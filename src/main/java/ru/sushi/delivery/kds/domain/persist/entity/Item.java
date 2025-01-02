@@ -33,7 +33,6 @@ public class Item {
     @JoinColumn(name = "station_id")
     private List<Station> stationsIterator;
 
-    @OneToMany
-    @JoinColumn(name = "ingredient_id")
+    @OneToMany(mappedBy = "item")
     private List<Ingredient> ingredients;
 }

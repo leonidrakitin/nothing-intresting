@@ -48,8 +48,10 @@ databaseChangeLog:
             baseColumnNames: order_id
             referencedTableName: order
             referencedColumnNames: id
+            constraintName: fk_order_item_order_id
         - addForeignKeyConstraint:
             baseTableName: order_item
             baseColumnNames: item_id
             referencedTableName: item
             referencedColumnNames: id
+            constraintName: fk_order_item_item_id

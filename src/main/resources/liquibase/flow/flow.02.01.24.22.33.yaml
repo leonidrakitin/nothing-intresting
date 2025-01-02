@@ -33,7 +33,7 @@ databaseChangeLog:
                   name: name
                   value: "Холодные роллы"
   - changeSet:
-      id: flow.INSERT.03.01.24.00.15
+      id: flow.INSERT.03.01.24.00.16
       author: rakitin
       changes:
         - insert:
@@ -46,7 +46,7 @@ databaseChangeLog:
                   name: name
                   value: "Горячие роллы"
   - changeSet:
-      id: flow.INSERT.03.01.24.00.15
+      id: flow.INSERT.03.01.24.00.17
       author: rakitin
       changes:
         - insert:

@@ -16,9 +16,9 @@ spring:
     username: root
     password: 123456
     driver-class-name: org.postgresql.Driver
-  jpa:
-    database: postgresql
-    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+#  jpa:
+#    database: postgresql
+#    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
   liquibase:
     enabled: true
     change-log: classpath:/liquibase/db.changelog-master.yaml

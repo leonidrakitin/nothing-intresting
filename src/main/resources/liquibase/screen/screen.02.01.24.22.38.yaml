@@ -23,6 +23,7 @@ databaseChangeLog:
             baseColumnNames: station_id
             referencedTableName: station
             referencedColumnNames: id
+            constraintName: fk_screen_station_id
   - changeSet:
       id: screen.INSERT.02.01.24.22.61
       author: rakitin

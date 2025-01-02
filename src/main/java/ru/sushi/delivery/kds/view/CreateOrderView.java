@@ -15,7 +15,6 @@ import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemSet;
-import ru.sushi.delivery.kds.domain.util.BusinessLogic;
 import ru.sushi.delivery.kds.service.ChefScreenOrderChangesListener;
 import ru.sushi.delivery.kds.service.ViewService;
 
@@ -55,8 +54,8 @@ public class CreateOrderView extends HorizontalLayout {
         getStyle().set("gap", "20px");
 
         // Изначально загружаем списки из BusinessLogic
-        this.menuItems = BusinessLogic.items;           // Роллы
-        this.menuItemSets = BusinessLogic.itemSets;     // Сеты
+        this.menuItems = this.viewService.getAllMenuItems();
+        this.menuItemSets = List.of();     // Сеты
 
         // -----------------------------------------------------------
         // Левая часть: вкладки (Tabs) со списками роллов и сетов

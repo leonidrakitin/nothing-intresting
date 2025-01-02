@@ -39,7 +39,8 @@ public class OrderService {
 
     @Transactional
     public void updateOrderItem(Long orderItemId) {
-        OrderItem orderItem = this.orderItemRepository.getReferenceById(orderItemId);
+        OrderItem orderItem = this.orderItemRepository.findById(orderItemId)
+                .orElseThrow(() -> new IllegalArgumentException("Order item not found"));
         orderItem = switch (orderItem.getStatus()) {
             case ADDED -> orderItem.toBuilder()
                     .status(OrderItemStationStatus.STARTED)

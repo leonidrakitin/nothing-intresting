@@ -19,7 +19,8 @@ public class ScreenService {
     }
 
     public Screen getOrThrow(String id) {
-        return screenRepository.getReferenceById(id);
+        return screenRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Screen not found"));
     }
 
     public Collection<Screen> getAll() {

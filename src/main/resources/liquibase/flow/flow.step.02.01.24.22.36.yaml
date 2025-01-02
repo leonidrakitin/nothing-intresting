@@ -38,18 +38,20 @@ databaseChangeLog:
             baseColumnNames: flow_id
             referencedTableName: flow
             referencedColumnNames: id
+            constraintName: fk_flow_step_flow_id
         - addForeignKeyConstraint:
             baseTableName: flow_step
             baseColumnNames: station_id
             referencedTableName: station
             referencedColumnNames: id
+            constraintName: fk_flow_step_station_id
 
   - changeSet:
       id: flow.INSERT.03.01.24.00.15
       author: rakitin
       changes:
         - insert:
-            tableName: flow
+            tableName: flow_step
             columns:
               - column:
                   name: id
@@ -67,7 +69,7 @@ databaseChangeLog:
                   name: step_order
                   valueNumeric: 1
         - insert:
-            tableName: flow
+            tableName: flow_step
             columns:
               - column:
                   name: id
@@ -90,7 +92,7 @@ databaseChangeLog:
       author: rakitin
       changes:
         - insert:
-            tableName: flow
+            tableName: flow_step
             columns:
               - column:
                   name: id
@@ -108,7 +110,7 @@ databaseChangeLog:
                   name: step_order
                   valueNumeric: 1
         - insert:
-            tableName: flow
+            tableName: flow_step
             columns:
               - column:
                   name: id
@@ -126,7 +128,7 @@ databaseChangeLog:
                   name: step_order
                   valueNumeric: 2
         - insert:
-            tableName: flow
+            tableName: flow_step
             columns:
               - column:
                   name: id
@@ -149,7 +151,7 @@ databaseChangeLog:
       author: rakitin
       changes:
         - insert:
-            tableName: flow
+            tableName: flow_step
             columns:
               - column:
                   name: id
@@ -167,7 +169,7 @@ databaseChangeLog:
                   name: step_order
                   valueNumeric: 1
         - insert:
-            tableName: flow
+            tableName: flow_step
             columns:
               - column:
                   name: id

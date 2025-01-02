@@ -35,7 +35,7 @@ databaseChangeLog:
                   valueNumeric: 1
               - column:
                   name: name
-                  value: "NULL"
+                  value: "Не задан"
               - column:
                   name: order_status_at_station
                   value: "CREATED"

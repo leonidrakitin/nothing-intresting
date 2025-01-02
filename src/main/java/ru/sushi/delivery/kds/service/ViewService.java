@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.Screen;
+import ru.sushi.delivery.kds.domain.service.ItemService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
 import ru.sushi.delivery.kds.domain.service.ScreenService;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
@@ -21,9 +22,14 @@ public class ViewService {
 
     private final OrderService orderService;
     private final ScreenService screenService;
+    private final ItemService itemService;
 
     public void createOrder(String name, List<Item> items) {
         this.orderService.createOrder(name, items);
+    }
+
+    public List<Item> getAllMenuItems() {
+        return this.itemService.getAllMenuItems();
     }
     public List<KitchenDisplayInfoDto> getAvailableDisplaysData() {
         List<KitchenDisplayInfoDto> kitchenDisplayData = new ArrayList<>();
