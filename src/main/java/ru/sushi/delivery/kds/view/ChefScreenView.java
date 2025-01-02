@@ -88,7 +88,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
 
         ui.access(() -> {
             // Обновляем страницу
-            if (!message.equals("$timer")) {
+            if (message.equals("$timer")) {
                 refreshPage();
             } else {
                 // Показываем уведомление
