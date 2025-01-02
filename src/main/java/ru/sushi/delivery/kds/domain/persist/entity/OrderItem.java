@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,7 @@ import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import java.time.Instant;
 
 @Entity
+@Table(name = "order_item")
 @Getter
 @Setter
 @Builder(toBuilder = true)

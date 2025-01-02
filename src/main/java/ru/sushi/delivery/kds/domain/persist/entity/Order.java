@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +16,7 @@ import ru.sushi.delivery.kds.model.OrderStatus;
 import java.time.Instant;
 
 @Entity
+@Table(name = "orders")
 @Getter
 @Setter
 @Builder(toBuilder = true)
@@ -33,10 +35,6 @@ public class Order {
     private Instant statusUpdateAt;
 
     public static Order of(String name) {
-        return Order.builder()
-                .name(name)
-                .status(OrderStatus.CREATED)
-                .statusUpdateAt(Instant.now())
-                .build();
+        return Order.builder().name(name).build();
     }
 }

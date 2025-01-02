@@ -4,11 +4,13 @@ databaseChangeLog:
       author: rakitin
       changes:
         - createTable:
-            tableName: "order"
+            tableName: orders
             columns:
               - column:
                   name: id
                   type: BIGINT
+                  autoIncrement: true # Добавляем автоинкремент
+
                   constraints:
                     primaryKey: true
                     nullable: false
