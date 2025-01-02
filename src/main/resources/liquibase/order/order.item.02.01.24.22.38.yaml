@@ -34,7 +34,7 @@ databaseChangeLog:
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
-                  defaultValue: "ADDED"
+                  defaultValue: 'ADDED'
               - column:
                   name: status_updated_at
                   type: TIMESTAMP

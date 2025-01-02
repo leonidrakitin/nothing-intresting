@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: order.02.01.24.22.35
+      id: order.create.01
       author: rakitin
       changes:
         - createTable:
-            tableName: order
+            tableName: "order"
             columns:
               - column:
                   name: id
@@ -12,7 +12,6 @@ databaseChangeLog:
                   constraints:
                     primaryKey: true
                     nullable: false
-                    autoIncrement: true
               - column:
                   name: name
                   type: VARCHAR(255)
@@ -23,7 +22,7 @@ databaseChangeLog:
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
-                  defaultValueComputed: "CREATED"
+                  defaultValue: 'CREATED'
               - column:
                   name: status_update_at
                   type: TIMESTAMP
