@@ -3,6 +3,12 @@ databaseChangeLog:
       file: measurement/master.yaml
       relativeToChangelogFile: true
   - include:
+      file: station/master.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: flow/master.yaml
+      relativeToChangelogFile: true
+  - include:
       file: item/master.yaml
       relativeToChangelogFile: true
   - include:
@@ -12,11 +18,5 @@ databaseChangeLog:
       file: order/master.yaml
       relativeToChangelogFile: true
   - include:
-      file: station/master.yaml
-      relativeToChangelogFile: true
-  - include:
       file: screen/master.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: flow/master.yaml
       relativeToChangelogFile: true

@@ -14,7 +14,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     @Query("""
         select o from OrderItem o
-        left join FlowStep step on step.id = o.currentFlowStepId and step.flow.id = o.flowId
+        left join FlowStep step on step.id = o.currentFlowStepId and step.flow.id = o.item.id
         where step.station.id = :stationId
     """)
     List<OrderItem> findAllItemsByStationId(Long stationId);

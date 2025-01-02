@@ -23,8 +23,10 @@ databaseChangeLog:
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
+                  defaultValueComputed: "CREATED"
               - column:
                   name: status_update_at
                   type: TIMESTAMP
                   constraints:
                     nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
