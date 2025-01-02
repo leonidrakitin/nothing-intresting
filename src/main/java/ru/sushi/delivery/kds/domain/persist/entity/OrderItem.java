@@ -41,7 +41,7 @@ public class OrderItem {
     private Item item;
 
     @Builder.Default
-    private Integer currentFlowStepId = 0;
+    private Integer currentFlowStepId = 1;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)

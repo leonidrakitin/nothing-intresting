@@ -29,7 +29,7 @@ databaseChangeLog:
                   type: INT
                   constraints:
                     nullable: false
-                  defaultValue: 0
+                  defaultValue: 1
               - column:
                   name: status
                   type: VARCHAR(255)
