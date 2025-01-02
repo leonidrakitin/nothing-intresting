@@ -37,7 +37,7 @@ public class OrderItem implements Identifiable<Long> {
             stationsIterator.next();
             return station;
         } else {
-            return item.getStationsIterator().getFirst();
+            return item.getStationsIterator().iterator().next();
         }
     }
 }
