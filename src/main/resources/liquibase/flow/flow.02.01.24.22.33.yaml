@@ -18,3 +18,43 @@ databaseChangeLog:
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
+
+  - changeSet:
+      id: flow.INSERT.03.01.24.00.12
+      author: rakitin
+      changes:
+        - insert:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "Холодные роллы"
+  - changeSet:
+      id: flow.INSERT.03.01.24.00.15
+      author: rakitin
+      changes:
+        - insert:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 2
+              - column:
+                  name: name
+                  value: "Горячие роллы"
+  - changeSet:
+      id: flow.INSERT.03.01.24.00.15
+      author: rakitin
+      changes:
+        - insert:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 3
+              - column:
+                  name: name
+                  value: "Горячие закуски"

@@ -23,3 +23,36 @@ databaseChangeLog:
             baseColumnNames: station_id
             referencedTableName: station
             referencedColumnNames: id
+  - changeSet:
+      id: screen.INSERT.02.01.24.22.61
+      author: rakitin
+      changes:
+        - insert:
+            tableName: screen
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: station_id
+                  valueNumeric: 2
+
+        - insert:
+            tableName: screen
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 2
+              - column:
+                  name: station_id
+                  valueNumeric: 3
+
+        - insert:
+            tableName: screen
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 3
+              - column:
+                  name: station_id
+                  valueNumeric: 4

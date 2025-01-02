@@ -18,3 +18,27 @@ databaseChangeLog:
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
+
+  - changeSet:
+      id: measurement.INSERT.02.01.24.22.50
+      author: rakitin
+      changes:
+        - insert:
+            tableName: measurement
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "г"
+
+        - insert:
+            tableName: measurement
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 2
+              - column:
+                  name: name
+                  value: "шт"

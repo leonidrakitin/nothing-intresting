@@ -23,3 +23,58 @@ databaseChangeLog:
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
+  - changeSet:
+      id: station.INSERT.02.01.24.22.60
+      author: rakitin
+      changes:
+        - insert:
+            tableName: station
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "NULL"
+              - column:
+                  name: order_status_at_station
+                  value: "CREATED"
+
+        - insert:
+            tableName: station
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 2
+              - column:
+                  name: name
+                  value: "Холодный цех"
+              - column:
+                  name: order_status_at_station
+                  value: "COOKING"
+
+        - insert:
+            tableName: station
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 3
+              - column:
+                  name: name
+                  value: "Горячий цех"
+              - column:
+                  name: order_status_at_station
+                  value: "COOKING"
+
+        - insert:
+            tableName: station
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 4
+              - column:
+                  name: name
+                  value: "Сбор заказа"
+              - column:
+                  name: order_status_at_station
+                  value: "COLLECTING"

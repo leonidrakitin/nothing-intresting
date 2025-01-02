@@ -29,11 +29,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: step_name
-                  type: VARCHAR(255)
-                  constraints:
-                    nullable: false
-              - column:
                   name: step_order
                   type: INT
                   constraints:
@@ -48,3 +43,144 @@ databaseChangeLog:
             baseColumnNames: station_id
             referencedTableName: station
             referencedColumnNames: id
+
+  - changeSet:
+      id: flow.INSERT.03.01.24.00.15
+      author: rakitin
+      changes:
+        - insert:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: flow_id
+                  valueNumeric: 1
+              - column:
+                  name: station_id
+                  valueNumeric: 2
+              - column:
+                  name: step_type
+                  value: "PROGRESS_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: 1
+        - insert:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 2
+              - column:
+                  name: flow_id
+                  valueNumeric: 1
+              - column:
+                  name: station_id
+                  valueNumeric: 4
+              - column:
+                  name: step_type
+                  value: "FINAL_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: 2
+
+  - changeSet:
+      id: flow.INSERT.03.01.24.00.21
+      author: rakitin
+      changes:
+        - insert:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 3
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
+                  name: station_id
+                  valueNumeric: 2
+              - column:
+                  name: step_type
+                  value: "PROGRESS_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: 1
+        - insert:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 4
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
+                  name: station_id
+                  valueNumeric: 3
+              - column:
+                  name: step_type
+                  value: "PROGRESS_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: 2
+        - insert:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 5
+              - column:
+                  name: flow_id
+                  valueNumeric: 1
+              - column:
+                  name: station_id
+                  valueNumeric: 4
+              - column:
+                  name: step_type
+                  value: "FINAL_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: 3
+
+  - changeSet:
+      id: flow.INSERT.03.01.24.00.23
+      author: rakitin
+      changes:
+        - insert:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 6
+              - column:
+                  name: flow_id
+                  valueNumeric: 3
+              - column:
+                  name: station_id
+                  valueNumeric: 3
+              - column:
+                  name: step_type
+                  value: "PROGRESS_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: 1
+        - insert:
+            tableName: flow
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 7
+              - column:
+                  name: flow_id
+                  valueNumeric: 3
+              - column:
+                  name: station_id
+                  valueNumeric: 4
+              - column:
+                  name: step_type
+                  value: "FINAL_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: 2
