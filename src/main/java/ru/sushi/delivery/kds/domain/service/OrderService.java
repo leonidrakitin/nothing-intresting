@@ -54,7 +54,7 @@ public class OrderService {
         };
         if (orderItem.getStatus() == OrderItemStationStatus.COMPLETED) {
             FlowStep flowStep = this.flowCacheService.getNextStep(
-                    orderItem.getFlowId(),
+                    orderItem.getItem().getFlow().getId(),
                     orderItem.getCurrentFlowStepId()
             );
             if (flowStep.getStepType() != FlowStepType.FINAL_STEP) {
@@ -83,7 +83,7 @@ public class OrderService {
 
         for (OrderItem orderItem : orderItems) {
             Station currentStation = this.flowCacheService.getCurrentStep(
-                            orderItem.getFlowId(),
+                            orderItem.getItem().getFlow().getId(),
                             orderItem.getCurrentFlowStepId()
                     )
                     .getStation();

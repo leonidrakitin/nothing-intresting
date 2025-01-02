@@ -14,10 +14,21 @@ databaseChangeLog:
                     nullable: false
                     autoIncrement: true
               - column:
+                  name: flow_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
                   name: name
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: item
+            baseColumnNames: flow_id
+            referencedTableName: flow
+            referencedColumnNames: id
+            constraintName: fk_item_flow_id
 
   - changeSet:
       id: item.INSERT.02.01.24.22.80
@@ -30,6 +41,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 1
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Лава с лососем"
 
@@ -38,6 +52,9 @@ databaseChangeLog:
             columns:
               - column:
                   name: id
+                  valueNumeric: 2
+              - column:
+                  name: flow_id
                   valueNumeric: 2
               - column:
                   name: name
@@ -50,6 +67,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 3
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Лава с креветкой"
 
@@ -59,6 +79,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 4
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Лава с беконом"
@@ -70,6 +93,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 5
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Лава с курицей"
 
@@ -79,6 +105,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 6
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Лагуна"
@@ -90,6 +119,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 7
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Лосось моцарелла"
 
@@ -99,6 +131,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 8
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Жульен"
@@ -110,6 +145,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 9
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Запеченная креветка"
 
@@ -119,6 +157,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 10
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Фила с авакадо"
@@ -130,6 +171,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 11
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Фила"
 
@@ -139,6 +183,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 12
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Фила с икрой"
@@ -150,6 +197,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 13
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Фила с креветкой внутрь"
 
@@ -159,6 +209,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 14
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Фила с манго соусом"
@@ -170,6 +223,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 15
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Ролл с тунцом внутрь"
 
@@ -179,6 +235,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 16
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Опаленный тунец"
@@ -190,6 +249,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 17
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Ролл с угрем"
 
@@ -199,6 +261,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 18
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Спайси рубленный тунец"
@@ -210,6 +275,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 19
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Спайси лосось"
 
@@ -219,6 +287,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 20
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Сливочная креветка"
@@ -230,6 +301,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 21
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Калифорния"
 
@@ -239,6 +313,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 22
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Калифорния с креветкой"
@@ -250,6 +327,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 23
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Маки огурец"
 
@@ -259,6 +339,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 24
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Маки креветка"
@@ -270,6 +353,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 25
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Маки лосось"
 
@@ -279,6 +365,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 26
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Маки угорь"
@@ -290,6 +379,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 27
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Маки тунец"
 
@@ -299,6 +391,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 28
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Суши угорь"
@@ -310,6 +405,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 29
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Суши креветка"
 
@@ -320,6 +418,9 @@ databaseChangeLog:
                   name: id
                   valueNumeric: 30
               - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
                   name: name
                   value: "Гункан креветка"
 
@@ -329,6 +430,9 @@ databaseChangeLog:
               - column:
                   name: id
                   valueNumeric: 31
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
               - column:
                   name: name
                   value: "Гункан угорь спайси вафу"

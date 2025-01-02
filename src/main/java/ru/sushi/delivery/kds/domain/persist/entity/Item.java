@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,10 @@ public class Item {
     private Long id;
 
     private String name;
+
+    @ManyToOne
+    @JoinColumn(name = "flow_id")
+    private Flow flow;
 
     @OneToMany
     @JoinColumn(name = "station_id")

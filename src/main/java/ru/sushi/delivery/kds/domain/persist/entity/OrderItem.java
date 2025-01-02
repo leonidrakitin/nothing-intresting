@@ -40,8 +40,6 @@ public class OrderItem {
 
     private Integer currentFlowStepId;
 
-    private Long flowId;
-
     @Enumerated(EnumType.STRING)
     private OrderItemStationStatus status;
 
@@ -51,7 +49,6 @@ public class OrderItem {
         return OrderItem.builder()
                 .order(order)
                 .item(item)
-                .statusUpdatedAt(Instant.now())
                 .build();
     }
 }
