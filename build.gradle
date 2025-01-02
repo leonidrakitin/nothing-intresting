@@ -15,6 +15,9 @@ jar {
 				'Main-Class': 'ru.sushi.delivery.kds.KdsApplication' // Замените на путь к вашему Main классу
 		)
 	}
+	from('src/main/resources/frontend') {
+		into('META-INF/frontend')
+	}
 }
 
 java {
