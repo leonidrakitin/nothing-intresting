@@ -135,7 +135,7 @@ databaseChangeLog:
                   valueNumeric: 5
               - column:
                   name: flow_id
-                  valueNumeric: 1
+                  valueNumeric: 2
               - column:
                   name: station_id
                   valueNumeric: 4
