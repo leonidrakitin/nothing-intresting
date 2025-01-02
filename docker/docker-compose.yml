@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:14
+    container_name: kds-db
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=kds
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  kds-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kds-app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    restart: unless-stopped
