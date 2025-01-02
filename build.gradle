@@ -8,6 +8,14 @@ plugins {
 group = 'ru.sushi.delivery'
 version = '0.0.1-SNAPSHOT'
 
+jar {
+	manifest {
+		attributes(
+				'Main-Class': 'ru.sushi.delivery.kds.KdsApplication' // Замените на путь к вашему Main классу
+		)
+	}
+}
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(20)
