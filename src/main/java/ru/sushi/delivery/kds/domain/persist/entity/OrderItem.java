@@ -32,7 +32,7 @@ public class OrderItem implements Identifiable<Long> {
 
     //todo workflow!!
     public Station getCurrentStation() {
-        if (stationsIterator.hasPrevious()) {
+            if (stationsIterator.hasPrevious()) {
             Station station = stationsIterator.previous();
             stationsIterator.next();
             return station;

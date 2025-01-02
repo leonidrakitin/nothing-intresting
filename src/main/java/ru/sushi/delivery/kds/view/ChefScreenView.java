@@ -91,9 +91,11 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
             // Обновляем страницу
             refreshPage();
             // Показываем уведомление
-            Notification.show("Новый заказ: " + message);
-            ui.getPage().executeJs("new Audio($0).play();",
-                "https://commondatastorage.googleapis.com/codeskulptor-assets/jump.ogg");
+            if (!message.equals("$timer")) {
+                Notification.show("Новый заказ: " + message);
+                ui.getPage().executeJs("new Audio($0).play();",
+                        "https://commondatastorage.googleapis.com/codeskulptor-assets/jump.ogg");
+            }
         });
     }
 
@@ -129,18 +131,26 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         for (var ingredient : item.getIngredients()) {
             details.add(new Div(new Text("- " + ingredient)));
         }
-        // Время готовки: текущее время - время создания
-        long seconds = Duration.between(item.getCreatedAt(), Instant.now()).toSeconds();
-        Div timer = new Div(new Text("Время готовки: " + seconds + " сек"));
 
         title.getStyle().set("font-weight", "bold");
-        timer.getStyle().set("font-weight", "bold");
-
-        container.add(title, details, timer);
+        // Время готовки: текущее время - время создания
+        long seconds = Duration.between(item.getCreatedAt(), Instant.now()).toSeconds();
+        Div timer = new Div();
 
         if (item.getStatus() == OrderItemStationStatus.STARTED) {
             container.getStyle().set("background-color", "lightblue");
+            timer.add("Время готовки: ");
+        } else {
+            timer.add("Время ожидания: ");
         }
+
+        if (seconds > 10) {
+            container.getStyle().set("background-color", "orange");
+        }
+
+        timer.add(new Text(seconds + " сек"));
+        timer.getStyle().set("font-weight", "bold");
+        container.add(title, details, timer);
 
         container.addClickListener(e -> {
             this.viewService.updateStatus(item.getId());
