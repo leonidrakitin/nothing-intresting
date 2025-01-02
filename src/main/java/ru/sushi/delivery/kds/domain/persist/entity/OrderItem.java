@@ -51,6 +51,7 @@ public class OrderItem {
         return OrderItem.builder()
                 .order(order)
                 .item(item)
+                .statusUpdatedAt(Instant.now())
                 .build();
     }
 }

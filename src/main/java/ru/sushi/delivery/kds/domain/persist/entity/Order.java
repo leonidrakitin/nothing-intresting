@@ -36,6 +36,7 @@ public class Order {
         return Order.builder()
                 .name(name)
                 .status(OrderStatus.CREATED)
+                .statusUpdateAt(Instant.now())
                 .build();
     }
 }
