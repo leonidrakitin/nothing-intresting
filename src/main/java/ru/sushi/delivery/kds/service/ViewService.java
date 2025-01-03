@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.Screen;
+import ru.sushi.delivery.kds.domain.service.IngredientCacheService;
 import ru.sushi.delivery.kds.domain.service.ItemService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
 import ru.sushi.delivery.kds.domain.service.ScreenService;
@@ -23,6 +24,7 @@ public class ViewService {
     private final OrderService orderService;
     private final ScreenService screenService;
     private final ItemService itemService;
+    private final IngredientCacheService ingredientCacheService;
 
     public void createOrder(String name, List<Item> items) {
         this.orderService.createOrder(name, items);
@@ -51,7 +53,7 @@ public class ViewService {
                         .orderId(item.getOrder().getId())
                         .name(item.getItem().getName())
                         .ingredients(
-                                item.getItem().getIngredients().stream()
+                                this.ingredientCacheService.getItemIngredients(item.getItem().getId()).stream()
                                         .map(Ingredient::toString)
                                         .toList()
                         )
