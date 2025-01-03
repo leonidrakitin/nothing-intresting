@@ -26,6 +26,8 @@ public class OrderChangesListener {
     }
 
     public void broadcast(long stationId, BroadcastMessage message) {
-        listeners.get(stationId).receiveBroadcast(message);
+        if (listeners.containsKey(stationId)) {
+            listeners.get(stationId).receiveBroadcast(message);
+        }
     }
 }
