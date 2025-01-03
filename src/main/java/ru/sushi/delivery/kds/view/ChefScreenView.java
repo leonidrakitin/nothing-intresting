@@ -56,7 +56,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         columns = new VerticalLayout[GRID_SIZE];
         for (int i = 0; i < GRID_SIZE; i++) {
             VerticalLayout col = new VerticalLayout();
-            col.setWidth(String.format("%f%%", 100.0/GRID_SIZE));  // примерно 1/6 ширины
+            col.setWidth(String.format("%.1f%%", 100.0/GRID_SIZE).replace(',', '.'));  // примерно 1/6 ширины
             col.setSpacing(true);
             columns[i] = col;
             add(col);
