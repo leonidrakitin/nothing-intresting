@@ -37,5 +37,11 @@ public class MainView extends VerticalLayout {
             UI.getCurrent().navigate("create")
         );
         add(goToCreateScreen);
+
+        Button goToCollectorScreen = new Button("Сборщик");
+        goToCollectorScreen.addClickListener(e ->
+            UI.getCurrent().navigate("collector")
+        );
+        add(goToCollectorScreen);
     }
 }

@@ -16,4 +16,8 @@ public class StationService {
     public Collection<Station> getAll() {
         return stationRepository.findAll();
     }
+    
+    public Station getById(Long id){
+        return stationRepository.findById(id).orElseThrow();
+    }
 }

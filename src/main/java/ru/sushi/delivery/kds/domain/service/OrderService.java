@@ -153,4 +153,8 @@ public class OrderService {
             default -> throw new IllegalStateException("Unexpected value: " + priority);
         };
     }
+
+    public List<Order> getAllOrdersWithItems() {
+        return orderRepository.findAllWithItems();
+    }
 }

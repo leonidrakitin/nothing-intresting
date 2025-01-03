@@ -2,6 +2,7 @@ package ru.sushi.delivery.kds.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import ru.sushi.delivery.kds.domain.persist.entity.Station;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 
 import java.time.Instant;
@@ -18,4 +19,5 @@ public class OrderItemDto {
     private final Instant createdAt;
     //TODO Так делать плохо
     private OrderItemStationStatus status;
+    private Station currentStation;
 }

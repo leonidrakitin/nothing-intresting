@@ -1,9 +1,11 @@
 package ru.sushi.delivery.kds.domain.persist.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,6 +16,8 @@ import lombok.Setter;
 import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -32,6 +36,9 @@ public class Order {
 
     @Builder.Default
     private OrderStatus status = OrderStatus.CREATED;
+
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    private List<OrderItem> orderItems = new ArrayList<>();
 
     @Builder.Default
     private Instant statusUpdateAt = Instant.now();

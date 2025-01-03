@@ -7,8 +7,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.orderedlayout.*;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextField;
@@ -17,6 +16,7 @@ import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemSet;
+import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.service.ViewService;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
@@ -34,11 +34,11 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     private final ViewService viewService;
     private final CashListener cashListener;
 
-    // Два контейнера под содержимое вкладок
+    // Два контейнера под содержимое вкладок (Роллы / Сеты)
     private final VerticalLayout rollsTabLayout = new VerticalLayout();
     private final VerticalLayout setsTabLayout = new VerticalLayout();
 
-    // Grids
+    // Grids слева
     private final Grid<Item> rollsGrid = new Grid<>(Item.class, false);
     private final Grid<ItemSet> setsGrid = new Grid<>(ItemSet.class, false);
 
@@ -46,8 +46,14 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     private final List<Item> menuItems;
     private final List<ItemSet> menuItemSets;
 
-    // Таблица корзины справа
+    // Таблица «Корзины» справа
     private final Grid<Item> chosenGrid = new Grid<>(Item.class, false);
+
+    // Таблица «Все заказы» (справа, отдельная вкладка)
+    private final Grid<OrderFullDto> ordersGrid = new Grid<>(OrderFullDto.class, false);
+
+    // Поле для ввода «номера заказа»
+    private final TextField orderNumberField = new TextField("Номер заказа");
 
     @Autowired
     public CreateOrderView(ViewService viewService, CashListener cashListener) {
@@ -60,28 +66,31 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         getStyle().set("padding", "20px");
         getStyle().set("gap", "20px");
 
-        // Изначально загружаем списки из BusinessLogic
-        this.menuItems = this.viewService.getAllMenuItems();
-        this.menuItemSets = List.of();     // Сеты
+        // Загружаем списки из BusinessLogic
+        this.menuItems = viewService.getAllMenuItems(); // Роллы
+        this.menuItemSets = List.of();                  // Сеты (пример)
 
-        // -----------------------------------------------------------
-        // Левая часть: вкладки (Tabs) со списками роллов и сетов
-        // -----------------------------------------------------------
+        // ----------------------------
+        // ЛЕВАЯ ЧАСТЬ
+        // ----------------------------
 
-        // Создаём две вкладки
+        // Поле «Номер заказа»
+        orderNumberField.setPlaceholder("Введите номер заказа...");
+        orderNumberField.setWidthFull();
+
+        // Создаём две вкладки (Роллы, Сеты)
         Tab tabRolls = new Tab("Роллы");
         Tab tabSets = new Tab("Сеты");
-        Tabs tabs = new Tabs(tabRolls, tabSets);
-        tabs.setWidthFull();
+        Tabs tabsLeft = new Tabs(tabRolls, tabSets);
+        tabsLeft.setWidthFull();
 
-        // Контейнер, где размещаем layouts для роллов и сетов
-        Div tabsContent = new Div(rollsTabLayout, setsTabLayout);
-        tabsContent.setWidthFull();
-        // Изначально показываем «Роллы», «Сеты» скрываем
+        // Два Layout’а для контента (rollsTabLayout, setsTabLayout)
+        Div tabsContentLeft = new Div(rollsTabLayout, setsTabLayout);
+        tabsContentLeft.setWidthFull();
+        // Изначально показываем «Роллы»
         setsTabLayout.setVisible(false);
 
-        // Логика переключения вкладок
-        tabs.addSelectedChangeListener(event -> {
+        tabsLeft.addSelectedChangeListener(event -> {
             if (event.getSelectedTab().equals(tabRolls)) {
                 rollsTabLayout.setVisible(true);
                 setsTabLayout.setVisible(false);
@@ -95,31 +104,26 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         rollsTabLayout.setPadding(false);
         rollsTabLayout.setSpacing(true);
 
-        // Поле поиска по роллам
         TextField rollsSearchField = new TextField("Поиск по роллам");
         rollsSearchField.setPlaceholder("Введите название...");
         rollsSearchField.setWidthFull();
         rollsSearchField.setValueChangeMode(ValueChangeMode.EAGER);
-
-
-        // При вводе текста в поле фильтруем список
         rollsSearchField.addValueChangeListener(e -> {
             String searchValue = e.getValue().trim().toLowerCase();
             if (searchValue.isEmpty()) {
                 rollsGrid.setItems(menuItems);
             } else {
-                rollsGrid.setItems(menuItems.stream()
-                    .filter(item -> item.getName().toLowerCase().contains(searchValue))
-                    .collect(Collectors.toList()));
+                rollsGrid.setItems(
+                    menuItems.stream()
+                        .filter(item -> item.getName().toLowerCase().contains(searchValue))
+                        .collect(Collectors.toList())
+                );
             }
         });
 
-        // Grid с роллами
-        rollsGrid.setItems(menuItems);               // Начально показываем все
-        rollsGrid.addColumn(Item::getName);
+        rollsGrid.setItems(menuItems);
+        rollsGrid.addColumn(Item::getName).setHeader("Наименование");
         rollsGrid.setWidthFull();
-
-        // Клик по строке => Добавить выбранный Item в корзину
         rollsGrid.addItemClickListener(e -> {
             Item clickedItem = e.getItem();
             chosenItems.add(clickedItem);
@@ -133,30 +137,26 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsTabLayout.setPadding(false);
         setsTabLayout.setSpacing(true);
 
-        // Поле поиска по сетам
         TextField setsSearchField = new TextField("Поиск по сетам");
         setsSearchField.setPlaceholder("Введите название...");
         setsSearchField.setWidthFull();
-        rollsSearchField.setValueChangeMode(ValueChangeMode.EAGER);
-
-
+        setsSearchField.setValueChangeMode(ValueChangeMode.EAGER);
         setsSearchField.addValueChangeListener(e -> {
             String searchValue = e.getValue().trim().toLowerCase();
             if (searchValue.isEmpty()) {
                 setsGrid.setItems(menuItemSets);
             } else {
-                setsGrid.setItems(menuItemSets.stream()
-                    .filter(s -> s.getName().toLowerCase().contains(searchValue))
-                    .collect(Collectors.toList()));
+                setsGrid.setItems(
+                    menuItemSets.stream()
+                        .filter(s -> s.getName().toLowerCase().contains(searchValue))
+                        .collect(Collectors.toList())
+                );
             }
         });
 
-        // Grid с сетами
         setsGrid.setItems(menuItemSets);
-        setsGrid.addColumn(ItemSet::getName);
+        setsGrid.addColumn(ItemSet::getName).setHeader("Наименование");
         setsGrid.setWidthFull();
-
-        // Клик по строке => Добавить все Item из этого сета
         setsGrid.addItemClickListener(e -> {
             ItemSet clickedSet = e.getItem();
             chosenItems.addAll(clickedSet.getItems());
@@ -166,8 +166,12 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
         setsTabLayout.add(setsSearchField, setsGrid);
 
-        // Объединяем Tabs и «tabsContent» во VerticalLayout
-        VerticalLayout leftLayout = new VerticalLayout(tabs, tabsContent);
+        // Собираем левую часть (вертикально): [Поле "Номер заказа"] + [Tabs] + [Контент вкладок]
+        VerticalLayout leftLayout = new VerticalLayout(
+            orderNumberField,
+            tabsLeft,
+            tabsContentLeft
+        );
         leftLayout.setWidth("50%");
         leftLayout.setPadding(false);
         leftLayout.setSpacing(true);
@@ -176,54 +180,119 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             .set("border-radius", "8px")
             .set("padding", "20px");
 
-        // -----------------------------------------------------------
-        // Правая часть: корзина (список выбранных позиций) + кнопки
-        // -----------------------------------------------------------
+        // ----------------------------
+        // ПРАВАЯ ЧАСТЬ (Корзина / Все заказы)
+        // ----------------------------
+        Tab cartTab = new Tab("Корзина");
+        Tab ordersTab = new Tab("Все заказы");
+        Tabs rightTabs = new Tabs(cartTab, ordersTab);
 
-        VerticalLayout rightLayout = new VerticalLayout();
+        Div cartLayout = buildCartLayout();
+        Div allOrdersLayout = buildAllOrdersLayout();
+        allOrdersLayout.setVisible(false);
+
+        rightTabs.addSelectedChangeListener(event -> {
+            if (event.getSelectedTab().equals(cartTab)) {
+                cartLayout.setVisible(true);
+                allOrdersLayout.setVisible(false);
+            } else {
+                cartLayout.setVisible(false);
+                allOrdersLayout.setVisible(true);
+                refreshOrdersGrid();
+            }
+        });
+
+        VerticalLayout rightLayout = new VerticalLayout(rightTabs, cartLayout, allOrdersLayout);
         rightLayout.setWidth("50%");
+        rightLayout.setPadding(false);
         rightLayout.setSpacing(true);
         rightLayout.getStyle()
             .set("border", "1px solid #ccc")
             .set("border-radius", "8px")
             .set("padding", "20px");
 
+        // Добавляем левую и правую часть на главный лейаут
+        add(leftLayout, rightLayout);
+    }
+
+    /**
+     * Создаем лейаут "Корзина".
+     */
+    private Div buildCartLayout() {
+        Div cartLayout = new Div();
+        cartLayout.setWidthFull();
+
         H3 chosenTitle = new H3("Корзина:");
         chosenGrid.addColumn(Item::getName).setHeader("Наименование");
         chosenGrid.setItems(chosenItems);
 
-        // Кнопки "Создать заказ" и "Очистить корзину"
         Button createOrderButton = new Button("Создать заказ");
         Button clearCartButton = new Button("Очистить корзину");
         HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, clearCartButton);
 
-        rightLayout.add(chosenTitle, chosenGrid, buttonBar);
-
-        // Добавляем левую и правую часть на главный лейаут
-        add(leftLayout, rightLayout);
-
-        // --- ЛОГИКА КНОПОК ---
-
-        // "Создать заказ"
         createOrderButton.addClickListener(e -> {
             if (chosenItems.isEmpty()) {
                 Notification.show("Корзина пуста, нельзя создать заказ");
                 return;
             }
-            //todo name заполнить
-            viewService.createOrder("123123", chosenItems);
-            Notification.show("Заказ создан! Позиции: " + chosenItems.size());
+            // Берём значение "номера заказа" из поля orderNumberField
+            String orderNumber = orderNumberField.getValue().trim();
+            if (orderNumber.isEmpty()) {
+                orderNumber = "Без номера"; // или любой дефолт
+            }
+
+            // Создаём заказ с указанным номером
+            viewService.createOrder(orderNumber, chosenItems);
+            Notification.show("Заказ создан! Номер: " + orderNumber +
+                ", Позиции: " + chosenItems.size());
 
             chosenItems.clear();
             chosenGrid.getDataProvider().refreshAll();
         });
 
-        // "Очистить корзину"
         clearCartButton.addClickListener(e -> {
             chosenItems.clear();
             chosenGrid.getDataProvider().refreshAll();
             Notification.show("Корзина очищена");
         });
+
+        cartLayout.add(chosenTitle, chosenGrid, buttonBar);
+        return cartLayout;
+    }
+
+    /**
+     * Создаем лейаут "Все заказы" (Grid со всеми заказами).
+     */
+    private Div buildAllOrdersLayout() {
+        Div ordersLayout = new Div();
+        ordersLayout.setWidthFull();
+
+        ordersGrid.removeAllColumns();
+        ordersGrid.addColumn(OrderFullDto::getOrderId).setHeader("ID");
+        ordersGrid.addColumn(dto -> dto.getItems() == null ? 0 : dto.getItems().size())
+            .setHeader("Кол-во позиций");
+
+        // Пример вывода статуса в человеко-понятном виде
+        ordersGrid.addColumn(orderDto -> {
+            return switch (orderDto.getStatus()) {
+                case "CREATED" -> "Создан";
+                case "COOKING" -> "Готовится";
+                case "COLLECTING" -> "Сборка заказа";
+                case "READY" -> "Выполнен";
+                default -> "";
+            };
+        }).setHeader("Статус заказа");
+
+        ordersLayout.add(new H3("Список всех заказов:"), ordersGrid);
+        return ordersLayout;
+    }
+
+    /**
+     * Обновляем таблицу «Все заказы».
+     */
+    private void refreshOrdersGrid() {
+        List<OrderFullDto> allOrders = viewService.getAllOrdersWithItems();
+        ordersGrid.setItems(allOrders);
     }
 
     @Override
