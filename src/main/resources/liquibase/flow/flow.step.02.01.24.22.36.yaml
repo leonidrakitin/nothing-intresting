@@ -86,6 +86,24 @@ databaseChangeLog:
               - column:
                   name: step_order
                   valueNumeric: 2
+        - insert:
+            tableName: flow_step
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 10
+              - column:
+                  name: flow_id
+                  valueNumeric: 1
+              - column:
+                  name: station_id
+                  valueNumeric: 5
+              - column:
+                  name: step_type
+                  value: "FINAL_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: 3
 
   - changeSet:
       id: flow.INSERT.03.01.24.00.21
@@ -145,6 +163,24 @@ databaseChangeLog:
               - column:
                   name: step_order
                   valueNumeric: 3
+        - insert:
+            tableName: flow_step
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 8
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
+                  name: station_id
+                  valueNumeric: 5
+              - column:
+                  name: step_type
+                  value: "FINAL_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: 4
 
   - changeSet:
       id: flow.INSERT.03.01.24.00.23
@@ -186,3 +222,21 @@ databaseChangeLog:
               - column:
                   name: step_order
                   valueNumeric: 2
+        - insert:
+            tableName: flow_step
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 9
+              - column:
+                  name: flow_id
+                  valueNumeric: 3
+              - column:
+                  name: station_id
+                  valueNumeric: 5
+              - column:
+                  name: step_type
+                  value: "FINAL_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: 3

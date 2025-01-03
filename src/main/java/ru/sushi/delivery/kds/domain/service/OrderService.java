@@ -57,14 +57,14 @@ public class OrderService {
                     orderItem.getItem().getFlow().getId(),
                     orderItem.getCurrentFlowStep()
             );
-            if (flowStep.getStepType() != FlowStepType.FINAL_STEP) {
-                orderItem = orderItem.toBuilder()
-                        .status(OrderItemStationStatus.ADDED)
-                        .currentFlowStep(flowStep.getStepOrder())
-                        .screenChangedAt(Instant.now())
-                        .build();
+            orderItem = orderItem.toBuilder()
+                    .status(OrderItemStationStatus.ADDED)
+                    .currentFlowStep(flowStep.getStepOrder())
+                    .stationChangedAt(Instant.now())
+                    .build();
 
-                    Station station = flowStep.getStation();
+            if (flowStep.getStepType() != FlowStepType.FINAL_STEP) {
+                Station station = flowStep.getStation();
                 //add notification to all station displays
             }
         }

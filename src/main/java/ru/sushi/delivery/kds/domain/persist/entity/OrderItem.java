@@ -51,7 +51,7 @@ public class OrderItem {
     private Instant statusUpdatedAt = Instant.now();
 
     @Builder.Default
-    private Instant screenChangedAt = Instant.now();
+    private Instant stationChangedAt = Instant.now();
 
     public static OrderItem of(Order order, Item item) {
         return OrderItem.builder()

@@ -79,3 +79,16 @@ databaseChangeLog:
               - column:
                   name: order_status_at_station
                   value: "COLLECTING"
+
+        - insert:
+            tableName: station
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 5
+              - column:
+                  name: name
+                  value: "Кассовая зона"
+              - column:
+                  name: order_status_at_station
+                  value: "READY"
