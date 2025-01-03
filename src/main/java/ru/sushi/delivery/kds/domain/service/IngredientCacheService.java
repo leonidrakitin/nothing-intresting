@@ -32,7 +32,7 @@ public class IngredientCacheService {
     }
 
     public List<Ingredient> getItemIngredients(Long itemId) {
-        return ingredientCache.get(itemId);
+        return ingredientCache.getOrDefault(itemId, List.of());
     }
 }
 
