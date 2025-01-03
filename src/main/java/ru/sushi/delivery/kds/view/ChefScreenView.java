@@ -34,6 +34,11 @@ import java.util.Optional;
 public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<String>, BroadcastListener {
 
     public static final int GRID_SIZE = 3;
+    public static final String COLOR_IN_PROGRESS = "lightblue";
+    public static final String COLOR_WAITING_WARNING = "orange";
+    public static final int SECONDS_WAITING_WARNING = 20;
+    public static final String COLOR_COOKING_WARNING = "#ff6969";
+    public static final int SECONDS_COOKING_WARNING = 30;
     private final ViewService viewService;
     private final OrderChangesListener orderChangesListener;
 
@@ -150,14 +155,16 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         Div timer = new Div();
 
         if (item.getStatus() == OrderItemStationStatus.STARTED) {
-            container.getStyle().set("background-color", "lightblue");
+            container.getStyle().set("background-color", COLOR_IN_PROGRESS);
             timer.add("Время готовки: ");
         } else {
             timer.add("Время ожидания: ");
         }
 
-        if (seconds > 10) {
-            container.getStyle().set("background-color", "orange");
+        if (seconds > SECONDS_WAITING_WARNING && item.getStatus() == OrderItemStationStatus.ADDED) {
+            container.getStyle().set("background-color", COLOR_WAITING_WARNING);
+        } else if (seconds > SECONDS_COOKING_WARNING && item.getStatus() == OrderItemStationStatus.STARTED) {
+            container.getStyle().set("background-color", COLOR_COOKING_WARNING);
         }
 
         timer.add(new Text(seconds + " сек"));
