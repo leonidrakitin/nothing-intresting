@@ -13,9 +13,16 @@ import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
 import ru.sushi.delivery.kds.model.FlowStepType;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
+import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
+import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
+import ru.sushi.delivery.kds.service.listeners.CashListener;
+import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
@@ -24,13 +31,27 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final FlowCacheService flowCacheService;
+    private final OrderChangesListener orderChangesListener;
+    private final CashListener cashListener;
 
     public void createOrder(String name, List<Item> items) {
         Order order = orderRepository.save(Order.of(name));
-        List<OrderItem> orderItems = items.stream()
-                .map(item -> OrderItem.of(order, item))
-                .toList();
+
+        List<OrderItem> orderItems = new ArrayList<>();
+        Set<FlowStep> flowSteps = new HashSet<>();
+        for (Item item : items) {
+            OrderItem orderItem = OrderItem.of(order, item);
+            orderItems.add(orderItem);
+            flowSteps.add(this.flowCacheService.getCurrentStep(
+                    orderItem.getItem().getFlow().getId(),
+                    orderItem.getCurrentFlowStep()
+            ));
+        }
         orderItemRepository.saveAll(orderItems);
+        flowSteps.forEach(flowStep -> this.orderChangesListener.broadcast(
+                flowStep.getStation().getId(),
+                BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
+        ));
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
@@ -64,8 +85,15 @@ public class OrderService {
                     .build();
 
             if (flowStep.getStepType() != FlowStepType.FINAL_STEP) {
-                Station station = flowStep.getStation();
-                //add notification to all station displays
+                this.orderChangesListener.broadcast(
+                        flowStep.getStation().getId(),
+                        BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новые позиции")
+                );
+            } else {
+                this.cashListener.broadcast(BroadcastMessage.of(
+                        BroadcastMessageType.NOTIFICATION,
+                        orderItem.getOrder().getId() + " заказ обновлен"
+                ));
             }
         }
         this.orderItemRepository.save(orderItem);

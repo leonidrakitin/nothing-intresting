@@ -1,5 +1,7 @@
 package ru.sushi.delivery.kds.view;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
@@ -15,18 +17,22 @@ import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemSet;
-import ru.sushi.delivery.kds.service.ChefScreenOrderChangesListener;
 import ru.sushi.delivery.kds.service.ViewService;
+import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
+import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
+import ru.sushi.delivery.kds.service.listeners.BroadcastListener;
+import ru.sushi.delivery.kds.service.listeners.CashListener;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Route("create")
-public class CreateOrderView extends HorizontalLayout {
+public class CreateOrderView extends HorizontalLayout implements BroadcastListener {
 
     private final List<Item> chosenItems = new ArrayList<>();
     private final ViewService viewService;
+    private final CashListener cashListener;
 
     // Два контейнера под содержимое вкладок
     private final VerticalLayout rollsTabLayout = new VerticalLayout();
@@ -44,10 +50,11 @@ public class CreateOrderView extends HorizontalLayout {
     private final Grid<Item> chosenGrid = new Grid<>(Item.class, false);
 
     @Autowired
-    public CreateOrderView(ViewService viewService) {
+    public CreateOrderView(ViewService viewService, CashListener cashListener) {
         setSizeFull();
 
         this.viewService = viewService;
+        this.cashListener = cashListener;
 
         // Общие отступы и пространство между колонками
         getStyle().set("padding", "20px");
@@ -204,9 +211,7 @@ public class CreateOrderView extends HorizontalLayout {
                 return;
             }
             //todo name заполнить
-            viewService.createOrder("#123123", chosenItems);
-
-            ChefScreenOrderChangesListener.broadcast("Новый заказ");
+            viewService.createOrder("123123", chosenItems);
             Notification.show("Заказ создан! Позиции: " + chosenItems.size());
 
             chosenItems.clear();
@@ -219,5 +224,24 @@ public class CreateOrderView extends HorizontalLayout {
             chosenGrid.getDataProvider().refreshAll();
             Notification.show("Корзина очищена");
         });
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        this.cashListener.register(this);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        this.cashListener.unregister(this);
+        super.onDetach(detachEvent);
+    }
+
+    @Override
+    public void receiveBroadcast(BroadcastMessage message) {
+        if (message.getType() == BroadcastMessageType.NOTIFICATION) {
+            Notification.show(message.getContent());
+        }
     }
 }

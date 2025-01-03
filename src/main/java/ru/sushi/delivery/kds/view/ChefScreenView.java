@@ -18,13 +18,16 @@ import com.vaadin.flow.spring.annotation.UIScope;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
-import ru.sushi.delivery.kds.service.BroadcastListener;
-import ru.sushi.delivery.kds.service.ChefScreenOrderChangesListener;
 import ru.sushi.delivery.kds.service.ViewService;
+import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
+import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
+import ru.sushi.delivery.kds.service.listeners.BroadcastListener;
+import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Route("screen")
 @UIScope
@@ -32,14 +35,20 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
 
     public static final int GRID_SIZE = 3;
     private final ViewService viewService;
+    private final OrderChangesListener orderChangesListener;
 
     // 6 колонок (ячейки)
     private final VerticalLayout[] columns;
-    private String currentScreenId;
+    private String screenId;
+    private Long stationId;
 
     @Autowired
-    public ChefScreenView(ViewService viewService) {
+    public ChefScreenView(
+            ViewService viewService,
+            OrderChangesListener orderChangesListener
+    ) {
         this.viewService = viewService;
+        this.orderChangesListener = orderChangesListener;
 
         setSizeFull();
 
@@ -57,44 +66,47 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter String screenId) {
 
-        if (!this.viewService.checkScreenExists(screenId)) {
+        Optional<Long> stationId = this.viewService.getScreenStationIfExists(screenId);
+        if (stationId.isEmpty()) {
             removeAll();
             add(new H1("Страница не найдена"));
             return;
         }
-        this.currentScreenId = screenId;
+        this.screenId = screenId;
+        this.stationId = stationId.get();
         refreshPage();
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        ChefScreenOrderChangesListener.register(this);
+        this.orderChangesListener.register(stationId, this);
         refreshPage();
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
-        ChefScreenOrderChangesListener.unregister(this);
+        this.orderChangesListener.unregister(stationId);
         super.onDetach(detachEvent);
     }
 
     // Этот метод вызывается, когда получаем broadcast "new order"
     @Override
-    public void receiveBroadcast(String message) {
-        // «Входим» в UI-поток Vaadin
+    public void receiveBroadcast(BroadcastMessage message) {
         UI ui = getUI().orElse(null);
-        if (ui == null) return;
+        if (ui == null) {
+            return;
+        }
 
         ui.access(() -> {
-            // Обновляем страницу
-            if (message.equals("$timer")) {
+            if (message.getType() == BroadcastMessageType.REFRESH_PAGE) {
                 refreshPage();
-            } else {
-                // Показываем уведомление
-                Notification.show("Новый заказ: " + message);
-                ui.getPage().executeJs("new Audio($0).play();",
-                        "https://commondatastorage.googleapis.com/codeskulptor-assets/jump.ogg");
+            } else if (message.getType() == BroadcastMessageType.NOTIFICATION) {
+                Notification.show(message.getContent());
+                ui.getPage().executeJs(
+                        "new Audio($0).play();",
+                        "https://commondatastorage.googleapis.com/codeskulptor-assets/jump.ogg"
+                );
             }
         });
     }
@@ -104,7 +116,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
             col.removeAll();
         }
 
-        List<OrderItemDto> orders = this.viewService.getScreenOrderItems(this.currentScreenId);
+        List<OrderItemDto> orders = this.viewService.getScreenOrderItems(this.screenId);
         if (orders == null || orders.isEmpty()) {
             columns[0].add("Заказов нет");
             return;

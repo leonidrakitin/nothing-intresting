@@ -1,24 +1,24 @@
 package ru.sushi.delivery.kds.service;
 
-import org.springframework.stereotype.Component;
+import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
+import ru.sushi.delivery.kds.service.listeners.BroadcastListener;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-@Component
 public abstract class AbstractBroadcasterService {
 
-    private static final Set<BroadcastListener> listeners = new CopyOnWriteArraySet<>();
+    private final Set<BroadcastListener> listeners = new CopyOnWriteArraySet<>();
 
-    public static void register(BroadcastListener listener) {
+    public void register(BroadcastListener listener) {
         listeners.add(listener);
     }
 
-    public static void unregister(BroadcastListener listener) {
+    public void unregister(BroadcastListener listener) {
         listeners.remove(listener);
     }
 
-    public static void broadcast(String message) {
+    public void broadcast(BroadcastMessage message) {
         for (BroadcastListener listener : listeners) {
             listener.receiveBroadcast(message);
         }

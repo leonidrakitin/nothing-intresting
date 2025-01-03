@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.Screen;
+import ru.sushi.delivery.kds.domain.persist.entity.Station;
 import ru.sushi.delivery.kds.domain.service.IngredientCacheService;
 import ru.sushi.delivery.kds.domain.service.ItemService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
@@ -15,6 +16,7 @@ import ru.sushi.delivery.kds.dto.OrderItemDto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -41,8 +43,8 @@ public class ViewService {
         return kitchenDisplayData;
     }
 
-    public boolean checkScreenExists(String screenId) {
-        return screenService.get(screenId).isPresent();
+    public Optional<Long> getScreenStationIfExists(String screenId) {
+        return screenService.get(screenId).map(Screen::getStation).map(Station::getId);
     }
 
     public List<OrderItemDto> getScreenOrderItems(String screenId) {
