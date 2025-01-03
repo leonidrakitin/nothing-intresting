@@ -55,12 +55,13 @@ public class OrderService {
         if (orderItem.getStatus() == OrderItemStationStatus.COMPLETED) {
             FlowStep flowStep = this.flowCacheService.getNextStep(
                     orderItem.getItem().getFlow().getId(),
-                    orderItem.getCurrentFlowStepId()
+                    orderItem.getCurrentFlowStep()
             );
             if (flowStep.getStepType() != FlowStepType.FINAL_STEP) {
                 orderItem = orderItem.toBuilder()
                         .status(OrderItemStationStatus.ADDED)
-                        .currentFlowStepId(flowStep.getId())
+                        .currentFlowStep(flowStep.getStepOrder())
+                        .screenChangedAt(Instant.now())
                         .build();
 
                     Station station = flowStep.getStation();
@@ -84,7 +85,7 @@ public class OrderService {
         for (OrderItem orderItem : orderItems) {
             Station currentStation = this.flowCacheService.getCurrentStep(
                             orderItem.getItem().getFlow().getId(),
-                            orderItem.getCurrentFlowStepId()
+                            orderItem.getCurrentFlowStep()
                     )
                     .getStation();
             int currentPriorityStatus = this.definePriorityByOrderStatus(currentStation.getOrderStatusAtStation());

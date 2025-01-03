@@ -25,7 +25,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: current_flow_step_id
+                  name: current_flow_step
                   type: INT
                   constraints:
                     nullable: false
@@ -38,6 +38,12 @@ databaseChangeLog:
                   defaultValue: 'ADDED'
               - column:
                   name: status_updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: screen_changed_at
                   type: TIMESTAMP
                   constraints:
                     nullable: false

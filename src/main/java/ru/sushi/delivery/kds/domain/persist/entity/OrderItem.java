@@ -41,7 +41,7 @@ public class OrderItem {
     private Item item;
 
     @Builder.Default
-    private Integer currentFlowStepId = 1;
+    private Integer currentFlowStep = 1;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
@@ -49,6 +49,9 @@ public class OrderItem {
 
     @Builder.Default
     private Instant statusUpdatedAt = Instant.now();
+
+    @Builder.Default
+    private Instant screenChangedAt = Instant.now();
 
     public static OrderItem of(Order order, Item item) {
         return OrderItem.builder()

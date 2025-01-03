@@ -35,18 +35,18 @@ public class FlowCacheService {
         return flowCache.get(flowId);
     }
 
-    public FlowStep getCurrentStep(long flowId, int currentFlowStepId) {
+    public FlowStep getCurrentStep(long flowId, int currentFlowStep) {
         List<FlowStep> flowSteps = flowCache.get(flowId);
-        if (currentFlowStepId >= 0 && currentFlowStepId < flowSteps.size()) {
-            return flowSteps.get(currentFlowStepId + 1);
+        if (currentFlowStep > 0 && currentFlowStep - 1 < flowSteps.size()) {
+            return flowSteps.get(currentFlowStep - 1);
         }
         return flowSteps.getFirst();
     }
 
-    public FlowStep getNextStep(long flowId, int currentFlowStepId) {
+    public FlowStep getNextStep(long flowId, int currentFlowStep) {
         List<FlowStep> flowSteps = flowCache.get(flowId);
-        if (currentFlowStepId >= 0 && currentFlowStepId + 1 < flowSteps.size()) {
-            return flowSteps.get(currentFlowStepId + 1);
+        if (currentFlowStep >= 0 && currentFlowStep < flowSteps.size()) {
+            return flowSteps.get(currentFlowStep);
         }
         return flowSteps.getLast();
     }

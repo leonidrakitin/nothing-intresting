@@ -82,7 +82,7 @@ databaseChangeLog:
                   valueNumeric: 4
               - column:
                   name: step_type
-                  value: "FINAL_STEP"
+                  value: "PROGRESS_STEP"
               - column:
                   name: step_order
                   valueNumeric: 2
@@ -141,7 +141,7 @@ databaseChangeLog:
                   valueNumeric: 4
               - column:
                   name: step_type
-                  value: "FINAL_STEP"
+                  value: "PROGRESS_STEP"
               - column:
                   name: step_order
                   valueNumeric: 3
@@ -182,7 +182,7 @@ databaseChangeLog:
                   valueNumeric: 4
               - column:
                   name: step_type
-                  value: "FINAL_STEP"
+                  value: "PROGRESS_STEP"
               - column:
                   name: step_order
                   valueNumeric: 2
