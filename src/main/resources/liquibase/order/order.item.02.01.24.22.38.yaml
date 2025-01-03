@@ -43,7 +43,7 @@ databaseChangeLog:
                     nullable: false
                   defaultValueComputed: CURRENT_TIMESTAMP
               - column:
-                  name: screen_changed_at
+                  name: station_changed_at
                   type: TIMESTAMP
                   constraints:
                     nullable: false
