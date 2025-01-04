@@ -1,4 +1,7 @@
 databaseChangeLog:
   - include:
-      file: station.04.01.24.05.38.yaml
+      file: station.02.01.24.22.38.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: station.04.01.25.14.09.yaml
       relativeToChangelogFile: true

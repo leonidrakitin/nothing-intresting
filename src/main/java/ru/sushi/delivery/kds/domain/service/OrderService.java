@@ -204,4 +204,8 @@ public class OrderService {
         }
         orderRepository.save(updatedOrder);
     }
+
+    public List<OrderItem> getOrderItems(Long orderId){
+        return orderItemRepository.findByOrderId(orderId);
+    }
 }

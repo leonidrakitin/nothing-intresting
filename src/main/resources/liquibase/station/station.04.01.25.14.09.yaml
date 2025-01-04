@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: station.INSERT.02.01.24.22.60
+      author: dlosev
+      changes:
+        - insert:
+            tableName: station
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 6
+              - column:
+                  name: name
+                  value: "Отменен"
+              - column:
+                  name: order_status_at_station
+                  value: "CANCELED"

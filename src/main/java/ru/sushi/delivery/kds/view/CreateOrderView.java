@@ -274,7 +274,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         ordersGrid.removeAllColumns();
 
         // Колонка "ID"
-        ordersGrid.addColumn(OrderFullDto::getOrderId)
+        ordersGrid.addColumn(OrderFullDto::getName)
             .setHeader("ID");
 
         // Колонка "Кол-во позиций"
@@ -306,7 +306,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             cancelBtn.addClickListener(e -> {
                 // Отмена заказа
                 viewService.cancelOrder(orderDto.getId());
-                Notification.show("Заказ " + orderDto.getOrderId() + " отменён!");
+                Notification.show("Заказ " + orderDto.getName() + " отменён!");
                 refreshOrdersGrid();
             });
 
@@ -340,7 +340,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     private void openOrderItemsDialog(OrderFullDto orderDto) {
         Dialog dialog = new Dialog();
         dialog.setWidth("600px");
-        dialog.setHeaderTitle("Позиции заказа: " + orderDto.getOrderId());
+        dialog.setHeaderTitle("Позиции заказа: " + orderDto.getName());
 
         // Грид с позициями
         Grid<OrderItemDto> itemsGrid = new Grid<>(OrderItemDto.class, false);
@@ -363,8 +363,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                     viewService.removeItemFromOrder(itemDto.getId());
                     Notification.show("Позиция удалена (ID=" + itemDto.getId() + ")");
                     // Перезагружаем заказ
-                    OrderFullDto updated = findOrderFullDtoById(orderDto.getOrderId());
-                    itemsGrid.setItems(updated.getItems());
+                    itemsGrid.setItems(this.viewService.getOrderItems(orderDto.getId()));
                 });
 
                 return removeBtn;
@@ -447,8 +446,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 Notification.show("Добавлено: " + item.getName());
 
                 // Обновляем основной грид позиций
-                OrderFullDto updated = findOrderFullDtoById(viewService.getOrderName(orderId));
-                itemsGrid.setItems(updated.getItems());
+                itemsGrid.setItems(this.viewService.getOrderItems(orderId));
             });
             return addButton;
         }).setHeader("Действие");
@@ -492,8 +490,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 Notification.show("Добавлен сет: " + set.getName());
 
                 // Обновляем основной грид позиций
-                OrderFullDto updated = findOrderFullDtoById(viewService.getOrderName(orderId));
-                itemsGrid.setItems(updated.getItems());
+                itemsGrid.setItems(this.viewService.getOrderItems(orderId));
             });
             return addButton;
         }).setHeader("Действие");
@@ -534,18 +531,6 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         addDialog.getFooter().add(cancelBtn);
 
         return addDialog;
-    }
-
-
-
-    /**
-     * Служебный метод для повторной загрузки данных одного заказа (по его "orderId").
-     */
-    private OrderFullDto findOrderFullDtoById(String orderId) {
-        return viewService.getAllOrdersWithItems().stream()
-            .filter(dto -> orderId.equals(dto.getOrderId()))
-            .findFirst()
-            .orElseThrow();
     }
 
     @Override

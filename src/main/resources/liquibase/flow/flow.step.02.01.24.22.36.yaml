@@ -61,13 +61,13 @@ databaseChangeLog:
                   valueNumeric: 1
               - column:
                   name: station_id
-                  valueNumeric: 1
+                  valueNumeric: 2
               - column:
                   name: step_type
                   value: "PROGRESS_STEP"
               - column:
                   name: step_order
-                  valueNumeric: 2
+                  valueNumeric: 1
         - insert:
             tableName: flow_step
             columns:
@@ -79,13 +79,13 @@ databaseChangeLog:
                   valueNumeric: 1
               - column:
                   name: station_id
-                  valueNumeric: 1
+                  valueNumeric: 4
               - column:
                   name: step_type
                   value: "PROGRESS_STEP"
               - column:
                   name: step_order
-                  valueNumeric: 1
+                  valueNumeric: 2
         - insert:
             tableName: flow_step
             columns:
@@ -97,31 +97,13 @@ databaseChangeLog:
                   valueNumeric: 1
               - column:
                   name: station_id
-                  valueNumeric: 1
+                  valueNumeric: 5
               - column:
                   name: step_type
                   value: "FINAL_STEP"
               - column:
                   name: step_order
                   valueNumeric: 0
-        - insert:
-            tableName: flow_step
-            columns:
-              - column:
-                  name: id
-                  valueNumeric: 11
-              - column:
-                  name: flow_id
-                  valueNumeric: 1
-              - column:
-                  name: station_id
-                  valueNumeric: 6
-              - column:
-                  name: step_type
-                  value: "FINAL_STEP"
-              - column:
-                  name: step_order
-                  valueNumeric: -1
 
   - changeSet:
       id: flow.INSERT.03.01.24.00.21
@@ -138,7 +120,7 @@ databaseChangeLog:
                   valueNumeric: 2
               - column:
                   name: station_id
-                  valueNumeric: 3
+                  valueNumeric: 2
               - column:
                   name: step_type
                   value: "PROGRESS_STEP"
@@ -159,10 +141,10 @@ databaseChangeLog:
                   valueNumeric: 3
               - column:
                   name: step_type
-                  value: "FINAL_STEP"
+                  value: "PROGRESS_STEP"
               - column:
                   name: step_order
-                  valueNumeric: -1
+                  valueNumeric: 2
         - insert:
             tableName: flow_step
             columns:
@@ -180,7 +162,7 @@ databaseChangeLog:
                   value: "PROGRESS_STEP"
               - column:
                   name: step_order
-                  valueNumeric: 2
+                  valueNumeric: 3
         - insert:
             tableName: flow_step
             columns:
@@ -198,7 +180,7 @@ databaseChangeLog:
                   value: "FINAL_STEP"
               - column:
                   name: step_order
-                  valueNumeric: 3
+                  valueNumeric: 0
 
   - changeSet:
       id: flow.INSERT.03.01.24.00.23
@@ -233,7 +215,7 @@ databaseChangeLog:
                   valueNumeric: 3
               - column:
                   name: station_id
-                  valueNumeric: 3
+                  valueNumeric: 4
               - column:
                   name: step_type
                   value: "PROGRESS_STEP"
@@ -257,22 +239,4 @@ databaseChangeLog:
                   value: "FINAL_STEP"
               - column:
                   name: step_order
-                  valueNumeric: 3
-        - insert:
-            tableName: flow_step
-            columns:
-              - column:
-                  name: id
-                  valueNumeric: 13
-              - column:
-                  name: flow_id
-                  valueNumeric: 3
-              - column:
-                  name: station_id
-                  valueNumeric: 6
-              - column:
-                  name: step_type
-                  value: "PROGRESS_STEP"
-              - column:
-                  name: step_order
-                  valueNumeric: 1
+                  valueNumeric: 0

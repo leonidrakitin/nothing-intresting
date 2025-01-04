@@ -17,7 +17,6 @@ import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
 import ru.sushi.delivery.kds.service.ViewService;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
-import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
 import ru.sushi.delivery.kds.service.listeners.BroadcastListener;
 import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 
@@ -160,7 +159,7 @@ public class CollectorView extends VerticalLayout implements BroadcastListener {
             orderColumn.getStyle().set("box-shadow", "0 2px 6px rgba(0,0,0,0.15)");
 
             // Заголовок колонки
-            H2 orderHeader = new H2("Заказ #" + orderDto.getOrderId());
+            H2 orderHeader = new H2("Заказ #" + orderDto.getName());
             orderHeader.getStyle().set("margin", "10px 10px 0 10px");
             orderColumn.add(orderHeader);
 

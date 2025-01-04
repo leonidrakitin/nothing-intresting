@@ -143,7 +143,9 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         container.setWidthFull();
 
         // Заголовок: "Заказ #id: <имя>"
-        Div title = new Div(new Text("Заказ #" + viewService.getOrderName(item.getOrderId()) + ": " + item.getName()));
+        //TODO Переделать передачу номера заказа
+        //TODO Переделать обновление объектов раз в секунду
+        Div title = new Div(new Text("Заказ #" + item.getOrderId() + ": " + item.getName()));
         Div details = new Div();
         for (var ingredient : item.getIngredients()) {
             details.add(new Div(new Text("- " + ingredient)));

@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: flow.INSERT.04.01.25.13.55
+      author: dlosev
+      changes:
+        - insert:
+            tableName: flow_step
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 11
+              - column:
+                  name: flow_id
+                  valueNumeric: 1
+              - column:
+                  name: station_id
+                  valueNumeric: 6
+              - column:
+                  name: step_type
+                  value: "FINAL_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: -1
+        - insert:
+            tableName: flow_step
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 12
+              - column:
+                  name: flow_id
+                  valueNumeric: 2
+              - column:
+                  name: station_id
+                  valueNumeric: 6
+              - column:
+                  name: step_type
+                  value: "FINAL_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: -1
+        - insert:
+            tableName: flow_step
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 13
+              - column:
+                  name: flow_id
+                  valueNumeric: 3
+              - column:
+                  name: station_id
+                  valueNumeric: 6
+              - column:
+                  name: step_type
+                  value: "FINAL_STEP"
+              - column:
+                  name: step_order
+                  valueNumeric: -1

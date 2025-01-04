@@ -3,8 +3,10 @@ package ru.sushi.delivery.kds.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import ru.sushi.delivery.kds.domain.persist.entity.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
+import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.Screen;
 import ru.sushi.delivery.kds.domain.service.FlowCacheService;
@@ -17,7 +19,6 @@ import ru.sushi.delivery.kds.domain.service.StationService;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
-import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ public class ViewService {
     private final IngredientCacheService ingredientCacheService;
     private final StationService stationService;
     private final FlowCacheService flowCacheService;
+    private final RestClient.Builder builder;
 
     public void createOrder(String name, List<Item> items) {
         this.orderService.createOrder(name, items);
@@ -58,19 +60,7 @@ public class ViewService {
     public List<OrderItemDto> getScreenOrderItems(String screenId) {
         Screen screen = screenService.getOrThrow(screenId);
         return orderService.getAllItemsByStationId(screen.getStation().getId()).stream()
-            .map(item -> OrderItemDto.builder()
-                .id(item.getId())
-                .orderId(item.getOrder().getId())
-                .name(item.getItem().getName())
-                .ingredients(
-                    this.ingredientCacheService.getItemIngredients(item.getItem().getId()).stream()
-                        .map(Ingredient::toString)
-                        .toList()
-                )
-                .status(item.getStatus())
-                .createdAt(item.getStatusUpdatedAt())
-                .build()
-            )
+            .map(this::buildOrderItemDto)
             .toList();
     }
 
@@ -82,40 +72,18 @@ public class ViewService {
         return orderService.getAllOrdersWithItems().stream()
             .map(order -> OrderFullDto.builder()
                 .id(order.getId())
-                .orderId(order.getName())
+                .name(order.getName())
                 .status(order.getStatus().toString())
-                .items(
-                    order.getOrderItems().stream()
-                        .map(orderItem -> OrderItemDto.builder()
-                            .id(orderItem.getId())
-                            .orderId(order.getId())
-                            .name(orderItem.getItem().getName())
-                            .ingredients(
-                                ingredientCacheService
-                                    .getItemIngredients(orderItem.getItem().getId())
-                                    .stream()
-                                    .map(Ingredient::toString)
-                                    .toList()
-                            )
-                            .status(orderItem.getStatus())
-                            .currentStation(this.flowCacheService.getCurrentStep(
-                                        orderItem.getItem().getFlow().getId(),
-                                        orderItem.getCurrentFlowStep()
-                                    )
-                                    .getStation()
-                            )
-                            .createdAt(orderItem.getStatusUpdatedAt())
-                            .build()
-                        )
-                        .toList()
-                )
+                .items(getOrderItemData(order))
                 .build()
             )
             .toList();
     }
 
-    public String getOrderName(Long orderId) {
-        return orderService.getOrderById(orderId).getName();
+    public List<OrderItemDto> getOrderItems(Long orderId) {
+        return orderService.getOrderItems(orderId).stream()
+            .map(this::buildOrderItemDto)
+            .toList();
     }
 
     public void removeItemFromOrder(Long id) {
@@ -128,5 +96,46 @@ public class ViewService {
 
     public void cancelOrder(Long orderId){
         orderService.cancelOrder(orderId);
+    }
+
+    private List<OrderItemDto> getOrderItemData(Order order) {
+        return order.getOrderItems().stream()
+            .map(orderItem -> OrderItemDto.builder()
+                .id(orderItem.getId())
+                .orderId(order.getId())
+                .name(orderItem.getItem().getName())
+                .ingredients(
+                    this.ingredientCacheService
+                        .getItemIngredients(orderItem.getItem().getId())
+                        .stream()
+                        .map(Ingredient::toString)
+                        .toList()
+                )
+                .status(orderItem.getStatus())
+                .currentStation(this.flowCacheService.getCurrentStep(
+                            orderItem.getItem().getFlow().getId(),
+                            orderItem.getCurrentFlowStep()
+                        )
+                        .getStation()
+                )
+                .createdAt(orderItem.getStatusUpdatedAt())
+                .build()
+            )
+            .toList();
+    }
+
+    private OrderItemDto buildOrderItemDto(OrderItem item) {
+        return OrderItemDto.builder()
+            .id(item.getId())
+            .orderId(item.getOrder().getId())
+            .name(item.getItem().getName())
+            .ingredients(
+                this.ingredientCacheService.getItemIngredients(item.getItem().getId()).stream()
+                    .map(Ingredient::toString)
+                    .toList()
+            )
+            .status(item.getStatus())
+            .createdAt(item.getStatusUpdatedAt())
+            .build();
     }
 }
