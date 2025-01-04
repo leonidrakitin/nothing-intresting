@@ -38,6 +38,7 @@ public class Order {
     private OrderStatus status = OrderStatus.CREATED;
 
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Builder.Default

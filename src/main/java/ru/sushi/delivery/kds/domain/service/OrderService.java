@@ -10,6 +10,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.Station;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
+import ru.sushi.delivery.kds.domain.persist.repository.StationRepository;
 import ru.sushi.delivery.kds.model.FlowStepType;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
@@ -33,6 +34,7 @@ public class OrderService {
     private final FlowCacheService flowCacheService;
     private final OrderChangesListener orderChangesListener;
     private final CashListener cashListener;
+    private final StationRepository stationRepository;
 
     public void createOrder(String name, List<Item> items) {
         Order order = orderRepository.save(Order.of(name));
@@ -43,14 +45,14 @@ public class OrderService {
             OrderItem orderItem = OrderItem.of(order, item);
             orderItems.add(orderItem);
             flowSteps.add(this.flowCacheService.getCurrentStep(
-                    orderItem.getItem().getFlow().getId(),
-                    orderItem.getCurrentFlowStep()
+                orderItem.getItem().getFlow().getId(),
+                orderItem.getCurrentFlowStep()
             ));
         }
         orderItemRepository.saveAll(orderItems);
         flowSteps.forEach(flowStep -> this.orderChangesListener.broadcast(
-                flowStep.getStation().getId(),
-                BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
+            flowStep.getStation().getId(),
+            BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
         ));
     }
 
@@ -61,38 +63,41 @@ public class OrderService {
     @Transactional
     public void updateOrderItem(Long orderItemId) {
         OrderItem orderItem = this.orderItemRepository.findById(orderItemId)
-                .orElseThrow(() -> new IllegalArgumentException("Order item not found"));
+            .orElseThrow(() -> new IllegalArgumentException("Order item not found"));
         orderItem = switch (orderItem.getStatus()) {
             case ADDED -> orderItem.toBuilder()
-                    .status(OrderItemStationStatus.STARTED)
-                    .statusUpdatedAt(Instant.now())
-                    .build();
+                .status(OrderItemStationStatus.STARTED)
+                .statusUpdatedAt(Instant.now())
+                .build();
             case STARTED -> orderItem.toBuilder()
-                    .status(OrderItemStationStatus.COMPLETED)
-                    .statusUpdatedAt(Instant.now())
-                    .build();
+                .status(OrderItemStationStatus.COMPLETED)
+                .statusUpdatedAt(Instant.now())
+                .build();
             case COMPLETED -> orderItem;
+
+            case CANCELED -> orderItem;
         };
         if (orderItem.getStatus() == OrderItemStationStatus.COMPLETED) {
             FlowStep flowStep = this.flowCacheService.getNextStep(
-                    orderItem.getItem().getFlow().getId(),
-                    orderItem.getCurrentFlowStep()
+                orderItem.getItem().getFlow().getId(),
+                orderItem.getCurrentFlowStep()
             );
             orderItem = orderItem.toBuilder()
-                    .status(OrderItemStationStatus.ADDED)
-                    .currentFlowStep(flowStep.getStepOrder())
-                    .stationChangedAt(Instant.now())
-                    .build();
+                .status(OrderItemStationStatus.ADDED)
+                .currentFlowStep(flowStep.getStepOrder())
+                .stationChangedAt(Instant.now())
+                .build();
 
             if (flowStep.getStepType() != FlowStepType.FINAL_STEP) {
                 this.orderChangesListener.broadcast(
-                        flowStep.getStation().getId(),
-                        BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новые позиции")
+                    flowStep.getStation().getId(),
+                    BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новые позиции")
                 );
-            } else {
+            }
+            else {
                 this.cashListener.broadcast(BroadcastMessage.of(
-                        BroadcastMessageType.NOTIFICATION,
-                        orderItem.getOrder().getId() + " заказ обновлен"
+                    BroadcastMessageType.NOTIFICATION,
+                    orderItem.getOrder().getId() + " заказ обновлен"
                 ));
             }
         }
@@ -112,14 +117,15 @@ public class OrderService {
 
         for (OrderItem orderItem : orderItems) {
             Station currentStation = this.flowCacheService.getCurrentStep(
-                            orderItem.getItem().getFlow().getId(),
-                            orderItem.getCurrentFlowStep()
-                    )
-                    .getStation();
+                    orderItem.getItem().getFlow().getId(),
+                    orderItem.getCurrentFlowStep()
+                )
+                .getStation();
             int currentPriorityStatus = this.definePriorityByOrderStatus(currentStation.getOrderStatusAtStation());
             if (currentPriorityStatus > 0 && minimumStatus == 0) {
                 minimumStatus = 1;
-            } else {
+            }
+            else {
                 minimumStatus = Math.min(minimumStatus, currentPriorityStatus);
             }
         }
@@ -128,8 +134,8 @@ public class OrderService {
 
         if (newOrderStatus != order.getStatus()) {
             orderRepository.save(order.toBuilder()
-                    .status(newOrderStatus)
-                    .build()
+                .status(newOrderStatus)
+                .build()
             );
         }
 
@@ -141,6 +147,7 @@ public class OrderService {
             case COOKING -> 1;
             case COLLECTING -> 2;
             case READY -> 3;
+            case CANCELED -> 4;
         };
     }
 
@@ -156,5 +163,45 @@ public class OrderService {
 
     public List<Order> getAllOrdersWithItems() {
         return orderRepository.findAllWithItems();
+    }
+
+    public Order getOrderById(Long id) {
+        return orderRepository.findById(id).orElseThrow();
+    }
+
+    public OrderItem getOrderItemById(Long id) {
+        return orderItemRepository.findById(id).orElseThrow();
+    }
+
+    public void removeItemFromOrder(Long id) {
+        OrderItem orderItem = this.getOrderItemById(id);
+        Station station = stationRepository.findByOrderStatusAtStation(OrderStatus.CANCELED);
+        Integer currentFlowStep = flowCacheService.getStepByStationAndFlowId(
+            station.getId(), orderItem.getItem().getFlow().getId()
+        ).getId();
+        OrderItem updatedOrderItem = orderItem.toBuilder()
+            .currentFlowStep(currentFlowStep)
+            .status(OrderItemStationStatus.CANCELED)
+            .build();
+
+        orderItemRepository.save(updatedOrderItem);
+    }
+
+    public void addItemToOrder(Long orderId, Item item) {
+        OrderItem orderItem = OrderItem.builder()
+            .order(this.getOrderById(orderId))
+            .item(item)
+            .build();
+        orderItemRepository.save(orderItem);
+    }
+
+    @Transactional
+    public void cancelOrder(Long orderId){
+        Order order = orderRepository.getOrderById(orderId);
+        Order updatedOrder = order.toBuilder().status(OrderStatus.CANCELED).build();
+        for (OrderItem orderItem:order.getOrderItems()){
+            this.removeItemFromOrder(orderItem.getId());
+        }
+        orderRepository.save(updatedOrder);
     }
 }

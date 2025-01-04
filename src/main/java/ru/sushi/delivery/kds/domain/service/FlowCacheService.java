@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.FlowStep;
+import ru.sushi.delivery.kds.domain.persist.entity.Station;
 import ru.sushi.delivery.kds.domain.persist.repository.FlowStepRepository;
 
 import java.util.List;
@@ -49,6 +50,10 @@ public class FlowCacheService {
             return flowSteps.get(currentFlowStep);
         }
         return flowSteps.getLast();
+    }
+
+    public FlowStep getStepByStationAndFlowId(Long stationId, Long flowId){
+        return flowStepRepository.getFlowStepByStation_IdAndFlow_Id(stationId,flowId);
     }
 }
 

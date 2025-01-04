@@ -4,5 +4,6 @@ public enum OrderStatus {
     CREATED,
     COOKING,
     COLLECTING,
-    READY
+    READY,
+    CANCELED
 }

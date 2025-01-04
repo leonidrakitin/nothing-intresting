@@ -1,6 +1,9 @@
 package ru.sushi.delivery.kds.view;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
@@ -10,7 +13,13 @@ import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
+import ru.sushi.delivery.kds.model.OrderItemStationStatus;
+import ru.sushi.delivery.kds.model.OrderStatus;
 import ru.sushi.delivery.kds.service.ViewService;
+import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
+import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
+import ru.sushi.delivery.kds.service.listeners.BroadcastListener;
+import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -19,14 +28,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * CollectorView: показывает ВСЕ заказы и все их позиции,
- * у каждой позиции — станция; если она на станции сборки,
- * включаем "двойной клик", если нет — блокируем.
+ * Показывает все заказы и все их позиции (плитки).
+ * - Если станция == "СБОР ЗАКАЗА", есть режим «двух кликов» (подсветка, затем "собрано").
+ * - Иначе плитка полупрозрачная.
+ * - Заказы, в которых после фильтрации нет позиций, не отображаются.
  */
 @Route("collector")
-public class CollectorView extends VerticalLayout {
+public class CollectorView extends VerticalLayout implements BroadcastListener {
 
     private final ViewService viewService;
+    private final OrderChangesListener orderChangesListener;
 
     /**
      * Храним «состояние клика» (подсветки) по позициям.
@@ -35,8 +46,9 @@ public class CollectorView extends VerticalLayout {
     private final Map<Long, Boolean> itemClickedState = new HashMap<>();
 
     @Autowired
-    public CollectorView(ViewService viewService) {
+    public CollectorView(ViewService viewService, OrderChangesListener orderChangesListener) {
         this.viewService = viewService;
+        this.orderChangesListener = orderChangesListener;
         setSizeFull();
         getStyle().set("padding", "20px");
         getStyle().set("overflow", "auto");
@@ -44,6 +56,55 @@ public class CollectorView extends VerticalLayout {
         refreshPage();
     }
 
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        // Регистрируемся на слушателя, например, c ID=3 (или любой другой)
+        this.orderChangesListener.register(3, this);
+        refreshPage();
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        this.orderChangesListener.unregister(3);
+        super.onDetach(detachEvent);
+    }
+
+    /**
+     * Получаем broadcast-сообщения.
+     * Например, NEW_ORDER -> показываем уведомление о новом заказе.
+     * REFRESH_PAGE -> обновляем UI.
+     * NOTIFICATION -> просто показываем сообщение.
+     */
+    @Override
+    public void receiveBroadcast(BroadcastMessage message) {
+        UI ui = getUI().orElse(null);
+        if (ui == null) {
+            return;
+        }
+
+        ui.access(() -> {
+            switch (message.getType()) {
+                case REFRESH_PAGE -> {
+                    // Обновляем список
+                    refreshPage();
+                }
+                case NOTIFICATION -> {
+                    // Покажем всплывающее уведомление
+                    Notification.show(message.getContent());
+                    // Например, проиграем звук
+                    ui.getPage().executeJs(
+                        "new Audio($0).play();",
+                        "https://commondatastorage.googleapis.com/codeskulptor-assets/jump.ogg"
+                    );
+                }
+            }
+        });
+    }
+
+    /**
+     * Перерисовываем страницу (список заказов -> плиток).
+     */
     private void refreshPage() {
         removeAll();
         itemClickedState.clear();
@@ -69,11 +130,25 @@ public class CollectorView extends VerticalLayout {
         // ВАЖНО: прижимаем колонки к верху, чтобы высота шла по содержимому
         flex.getStyle().set("align-items", "flex-start");
 
-        // Расстояния между колонками
+        // Расстояние между колонками
         flex.getStyle().set("gap", "20px");
         flex.getStyle().set("padding", "10px");
 
         for (OrderFullDto orderDto : allOrders) {
+
+            // Фильтруем позиции в заказе:
+            // 1) исключаем те, что CANCELED
+            // 2) исключаем те, где station = READY
+            List<OrderItemDto> filteredItems = orderDto.getItems().stream()
+                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+                .filter(item -> item.getCurrentStation().getOrderStatusAtStation() != OrderStatus.READY)
+                .toList();
+
+            // Если список отфильтрованных позиций пуст — пропускаем заказ (не рисуем колонку)
+            if (filteredItems.isEmpty()) {
+                continue;
+            }
+
             VerticalLayout orderColumn = new VerticalLayout();
             orderColumn.setSpacing(false);
             orderColumn.setPadding(true);
@@ -84,12 +159,13 @@ public class CollectorView extends VerticalLayout {
             orderColumn.getStyle().set("border-radius", "8px");
             orderColumn.getStyle().set("box-shadow", "0 2px 6px rgba(0,0,0,0.15)");
 
+            // Заголовок колонки
             H2 orderHeader = new H2("Заказ #" + orderDto.getOrderId());
             orderHeader.getStyle().set("margin", "10px 10px 0 10px");
             orderColumn.add(orderHeader);
 
-            // Добавляем «плитки»
-            for (OrderItemDto item : orderDto.getItems()) {
+            // Рисуем плитки для каждого элемента
+            for (OrderItemDto item : filteredItems) {
                 Div tile = buildItemTile(item);
                 orderColumn.add(tile);
             }
@@ -99,12 +175,11 @@ public class CollectorView extends VerticalLayout {
         add(flex);
     }
 
-
     /**
      * Создаём «плитку» для позиции:
      *  - Показываем её название, станцию, время.
-     *  - Если станция == "СБОР ЗАКАЗА" (или "COLLECT"), включаем "двойной клик".
-     *  - Иначе делаем плитку полупрозрачной и отключаем клик.
+     *  - Если станция == "СБОР ЗАКАЗА" — «двойной клик» (подсветка, второй клик = updateStatus).
+     *  - Иначе плитка полупрозрачная и не кликабельна.
      */
     private Div buildItemTile(OrderItemDto item) {
         Div tile = new Div();
@@ -131,7 +206,7 @@ public class CollectorView extends VerticalLayout {
         // Станция
         Div stationDiv = new Div(new Text("Станция: " + item.getCurrentStation().getName()));
 
-        // Время
+        // Время (секунды с момента createdAt)
         long seconds = Duration.between(item.getCreatedAt(), Instant.now()).toSeconds();
         Div timeDiv = new Div(new Text("Прошло: " + seconds + " сек"));
         timeDiv.getStyle().set("font-size", "0.9em");
@@ -150,11 +225,8 @@ public class CollectorView extends VerticalLayout {
             tile.add(ingredientsDiv);
         }
 
-        // ЛОГИКА «двух кликов» только для станции сборки
-        // Если у вас называется "COLLECT", то проверяем "COLLECT" (equalsIgnoreCase).
-        // Сейчас пример "СБОР ЗАКАЗА".
+        // Логика «двух кликов» только для "СБОР ЗАКАЗА" (пример)
         if ("СБОР ЗАКАЗА".equalsIgnoreCase(item.getCurrentStation().getName())) {
-            // Делаем плитку кликабельной
             tile.getStyle().set("cursor", "pointer");
 
             tile.addClickListener(e -> {
@@ -169,12 +241,11 @@ public class CollectorView extends VerticalLayout {
                     Notification.show("Позиция собрана: " + item.getName());
                     itemClickedState.remove(item.getId());
 
-                    // Обновить список, чтобы позиция исчезла или станция сменилась
+                    // Обновить список
                     refreshPage();
                 }
             });
         } else {
-            // Если позиция не на станции сборки, блокируем клики
             tile.getStyle().set("cursor", "default");
             tile.getStyle().set("opacity", "0.7");
         }
@@ -182,4 +253,3 @@ public class CollectorView extends VerticalLayout {
         return tile;
     }
 }
-

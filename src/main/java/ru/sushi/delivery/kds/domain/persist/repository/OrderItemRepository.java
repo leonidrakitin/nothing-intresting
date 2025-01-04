@@ -20,4 +20,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             order by o.stationChangedAt
     """)
     List<OrderItem> findAllItemsByStationId(Long stationId);
+
+    void deleteById(Long id);
 }

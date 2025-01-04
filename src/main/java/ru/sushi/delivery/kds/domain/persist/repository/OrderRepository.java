@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -16,4 +17,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         left join fetch o.orderItems
     """)
     List<Order> findAllWithItems();
+
+    Order getOrderById(Long id);
 }

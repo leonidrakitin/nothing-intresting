@@ -6,4 +6,6 @@ import ru.sushi.delivery.kds.domain.persist.entity.FlowStep;
 
 @Repository
 public interface FlowStepRepository extends JpaRepository<FlowStep, Long> {
+
+    FlowStep getFlowStepByStation_IdAndFlow_Id(Long stationId,Long flowId);
 }
