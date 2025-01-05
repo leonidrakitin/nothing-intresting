@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: ingredient.add_station_id.2025.01.05.12.38
+      author: dlosev
+      changes:
+        - addColumn:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: station_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true

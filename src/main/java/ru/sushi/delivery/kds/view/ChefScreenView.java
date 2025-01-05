@@ -150,7 +150,9 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         Div title = new Div(new Text("Заказ #" + item.getOrderId() + ": " + item.getName()));
         Div details = new Div();
         for (var ingredient : item.getIngredients()) {
-            details.add(new Div(new Text("- " + ingredient)));
+            if (ingredient.getStationId() == stationId || ingredient.getStationId() == null) {
+                details.add(new Div(new Text("- " + ingredient.getName())));
+            }
         }
 
         title.getStyle().set("font-weight", "bold");

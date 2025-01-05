@@ -5,7 +5,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -15,6 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.text.DecimalFormat;
+import java.util.List;
 
 @Entity
 @Table(name = "ingredient")
@@ -39,6 +43,8 @@ public class Ingredient {
     private Measurement measurementUnit;
 
     private Double amount;
+
+    private Long stationId;
 
     @Override
     public String toString() {

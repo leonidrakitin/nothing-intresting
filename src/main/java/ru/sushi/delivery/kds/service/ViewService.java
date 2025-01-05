@@ -14,6 +14,7 @@ import ru.sushi.delivery.kds.domain.service.IngredientCacheService;
 import ru.sushi.delivery.kds.domain.service.ItemService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
 import ru.sushi.delivery.kds.domain.service.ScreenService;
+import ru.sushi.delivery.kds.dto.IngredientDTO;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
@@ -108,7 +109,11 @@ public class ViewService {
                     this.ingredientCacheService
                         .getItemIngredients(orderItem.getItem().getId())
                         .stream()
-                        .map(Ingredient::toString)
+                        .map(ingredient -> IngredientDTO.builder()
+                            .name(ingredient.getName())
+                            .stationId(ingredient.getStationId())
+                            .build()
+                        )
                         .toList()
                 )
                 .status(orderItem.getStatus())
@@ -131,7 +136,11 @@ public class ViewService {
             .name(item.getItem().getName())
             .ingredients(
                 this.ingredientCacheService.getItemIngredients(item.getItem().getId()).stream()
-                    .map(Ingredient::toString)
+                    .map(ingredient -> IngredientDTO.builder()
+                        .name(ingredient.getName())
+                        .stationId(ingredient.getStationId())
+                        .build()
+                    )
                     .toList()
             )
             .status(item.getStatus())
