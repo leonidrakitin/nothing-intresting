@@ -12,7 +12,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("""
         select o from Order o
-        where o.status = 'READY' and o.status = 'CANCELED'
+        left join fetch o.orderItems
+        where o.status != 'READY' and o.status != 'CANCELED'
     """)
     List<Order> findAllActive();
 }

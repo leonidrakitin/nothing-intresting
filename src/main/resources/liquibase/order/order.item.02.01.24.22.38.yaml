@@ -65,7 +65,6 @@ databaseChangeLog:
                   type: BIGINT
                   autoIncrement: true
                   constraints:
-                    primaryKey: true
                     nullable: false
                     autoIncrement: true
               - column:
