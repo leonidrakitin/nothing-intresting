@@ -9,7 +9,8 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.*;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextField;
@@ -287,11 +288,11 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
         // Колонка "Статус"
         ordersGrid.addColumn(orderDto -> switch (orderDto.getStatus()) {
-            case "CREATED"    -> "Создан";
-            case "COOKING"    -> "Готовится";
-            case "COLLECTING" -> "Сборка";
-            case "READY"      -> "Выполнен";
-            case "CANCELED"   -> "Отменён";
+            case CREATED    -> "Создан";
+            case COOKING    -> "Готовится";
+            case COLLECTING -> "Сборка";
+            case READY      -> "Выполнен";
+            case CANCELED   -> "Отменён";
             default           -> "";
         }).setHeader("Статус");
 
@@ -301,16 +302,18 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
             Button detailsBtn = new Button("Позиции");
             detailsBtn.addClickListener(e -> openOrderItemsDialog(orderDto));
+            layout.add(detailsBtn);
 
-            Button cancelBtn = new Button("Отменить");
-            cancelBtn.addClickListener(e -> {
-                // Отмена заказа
-                viewService.cancelOrder(orderDto.getId());
-                Notification.show("Заказ " + orderDto.getName() + " отменён!");
-                refreshOrdersGrid();
-            });
-
-            layout.add(detailsBtn, cancelBtn);
+            if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
+                Button cancelBtn = new Button("Отменить");
+                cancelBtn.addClickListener(e -> {
+                    // Отмена заказа
+                    viewService.cancelOrder(orderDto.getId());
+                    Notification.show("Заказ " + orderDto.getName() + " отменён!");
+                    refreshOrdersGrid();
+                });
+                layout.add(cancelBtn);
+            }
             return layout;
         }).setHeader("Действие");
 
@@ -327,7 +330,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
         // Убираем заказы со статусом CANCELED
         List<OrderFullDto> notCanceled = allOrders.stream()
-            .filter(dto -> !OrderStatus.CANCELED.name().equals(dto.getStatus()))
+            .filter(dto -> !OrderStatus.CANCELED.equals(dto.getStatus()))
             .collect(Collectors.toList());
 
         ordersGrid.setItems(notCanceled);
@@ -347,7 +350,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         itemsGrid.addColumn(OrderItemDto::getName).setHeader("Наименование");
 
         // Если заказ не READY, добавляем кнопки «Удалить» и «Добавить позицию»
-        if (!OrderStatus.READY.name().equalsIgnoreCase(orderDto.getStatus())) {
+        if (!OrderStatus.READY.name().equalsIgnoreCase(orderDto.getStatus().toString())) {
 
             // Колонка «Удалить»
             itemsGrid.addComponentColumn(itemDto -> {
@@ -360,7 +363,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 // Иначе показываем кнопку "Удалить"
                 Button removeBtn = new Button("Удалить");
                 removeBtn.addClickListener(click -> {
-                    viewService.removeItemFromOrder(itemDto.getId());
+                    viewService.cancelOrderItem(itemDto.getId());
                     Notification.show("Позиция удалена (ID=" + itemDto.getId() + ")");
                     // Перезагружаем заказ
                     itemsGrid.setItems(this.viewService.getOrderItems(orderDto.getId()));

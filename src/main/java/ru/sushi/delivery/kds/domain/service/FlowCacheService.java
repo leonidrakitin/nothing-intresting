@@ -4,9 +4,9 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.FlowStep;
-import ru.sushi.delivery.kds.domain.persist.entity.Station;
 import ru.sushi.delivery.kds.domain.persist.repository.FlowStepRepository;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,44 +16,51 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FlowCacheService {
 
+    public final static int CANCEL_STEP_ORDER = -1;
+    public final static int DONE_STEP_ORDER = 0;
+
     private final FlowStepRepository flowStepRepository;
-    private final Map<Long, List<FlowStep>> flowCache = new ConcurrentHashMap<>();
+    private final Map<Long, Map<Integer, FlowStep>> flowCache = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void initializeCache() {
         List<FlowStep> flowSteps = flowStepRepository.findAll();
         flowCache.putAll(
-                flowSteps.stream().collect(
-                        Collectors.groupingBy(
-                                flowStep -> flowStep.getFlow().getId(),
-                                Collectors.toList()
+                flowSteps.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        flowStep -> flowStep.getFlow().getId(),
+                                        Collectors.toMap(
+                                                FlowStep::getStepOrder,
+                                                flowStep -> flowStep,
+                                                (existing, replacement) -> existing,
+                                                HashMap::new
+                                        )
+                                )
                         )
-                )
         );
+
     }
 
-    public List<FlowStep> getFlowSteps(Long flowId) {
-        return flowCache.get(flowId);
-    }
-
-    public FlowStep getCurrentStep(long flowId, int currentFlowStep) {
-        List<FlowStep> flowSteps = flowCache.get(flowId);
-        if (currentFlowStep > 0 && currentFlowStep - 1 < flowSteps.size()) {
-            return flowSteps.get(currentFlowStep - 1);
-        }
-        return flowSteps.getFirst();
+    public FlowStep getStep(long flowId, int currentFlowStep) {
+        return flowCache.get(flowId).get(currentFlowStep);
     }
 
     public FlowStep getNextStep(long flowId, int currentFlowStep) {
-        List<FlowStep> flowSteps = flowCache.get(flowId);
-        if (currentFlowStep >= 0 && currentFlowStep < flowSteps.size()) {
-            return flowSteps.get(currentFlowStep);
+        int nextFlowStep = currentFlowStep + 1;
+        if (flowCache.get(flowId).containsKey(nextFlowStep)) {
+            return flowCache.get(flowId).get(nextFlowStep);
+        } else {
+            return flowCache.get(flowId).get(DONE_STEP_ORDER);
         }
-        return flowSteps.getLast();
     }
 
-    public FlowStep getStepByStationAndFlowId(Long stationId, Long flowId){
-        return flowStepRepository.getFlowStepByStation_IdAndFlow_Id(stationId,flowId);
+    public FlowStep getCanceledStep(Long flowId) {
+        return flowCache.get(flowId).get(CANCEL_STEP_ORDER);
+    }
+
+    public FlowStep getDoneStep(Long flowId) {
+        return flowCache.get(flowId).get(DONE_STEP_ORDER);
     }
 }
 

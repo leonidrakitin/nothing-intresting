@@ -1,8 +1,15 @@
 package ru.sushi.delivery.kds.model;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public enum OrderItemStationStatus {
-    ADDED,
-    STARTED,
-    COMPLETED,
-    CANCELED
+    ADDED("Ожидает"),
+    STARTED("Взят в работу"),
+    COMPLETED("Закончен"),
+    CANCELED("Отменен");
+
+    private final String name;
 }

@@ -3,19 +3,17 @@ package ru.sushi.delivery.kds.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 import ru.sushi.delivery.kds.domain.persist.entity.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.Screen;
-import ru.sushi.delivery.kds.domain.service.FlowCacheService;
 import ru.sushi.delivery.kds.domain.persist.entity.Station;
+import ru.sushi.delivery.kds.domain.service.FlowCacheService;
 import ru.sushi.delivery.kds.domain.service.IngredientCacheService;
 import ru.sushi.delivery.kds.domain.service.ItemService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
 import ru.sushi.delivery.kds.domain.service.ScreenService;
-import ru.sushi.delivery.kds.domain.service.StationService;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
@@ -33,9 +31,7 @@ public class ViewService {
     private final ScreenService screenService;
     private final ItemService itemService;
     private final IngredientCacheService ingredientCacheService;
-    private final StationService stationService;
     private final FlowCacheService flowCacheService;
-    private final RestClient.Builder builder;
 
     public void createOrder(String name, List<Item> items) {
         this.orderService.createOrder(name, items);
@@ -73,7 +69,7 @@ public class ViewService {
             .map(order -> OrderFullDto.builder()
                 .id(order.getId())
                 .name(order.getName())
-                .status(order.getStatus().toString())
+                .status(order.getStatus())
                 .items(getOrderItemData(order))
                 .build()
             )
@@ -86,12 +82,16 @@ public class ViewService {
             .toList();
     }
 
-    public void removeItemFromOrder(Long id) {
-        orderService.removeItemFromOrder(id);
+    public void updateAllOrderItemsToDone(Long orderId) {
+        this.orderService.updateAllOrderItemsToDone(orderId);
+    }
+
+    public void cancelOrderItem(Long orderItemId) {
+        orderService.cancelOrderItem(orderItemId);
     }
 
     public void addItemToOrder(Long orderId, Item item) {
-        orderService.addItemToOrder(orderId, item);
+        orderService.createOrderItem(orderId, item);
     }
 
     public void cancelOrder(Long orderId){
@@ -112,7 +112,7 @@ public class ViewService {
                         .toList()
                 )
                 .status(orderItem.getStatus())
-                .currentStation(this.flowCacheService.getCurrentStep(
+                .currentStation(this.flowCacheService.getStep(
                             orderItem.getItem().getFlow().getId(),
                             orderItem.getCurrentFlowStep()
                         )

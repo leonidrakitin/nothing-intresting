@@ -4,6 +4,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
@@ -11,9 +12,9 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
+import ru.sushi.delivery.kds.domain.persist.entity.Station;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
-import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
 import ru.sushi.delivery.kds.service.ViewService;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
@@ -139,8 +140,8 @@ public class CollectorView extends VerticalLayout implements BroadcastListener {
             // 1) исключаем те, что CANCELED
             // 2) исключаем те, где station = READY
             List<OrderItemDto> filteredItems = orderDto.getItems().stream()
-                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
-                .filter(item -> item.getCurrentStation().getOrderStatusAtStation() != OrderStatus.READY)
+//                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+//                .filter(item -> item.getCurrentStation().getOrderStatusAtStation() != OrderStatus.READY)
                 .toList();
 
             // Если список отфильтрованных позиций пуст — пропускаем заказ (не рисуем колонку)
@@ -162,6 +163,22 @@ public class CollectorView extends VerticalLayout implements BroadcastListener {
             H2 orderHeader = new H2("Заказ #" + orderDto.getName());
             orderHeader.getStyle().set("margin", "10px 10px 0 10px");
             orderColumn.add(orderHeader);
+
+            boolean allOrderItemsReady = filteredItems.stream()
+                    .map(OrderItemDto::getCurrentStation)
+                    .map(Station::getOrderStatusAtStation)
+                    .filter(status -> status == OrderStatus.CREATED || status == OrderStatus.COOKING)
+                    .findAny()
+                    .isEmpty();
+
+            if (allOrderItemsReady) {
+                Button orderCollected = new Button("Заказ собран");
+                orderCollected.getStyle().set("align-self", "center");
+                orderCollected.getStyle().set("margin", "20px 0 20px 0");
+                orderCollected.getStyle().set("border", "1px solid #ccc");
+                orderCollected.addClickListener(e -> this.viewService.updateAllOrderItemsToDone(orderDto.getId()));
+                orderColumn.add(orderCollected);
+            }
 
             // Рисуем плитки для каждого элемента
             for (OrderItemDto item : filteredItems) {
@@ -204,25 +221,26 @@ public class CollectorView extends VerticalLayout implements BroadcastListener {
 
         // Станция
         Div stationDiv = new Div(new Text("Станция: " + item.getCurrentStation().getName()));
+        Div stationStatusDiv = new Div(new Text("Статус: " + item.getStatus().getName()));
 
         // Время (секунды с момента createdAt)
         long seconds = Duration.between(item.getCreatedAt(), Instant.now()).toSeconds();
-        Div timeDiv = new Div(new Text("Прошло: " + seconds + " сек"));
+        Div timeDiv = new Div(new Text("В этом статусе: " + seconds + " сек"));
         timeDiv.getStyle().set("font-size", "0.9em");
         timeDiv.getStyle().set("color", "#777");
 
-        tile.add(title, stationDiv, timeDiv);
+        tile.add(title, stationDiv, stationStatusDiv, timeDiv);
 
         // Ингредиенты (опционально)
-        if (item.getIngredients() != null && !item.getIngredients().isEmpty()) {
-            Div ingredientsDiv = new Div();
-            for (String ingr : item.getIngredients()) {
-                ingredientsDiv.add(new Div(new Text("- " + ingr)));
-            }
-            ingredientsDiv.getStyle().set("font-size", "0.9em");
-            ingredientsDiv.getStyle().set("color", "#555");
-            tile.add(ingredientsDiv);
-        }
+//        if (item.getIngredients() != null && !item.getIngredients().isEmpty()) {
+//            Div ingredientsDiv = new Div();
+//            for (String ingr : item.getIngredients()) {
+//                ingredientsDiv.add(new Div(new Text("- " + ingr)));
+//            }
+//            ingredientsDiv.getStyle().set("font-size", "0.9em");
+//            ingredientsDiv.getStyle().set("color", "#555");
+//            tile.add(ingredientsDiv);
+//        }
 
         // Логика «двух кликов» только для "СБОР ЗАКАЗА" (пример)
         if ("СБОР ЗАКАЗА".equalsIgnoreCase(item.getCurrentStation().getName())) {

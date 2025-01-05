@@ -1,5 +1,8 @@
 databaseChangeLog:
   - include:
+      file: audit/master.yaml
+      relativeToChangelogFile: true
+  - include:
       file: measurement/master.yaml
       relativeToChangelogFile: true
   - include:

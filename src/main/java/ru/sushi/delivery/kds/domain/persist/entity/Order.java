@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -15,12 +16,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Audited
 @Entity
 @Table(name = "orders")
 @Getter
@@ -31,7 +35,8 @@ import java.util.List;
 public class Order {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(name = "orders_id_seq_gen", sequenceName = "orders_id_generator", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "orders_id_seq_gen")
     private Long id;
 
     private String name;
@@ -40,6 +45,7 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.CREATED;
 
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
     @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
@@ -47,7 +53,14 @@ public class Order {
     @Builder.Default
     private Instant statusUpdateAt = Instant.now();
 
+    @Builder.Default
+    private Instant createdAt = Instant.now();
+
     public static Order of(String name) {
         return Order.builder().name(name).build();
+    }
+
+    public static Order of(Long id) {
+        return Order.builder().id(id).build();
     }
 }

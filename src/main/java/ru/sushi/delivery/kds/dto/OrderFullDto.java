@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
 public class OrderFullDto {
     private Long id;
     private String name;
-    private String status;
+    private OrderStatus status;
     private List<OrderItemDto> items;
 }
 

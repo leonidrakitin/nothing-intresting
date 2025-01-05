@@ -140,6 +140,8 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         container.getStyle().set("border", "1px solid #ccc");
         container.getStyle().set("padding", "10px");
         container.getStyle().set("margin", "5px");
+        container.getStyle().set("font-size", "20px");
+        container.getStyle().set("font-weight", "bold");
         container.setWidthFull();
 
         // Заголовок: "Заказ #id: <имя>"
@@ -155,6 +157,9 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         // Время готовки: текущее время - время создания
         long seconds = Duration.between(item.getCreatedAt(), Instant.now()).toSeconds();
         Div timer = new Div();
+        timer.getStyle().set("font-size", "0.9em");
+        timer.getStyle().set("font-weight", "normal");
+        timer.getStyle().set("color", "#777");
 
         if (item.getStatus() == OrderItemStationStatus.STARTED) {
             container.getStyle().set("background-color", COLOR_IN_PROGRESS);
