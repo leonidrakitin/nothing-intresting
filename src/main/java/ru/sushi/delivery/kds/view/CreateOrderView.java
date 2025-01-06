@@ -79,8 +79,6 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         // ----------------------------
         // ЛЕВАЯ ЧАСТЬ
         // ----------------------------
-        orderNumberField.setPlaceholder("Введите номер заказа...");
-        orderNumberField.setWidthFull();
 
         Tab tabRolls = new Tab("Роллы");
         Tab tabSets = new Tab("Сеты");
@@ -168,7 +166,6 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsTabLayout.add(setsSearchField, setsGrid);
 
         VerticalLayout leftLayout = new VerticalLayout(
-            orderNumberField,
             tabsLeft,
             tabsContentLeft
         );
@@ -183,6 +180,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         // ----------------------------
         // ПРАВАЯ ЧАСТЬ (Корзина / Все заказы)
         // ----------------------------
+        orderNumberField.setPlaceholder("Введите номер заказа...");
+        orderNumberField.setWidthFull();
+
         Tab cartTab = new Tab("Корзина");
         Tab ordersTab = new Tab("Все заказы");
         Tabs rightTabs = new Tabs(cartTab, ordersTab);
@@ -202,7 +202,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             }
         });
 
-        VerticalLayout rightLayout = new VerticalLayout(rightTabs, cartLayout, allOrdersLayout);
+        VerticalLayout rightLayout = new VerticalLayout(rightTabs, orderNumberField, cartLayout, allOrdersLayout);
         rightLayout.setWidth("50%");
         rightLayout.setPadding(false);
         rightLayout.setSpacing(true);

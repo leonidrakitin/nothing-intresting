@@ -2,3 +2,6 @@ databaseChangeLog:
   - include:
       file: item.02.01.24.22.38.yaml
       relativeToChangelogFile: true
+  - include:
+      file: item.06.01.24.17.38.yaml
+      relativeToChangelogFile: true

@@ -1,4 +1,5 @@
 version: "3.9"
+
 services:
   db:
     image: postgres:14
@@ -9,15 +10,25 @@ services:
       - POSTGRES_DB=kds
     ports:
       - "5432:5432"
-    restart: unless-stopped
+    networks:
+      - kds-network
 
   kds-app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: kds-app
+    environment:
+      - SQL_URL=jdbc:postgresql://kds-db:5432/kds
+      - SQL_USERNAME=root
+      - SQL_PASSWORD=123456
     ports:
       - "8000:8000"
     depends_on:
       - db
-    restart: unless-stopped
+    networks:
+      - kds-network
+
+networks:
+  kds-network:
+    name: kds-network

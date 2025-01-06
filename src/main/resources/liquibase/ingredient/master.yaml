@@ -5,3 +5,7 @@ databaseChangeLog:
   - include:
       file: ingredient.05.01.25.12.38.yaml
       relativeToChangelogFile: true
+
+  - include:
+      file: ingredient.06.01.24.17.00.yaml
+      relativeToChangelogFile: true

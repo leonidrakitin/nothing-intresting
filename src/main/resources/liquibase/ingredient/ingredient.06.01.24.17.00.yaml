@@ -1,0 +1,3470 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: ingredient.INSERT.map.02.01.24.22.80
+      author: rakitin
+      changes:
+        # ------------------------------------------------------------
+        # Item 1: "Лава с лососем"
+        # содержит 7 ингредиентов
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 101
+              - column:
+                  name: name
+                  value: "Соус унаги"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1   # г
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 1
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 102
+              - column:
+                  name: name
+                  value: "Шапка Лава"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 1
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 103
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 1
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 104
+              - column:
+                  name: name
+                  value: "Лосось"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 50
+              - column:
+                  name: item_id
+                  valueNumeric: 1
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 105
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 1
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 106
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 1
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 107
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2   # шт
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 1
+
+        # ------------------------------------------------------------
+        # Item 2: "Лава с угрем"
+        # содержит 7 ингредиентов
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 108
+              - column:
+                  name: name
+                  value: "Соус спайси"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 2
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 109
+              - column:
+                  name: name
+                  value: "Шапка Лава"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 2
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 110
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 2
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 111
+              - column:
+                  name: name
+                  value: "Угорь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 50
+              - column:
+                  name: item_id
+                  valueNumeric: 2
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 112
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 2
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 113
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 2
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 114
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 2
+
+        # ------------------------------------------------------------
+        # Item 3: "Лава с креветкой"
+        # содержит 7 ингредиентов
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 115
+              - column:
+                  name: name
+                  value: "Соус унаги"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 3
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 116
+              - column:
+                  name: name
+                  value: "Шапка Лава"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 3
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 117
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 3
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 118
+              - column:
+                  name: name
+                  value: "Креветка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 50
+              - column:
+                  name: item_id
+                  valueNumeric: 3
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 119
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 3
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 120
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 3
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 121
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 3
+
+        # ------------------------------------------------------------
+        # Item 4: "Лава с беконом"
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 122
+              - column:
+                  name: name
+                  value: "Соус спайси"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 4
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 123
+              - column:
+                  name: name
+                  value: "Шапка Лава"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 4
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 124
+              - column:
+                  name: name
+                  value: "Бекон"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 50
+              - column:
+                  name: item_id
+                  valueNumeric: 4
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 125
+              - column:
+                  name: name
+                  value: "Морковь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 4
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 126
+              - column:
+                  name: name
+                  value: "Паприка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 15
+              - column:
+                  name: item_id
+                  valueNumeric: 4
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 127
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 15
+              - column:
+                  name: item_id
+                  valueNumeric: 4
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 128
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 4
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 129
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 4
+
+        # ------------------------------------------------------------
+        # 5) Лава с курицей
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 130
+              - column:
+                  name: name
+                  value: "Соус Унаги"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 5
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 131
+              - column:
+                  name: name
+                  value: "Шапка Лава"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 5
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 132
+              - column:
+                  name: name
+                  value: "Курица в/к"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 50
+              - column:
+                  name: item_id
+                  valueNumeric: 5
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 133
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 5
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 134
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 5
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 135
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 5
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 136
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 5
+
+        # ------------------------------------------------------------
+        # 6) Лагуна
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 137
+              - column:
+                  name: name
+                  value: "Кимпаб соус"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 6
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 138
+              - column:
+                  name: name
+                  value: "Шапка Лагуна"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 6
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 139
+              - column:
+                  name: name
+                  value: "Краб-крем"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 6
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 140
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 6
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 141
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 6
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 142
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 6
+
+        # ------------------------------------------------------------
+        # 7) Лосось моцарелла
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 143
+              - column:
+                  name: name
+                  value: "Шапка моцарелла"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 7
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 144
+              - column:
+                  name: name
+                  value: "Лосось"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 7
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 145
+              - column:
+                  name: name
+                  value: "Икра масаго"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 7
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 146
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 7
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 147
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 7
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 148
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 7
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 149
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 7
+
+        # ------------------------------------------------------------
+        # 8) Жульен
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 150
+              - column:
+                  name: name
+                  value: "Соус Унаги"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 8
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 151
+              - column:
+                  name: name
+                  value: "Шапка грибная"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 100
+              - column:
+                  name: item_id
+                  valueNumeric: 8
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 152
+              - column:
+                  name: name
+                  value: "Курица в/к"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 50
+              - column:
+                  name: item_id
+                  valueNumeric: 8
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 153
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 8
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 154
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 8
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 155
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 8
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 156
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 8
+
+        # ------------------------------------------------------------
+        # 9) Запеченная креветка
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 157
+              - column:
+                  name: name
+                  value: "Соус Унаги"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 9
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 158
+              - column:
+                  name: name
+                  value: "Шап. Зап. Креветка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 100
+              - column:
+                  name: item_id
+                  valueNumeric: 9
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 159
+              - column:
+                  name: name
+                  value: "Краб-крем"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 9
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 160
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 9
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 161
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 9
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 162
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 9
+
+        # ------------------------------------------------------------
+        # 10) Фила с авокадо
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 163
+              - column:
+                  name: name
+                  value: "Лосось шапка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 10
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 164
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 10
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 165
+              - column:
+                  name: name
+                  value: "Авокадо"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 10
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 166
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 10
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 167
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 10
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 168
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 10
+
+        # ------------------------------------------------------------
+        # 11) Филадельфия
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 169
+              - column:
+                  name: name
+                  value: "Лосось шапка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 11
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 170
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 11
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 171
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 11
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 172
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 11
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 173
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 11
+
+        # ------------------------------------------------------------
+        # 12) Фила с икрой
+        # (здесь есть шапка с красной икрой 35г + сливочный сыр 30г)
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 174
+              - column:
+                  name: name
+                  value: "Лосось вокруг"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 12
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 175
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 12
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 176
+              - column:
+                  name: name
+                  value: "Авокадо"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 12
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 177
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 12
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 178
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 12
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 179
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.75
+              - column:
+                  name: item_id
+                  valueNumeric: 12
+
+        # Шапка (сверху):
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 180
+              - column:
+                  name: name
+                  value: "Сливочный сыр (шапка)"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 12
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 181
+              - column:
+                  name: name
+                  value: "Красная икра"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 35
+              - column:
+                  name: item_id
+                  valueNumeric: 12
+
+        # ------------------------------------------------------------
+        # 13) Фила с креветкой внутрь
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 182
+              - column:
+                  name: name
+                  value: "Лосось шапка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 13
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 183
+              - column:
+                  name: name
+                  value: "Креветка внутрь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 13
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 184
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 13
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 185
+              - column:
+                  name: name
+                  value: "Авокадо"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 13
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 186
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 13
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 187
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 13
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 188
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 13
+
+        # ------------------------------------------------------------
+        # 14) Фила с манго соусом
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 189
+              - column:
+                  name: name
+                  value: "Манго соус"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 14
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 190
+              - column:
+                  name: name
+                  value: "Лосось шапка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 14
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 191
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 14
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 192
+              - column:
+                  name: name
+                  value: "Авокадо"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 14
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 193
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 14
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 194
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 14
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 195
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 14
+
+        # ------------------------------------------------------------
+        # 15) Ролл с тунцом внутрь
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 196
+              - column:
+                  name: name
+                  value: "Тунец внутрь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 15
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 197
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 15
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 198
+              - column:
+                  name: name
+                  value: "Авокадо"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 15
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 199
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 15
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 200
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 15
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 201
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 15
+
+        # ------------------------------------------------------------
+        # 16) Опаленный тунец
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 202
+              - column:
+                  name: name
+                  value: "Кимпаб соус"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 16
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 203
+              - column:
+                  name: name
+                  value: "Тунец шапка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 16
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 204
+              - column:
+                  name: name
+                  value: "Лосось внутрь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 16
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 205
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 16
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 206
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 16
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 207
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 16
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 208
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 16
+
+        # ------------------------------------------------------------
+        # 17) Ролл с угрем
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 209
+              - column:
+                  name: name
+                  value: "Унаги соус"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 17
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 210
+              - column:
+                  name: name
+                  value: "Угорь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 17
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 211
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 17
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 212
+              - column:
+                  name: name
+                  value: "Авокадо"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 17
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 213
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 17
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 214
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 17
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 215
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 17
+
+        # ------------------------------------------------------------
+        # 18) Спайси рубленный тунец
+        # (Наверх замешивается: Соус спайси 40г + Тунец 60г)
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 216
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 18
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 217
+              - column:
+                  name: name
+                  value: "Кунжут"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 18
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 218
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 18
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 219
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 18
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 220
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 18
+
+        # "Наверх замешивается":
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 221
+              - column:
+                  name: name
+                  value: "Соус спайси (верх)"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 40
+              - column:
+                  name: item_id
+                  valueNumeric: 18
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 222
+              - column:
+                  name: name
+                  value: "Тунец (верх)"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 18
+
+        # ------------------------------------------------------------
+        # 19) Спайси лосось
+        # (Наверх замешивается: Соус спайси 40г + Лосось обрезь 60г)
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 223
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 19
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 224
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 19
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 225
+              - column:
+                  name: name
+                  value: "Кунжут"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 15
+              - column:
+                  name: item_id
+                  valueNumeric: 19
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 226
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 19
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 227
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 19
+
+        # "Наверх замешивается":
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 228
+              - column:
+                  name: name
+                  value: "Соус спайси (верх)"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 40
+              - column:
+                  name: item_id
+                  valueNumeric: 19
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 229
+              - column:
+                  name: name
+                  value: "Лосось обрезь (верх)"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 19
+
+        # ------------------------------------------------------------
+        # 20) Сливочная креветка
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 230
+              - column:
+                  name: name
+                  value: "Унаги соус"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 20
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 231
+              - column:
+                  name: name
+                  value: "Креветка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 80
+              - column:
+                  name: item_id
+                  valueNumeric: 20
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 232
+              - column:
+                  name: name
+                  value: "Сливочный сыр"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 20
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 233
+              - column:
+                  name: name
+                  value: "Авокадо"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 20
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 234
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 20
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 235
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 20
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 236
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 20
+
+        # ------------------------------------------------------------
+        # 21) Калифорния
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 237
+              - column:
+                  name: name
+                  value: "Краб-крем"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 21
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 238
+              - column:
+                  name: name
+                  value: "Лосось внутрь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 21
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 239
+              - column:
+                  name: name
+                  value: "Икра масаго"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 21
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 240
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 21
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 241
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 21
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 242
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 21
+
+        # ------------------------------------------------------------
+        # 22) Калифорния с креветкой
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 243
+              - column:
+                  name: name
+                  value: "Краб-крем"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 22
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 244
+              - column:
+                  name: name
+                  value: "Креветка внутрь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 40
+              - column:
+                  name: item_id
+                  valueNumeric: 22
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 245
+              - column:
+                  name: name
+                  value: "Икра масаго"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 22
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 246
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 22
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 247
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 110
+              - column:
+                  name: item_id
+                  valueNumeric: 22
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 248
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.5
+              - column:
+                  name: item_id
+                  valueNumeric: 22
+
+        # ------------------------------------------------------------
+        # 23) Маки огурец
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 249
+              - column:
+                  name: name
+                  value: "Огурец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 30
+              - column:
+                  name: item_id
+                  valueNumeric: 23
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 250
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 100
+              - column:
+                  name: item_id
+                  valueNumeric: 23
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 251
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 23
+
+        # ------------------------------------------------------------
+        # 24) Маки креветка
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 252
+              - column:
+                  name: name
+                  value: "Креветка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 40
+              - column:
+                  name: item_id
+                  valueNumeric: 24
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 253
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 100
+              - column:
+                  name: item_id
+                  valueNumeric: 24
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 254
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 24
+
+        # ------------------------------------------------------------
+        # 25) Маки лосось
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 255
+              - column:
+                  name: name
+                  value: "Лосось"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 25
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 256
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 100
+              - column:
+                  name: item_id
+                  valueNumeric: 25
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 257
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 25
+
+        # ------------------------------------------------------------
+        # 26) Маки угорь
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 258
+              - column:
+                  name: name
+                  value: "Угорь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 26
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 259
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 100
+              - column:
+                  name: item_id
+                  valueNumeric: 26
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 260
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 26
+
+        # ------------------------------------------------------------
+        # 27) Маки тунец
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 261
+              - column:
+                  name: name
+                  value: "Тунец"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 60
+              - column:
+                  name: item_id
+                  valueNumeric: 27
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 262
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 100
+              - column:
+                  name: item_id
+                  valueNumeric: 27
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 263
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 1
+              - column:
+                  name: item_id
+                  valueNumeric: 27
+
+        # ------------------------------------------------------------
+        # 28) Суши угорь
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 264
+              - column:
+                  name: name
+                  value: "Соус унаги"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 5
+              - column:
+                  name: item_id
+                  valueNumeric: 28
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 265
+              - column:
+                  name: name
+                  value: "Угорь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 28
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 266
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 28
+
+        # ------------------------------------------------------------
+        # 29) Суши креветка
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 267
+              - column:
+                  name: name
+                  value: "Креветка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 13
+              - column:
+                  name: item_id
+                  valueNumeric: 29
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 268
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 29
+
+        # ------------------------------------------------------------
+        # 30) Гункан креветка
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 269
+              - column:
+                  name: name
+                  value: "Мисо-майо"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 10
+              - column:
+                  name: item_id
+                  valueNumeric: 30
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 270
+              - column:
+                  name: name
+                  value: "Креветка"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 15
+              - column:
+                  name: item_id
+                  valueNumeric: 30
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 271
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 30
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 272
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.25
+              - column:
+                  name: item_id
+                  valueNumeric: 30
+
+        # ------------------------------------------------------------
+        # 31) Гункан угорь спайси вафу
+        # ------------------------------------------------------------
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 273
+              - column:
+                  name: name
+                  value: "Соус спайси"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 5
+              - column:
+                  name: item_id
+                  valueNumeric: 31
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 274
+              - column:
+                  name: name
+                  value: "Соус ореховый"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 5
+              - column:
+                  name: item_id
+                  valueNumeric: 31
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 275
+              - column:
+                  name: name
+                  value: "Угорь"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 15
+              - column:
+                  name: item_id
+                  valueNumeric: 31
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 276
+              - column:
+                  name: name
+                  value: "Рис"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 1
+              - column:
+                  name: amount
+                  valueNumeric: 20
+              - column:
+                  name: item_id
+                  valueNumeric: 31
+
+        - insert:
+            tableName: ingredient
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 277
+              - column:
+                  name: name
+                  value: "Нори"
+              - column:
+                  name: measurement_unit_id
+                  valueNumeric: 2
+              - column:
+                  name: amount
+                  valueNumeric: 0.25
+              - column:
+                  name: item_id
+                  valueNumeric: 31
