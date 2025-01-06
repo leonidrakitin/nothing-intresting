@@ -8,9 +8,11 @@ import ru.sushi.delivery.kds.domain.persist.entity.FlowStep;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
+import ru.sushi.delivery.kds.domain.persist.entity.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.Station;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
+import ru.sushi.delivery.kds.domain.persist.repository.ScreenRepository;
 import ru.sushi.delivery.kds.model.FlowStepType;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
@@ -18,6 +20,7 @@ import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
 import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
+import ru.sushi.delivery.kds.websocket.WebSocketController;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -34,6 +37,8 @@ public class OrderService {
     private final FlowCacheService flowCacheService;
     private final OrderChangesListener orderChangesListener;
     private final CashListener cashListener;
+    private final ScreenRepository screenRepository;
+    private final WebSocketController webSocketController;
 
     public void createOrder(String name, List<Item> items) {
         Order order = orderRepository.save(Order.of(name));
@@ -49,10 +54,18 @@ public class OrderService {
             ));
         }
         orderItemRepository.saveAll(orderItems);
-        flowSteps.forEach(flowStep -> this.orderChangesListener.broadcast(
-            flowStep.getStation().getId(),
-            BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
-        ));
+        flowSteps.forEach(flowStep -> {
+            this.orderChangesListener.broadcast(
+                flowStep.getStation().getId(),
+                BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
+            );
+
+            Screen screen = this.screenRepository.findByStationId(flowStep.getStation().getId());
+            this.webSocketController.broadcastNotification(screen.getId(), "Новый заказ");
+            this.webSocketController.broadcastRefreshPage(screen.getId());
+        });
+
+
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
@@ -65,8 +78,8 @@ public class OrderService {
         Integer doneStepOrder = null;
         for (OrderItem orderItem : this.getOrderItems(orderId)) {
             FlowStep step = this.flowCacheService.getStep(
-                    orderItem.getItem().getFlow().getId(),
-                    orderItem.getCurrentFlowStep()
+                orderItem.getItem().getFlow().getId(),
+                orderItem.getCurrentFlowStep()
             );
 
             if (doneStepOrder == null) {
@@ -75,16 +88,16 @@ public class OrderService {
 
             if (step.getStepType() != FlowStepType.FINAL_STEP) {
                 orderItem = orderItem.toBuilder()
-                        .currentFlowStep(doneStepOrder)
-                        .status(OrderItemStationStatus.COMPLETED)
-                        .build();
+                    .currentFlowStep(doneStepOrder)
+                    .status(OrderItemStationStatus.COMPLETED)
+                    .build();
                 orderItems.add(orderItem);
             }
         }
         this.orderItemRepository.saveAll(orderItems);
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
+            .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
         order = order.toBuilder().status(OrderStatus.READY).build();
         this.orderRepository.save(order);
 
@@ -176,44 +189,44 @@ public class OrderService {
 
     public void cancelOrderItem(Long orderId) {
         this.orderItemRepository.findById(orderId)
-                .map(orderItem -> orderItem.toBuilder()
-                        .currentFlowStep(FlowCacheService.CANCEL_STEP_ORDER)
-                        .status(OrderItemStationStatus.CANCELED)
-                        .build()
-                )
-                .ifPresent(orderItemRepository::save);
+            .map(orderItem -> orderItem.toBuilder()
+                .currentFlowStep(FlowCacheService.CANCEL_STEP_ORDER)
+                .status(OrderItemStationStatus.CANCELED)
+                .build()
+            )
+            .ifPresent(orderItemRepository::save);
     }
 
     public void createOrderItem(Long orderId, Item item) {
         orderItemRepository.save(
-                OrderItem.builder()
-                        .order(Order.of(orderId))
-                        .item(item)
-                        .build()
+            OrderItem.builder()
+                .order(Order.of(orderId))
+                .item(item)
+                .build()
         );
     }
 
     @Transactional
     public void cancelOrder(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
+            .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
         orderRepository.save(
-                order.toBuilder()
-                        .status(OrderStatus.CANCELED)
-                        .build()
+            order.toBuilder()
+                .status(OrderStatus.CANCELED)
+                .build()
         );
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
         this.orderItemRepository.saveAll(
-                orderItems.stream()
-                        .map(orderItem -> orderItem.toBuilder()
-                                .currentFlowStep(FlowCacheService.CANCEL_STEP_ORDER)
-                                .status(OrderItemStationStatus.CANCELED)
-                                .build())
-                        .toList()
+            orderItems.stream()
+                .map(orderItem -> orderItem.toBuilder()
+                    .currentFlowStep(FlowCacheService.CANCEL_STEP_ORDER)
+                    .status(OrderItemStationStatus.CANCELED)
+                    .build())
+                .toList()
         );
     }
 
-    public List<OrderItem> getOrderItems(Long orderId){
+    public List<OrderItem> getOrderItems(Long orderId) {
         return orderItemRepository.findByOrderId(orderId);
     }
 

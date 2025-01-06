@@ -6,4 +6,6 @@ import ru.sushi.delivery.kds.domain.persist.entity.Screen;
 
 @Repository
 public interface ScreenRepository extends JpaRepository<Screen, String> {
+
+    Screen findByStationId(Long stationId);
 }
