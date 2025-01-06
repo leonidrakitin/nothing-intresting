@@ -27,6 +27,6 @@ databaseChangeLog:
       file: prepack/master.yaml
       relativeToChangelogFile: true
   - include:
-      file: relations/master.yaml
+      file: recipes/master.yaml
       relativeToChangelogFile: true
 

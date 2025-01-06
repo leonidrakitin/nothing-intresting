@@ -1,0 +1,53 @@
+databaseChangeLog:
+- changeSet:
+    id: recipe_prepack.05.01.25.18.05.create
+    comment: Created RECIPE_PREPACK table
+    author: rakitin
+    changes:
+      - createTable:
+          tableName: recipe_prepack
+          columns:
+            - column:
+                name: id
+                type: BIGINT
+                autoIncrement: true
+                constraints:
+                  primaryKey: true
+                  nullable: false
+            - column:
+                name: source_id
+                type: BIGINT
+                constraints:
+                  nullable: false
+            - column:
+                name: source_type
+                type: VARCHAR(255)
+                constraints:
+                  nullable: false
+            - column:
+                name: prepack_id
+                type: BIGINT
+                constraints:
+                  nullable: false
+            - column:
+                name: init_amount
+                type: DOUBLE
+                constraints:
+                  nullable: false
+            - column:
+                name: final_amount
+                type: DOUBLE
+                constraints:
+                  nullable: false
+            - column:
+                name: losses_amount
+                type: DOUBLE
+                constraints:
+                  nullable: false
+                defaultValue: 0
+            - column:
+                name: losses_percentage
+                type: DOUBLE
+                constraints:
+                  nullable: false
+                defaultValue: 0

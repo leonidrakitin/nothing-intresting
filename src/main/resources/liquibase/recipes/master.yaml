@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+     file: recipe_item.05.01.25.14.05.yaml
+     relativeToChangelogFile: true
+  - include:
+      file: recipe_prepack.05.01.25.18.05.yaml
+      relativeToChangelogFile: true
