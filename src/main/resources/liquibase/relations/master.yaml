@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: prepack.ingredient.relation.05.01.25.14.05.yaml
+      relativeToChangelogFile: true

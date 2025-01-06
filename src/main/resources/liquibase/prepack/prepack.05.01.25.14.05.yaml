@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: prepack.05.01.25.14.05
+      author: dlosev
+      changes:
+        - createTable:
+            tableName: prepack
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: measurement_unit_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: prepack
+            baseColumnNames: measurement_unit_id
+            referencedTableName: measurement
+            referencedColumnNames: id
+            constraintName: fk_prepack_measurement_unit_id

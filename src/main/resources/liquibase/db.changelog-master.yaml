@@ -23,3 +23,10 @@ databaseChangeLog:
   - include:
       file: screen/master.yaml
       relativeToChangelogFile: true
+  - include:
+      file: prepack/master.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: relations/master.yaml
+      relativeToChangelogFile: true
+
