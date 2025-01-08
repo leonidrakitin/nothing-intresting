@@ -3,7 +3,6 @@ package ru.sushi.delivery.kds.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.domain.persist.entity.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
@@ -50,11 +49,11 @@ public class ViewService {
         return kitchenDisplayData;
     }
 
-    public Optional<Long> getScreenStationIfExists(String screenId) {
+    public Optional<Long> getScreenStationIfExists(Long screenId) {
         return screenService.get(screenId).map(Screen::getStation).map(Station::getId);
     }
 
-    public List<OrderItemDto> getScreenOrderItems(String screenId) {
+    public List<OrderItemDto> getScreenOrderItems(Long screenId) {
         Screen screen = screenService.getOrThrow(screenId);
         return orderService.getAllItemsByStationId(screen.getStation().getId()).stream()
             .map(this::buildOrderItemDto)

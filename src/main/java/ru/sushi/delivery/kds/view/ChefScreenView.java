@@ -44,7 +44,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
 
     // 6 колонок (ячейки)
     private final VerticalLayout[] columns;
-    private String screenId;
+    private Long screenId;
     private Long stationId;
 
     @Autowired
@@ -69,7 +69,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
     }
 
     @Override
-    public void setParameter(BeforeEvent event, @OptionalParameter String screenId) {
+    public void setParameter(BeforeEvent event, @OptionalParameter Long screenId) {
 
         Optional<Long> stationId = this.viewService.getScreenStationIfExists(screenId);
         if (stationId.isEmpty()) {

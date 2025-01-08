@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 import ru.sushi.delivery.kds.domain.persist.entity.Screen;
 
 @Repository
-public interface ScreenRepository extends JpaRepository<Screen, String> {
+public interface ScreenRepository extends JpaRepository<Screen, Long> {
 
     Screen findByStationId(Long stationId);
 }
