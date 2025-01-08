@@ -30,3 +30,6 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:/liquibase/db.changelog-master.yaml
+
+  main:
+    allow-circular-references: true

@@ -19,4 +19,3 @@ public class OrderFullDto {
     private OrderStatus status;
     private List<OrderItemDto> items;
 }
-

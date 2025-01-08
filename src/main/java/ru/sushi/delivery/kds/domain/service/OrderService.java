@@ -20,7 +20,7 @@ import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
 import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
-import ru.sushi.delivery.kds.websocket.WebSocketController;
+import ru.sushi.delivery.kds.websocket.WSMessageSender;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class OrderService {
     private final OrderChangesListener orderChangesListener;
     private final CashListener cashListener;
     private final ScreenRepository screenRepository;
-    private final WebSocketController webSocketController;
+    private final WSMessageSender wsMessageSender;
 
     public void createOrder(String name, List<Item> items) {
         Order order = orderRepository.save(Order.of(name));
@@ -61,11 +61,8 @@ public class OrderService {
             );
 
             Screen screen = this.screenRepository.findByStationId(flowStep.getStation().getId());
-            this.webSocketController.broadcastNotification(screen.getId(), "Новый заказ");
-            this.webSocketController.broadcastRefreshPage(screen.getId());
+            this.wsMessageSender.sendNotification(screen.getId(), "Новый заказ!");
         });
-
-
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {

@@ -31,7 +31,7 @@ import java.util.Optional;
 
 @Route("screen")
 @UIScope
-public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<String>, BroadcastListener {
+public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<Long>, BroadcastListener {
 
     public static final int GRID_SIZE = 3;
     public static final String COLOR_IN_PROGRESS = "lightblue";
