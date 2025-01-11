@@ -122,19 +122,23 @@ public class ViewService {
                         )
                         .getStation()
                 )
+                .flowStepType(this.flowCacheService.getStep(
+                    orderItem.getItem().getFlow().getId(),
+                    orderItem.getCurrentFlowStep()
+                ).getStepType())
                 .createdAt(orderItem.getStatusUpdatedAt())
                 .build()
             )
             .toList();
     }
 
-    private OrderItemDto buildOrderItemDto(OrderItem item) {
+    private OrderItemDto buildOrderItemDto(OrderItem orderItem) {
         return OrderItemDto.builder()
-            .id(item.getId())
-            .orderId(item.getOrder().getId())
-            .name(item.getItem().getName())
+            .id(orderItem.getId())
+            .orderId(orderItem.getOrder().getId())
+            .name(orderItem.getItem().getName())
             .ingredients(
-                this.ingredientCacheService.getItemIngredients(item.getItem().getId()).stream()
+                this.ingredientCacheService.getItemIngredients(orderItem.getItem().getId()).stream()
                     .map(ingredient -> IngredientDTO.builder()
                         .name(ingredient.getName())
                         .stationId(ingredient.getStationId())
@@ -142,8 +146,17 @@ public class ViewService {
                     )
                     .toList()
             )
-            .status(item.getStatus())
-            .createdAt(item.getStatusUpdatedAt())
+            .status(orderItem.getStatus())
+            .createdAt(orderItem.getStatusUpdatedAt())
+            .currentStation(this.flowCacheService.getStep(
+                    orderItem.getItem().getFlow().getId(),
+                    orderItem.getCurrentFlowStep()
+                )
+                .getStation())
+            .flowStepType(this.flowCacheService.getStep(
+                orderItem.getItem().getFlow().getId(),
+                orderItem.getCurrentFlowStep()
+            ).getStepType())
             .build();
     }
 }

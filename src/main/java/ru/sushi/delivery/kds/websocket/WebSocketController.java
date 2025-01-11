@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import ru.sushi.delivery.kds.model.WSMessageType;
 import ru.sushi.delivery.kds.service.ViewService;
 import ru.sushi.delivery.kds.websocket.dto.WSOrderItems;
+import ru.sushi.delivery.kds.websocket.dto.WSOrders;
 
 @RequiredArgsConstructor
 @Controller
@@ -22,6 +23,13 @@ public class WebSocketController {
         return new WSOrderItems(WSMessageType.GET_ALL_ORDER_ITEMS, viewService.getScreenOrderItems(screenId));
     }
 
+    @MessageMapping("/topic/screen.getAllOrdersWithItems")
+    @SendTo("/topic/screen.orders/3")
+    public WSOrders getAllOrdersWithItems() {
+        return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllOrdersWithItems());
+    }
+
+
     @MessageMapping("/topic/screen/{screenId}/update.orderItem/{orderItemId}")
     @SendTo("/topic/screen.orders/{screenId}")
     public WSOrderItems updateOrder(
@@ -32,12 +40,21 @@ public class WebSocketController {
         return new WSOrderItems(WSMessageType.GET_ALL_ORDER_ITEMS, viewService.getScreenOrderItems(screenId));
     }
 
-    @MessageMapping("/topic/screen/{screenId}/update.order.done/{orderId}")
-    public WSOrderItems updateAllToDone(
-        @DestinationVariable("orderId") Long screenId,
+    @MessageMapping("/topic/screen/{screenId}/update.allOrder.done/{orderId}")
+    @SendTo("/topic/screen.orders/{screenId}")
+    public WSOrders updateAllToDone(
         @DestinationVariable("orderId") Long orderId
     ) {
         viewService.updateAllOrderItemsToDone(orderId);
-        return new WSOrderItems(WSMessageType.GET_ALL_ORDER_ITEMS, viewService.getScreenOrderItems(screenId));
+        return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllOrdersWithItems());
+    }
+
+    @MessageMapping("/topic/screen/{screenId}/update.order.done/{orderItemId}")
+    @SendTo("/topic/screen.orders/{screenId}")
+    public WSOrders updateOrderToDone(
+        @DestinationVariable("orderItemId") Long orderItemId
+    ) {
+        viewService.updateStatus(orderItemId);
+        return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllOrdersWithItems());
     }
 }

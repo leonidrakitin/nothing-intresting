@@ -63,6 +63,7 @@ public class OrderService {
             Screen screen = this.screenRepository.findByStationId(flowStep.getStation().getId());
             this.wsMessageSender.sendNotification(screen.getId(), "Новый заказ!");
         });
+        this.wsMessageSender.sendRefreshAll();
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
@@ -143,6 +144,8 @@ public class OrderService {
         }
         this.orderItemRepository.save(orderItem);
         this.updateOrderStatus(orderItem.getOrder());
+
+        this.wsMessageSender.sendRefreshAll();
     }
 
     @Transactional

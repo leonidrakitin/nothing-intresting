@@ -26,12 +26,12 @@ import "./vaadin-react.js";
 import "Frontend/generated/jar-resources/vaadin-dev-tools/vaadin-dev-tools.js";
 // @ts-ignore
 if (import.meta.hot) {
-    // @ts-ignore
-    import.meta.hot.on("vite:afterUpdate", () => {
-        const eventbus = (window as any).Vaadin.copilot.eventbus;
-        if (eventbus) {
-            eventbus.emit("vite-after-update", {});
-        }
-    });
+  // @ts-ignore
+  import.meta.hot.on("vite:afterUpdate", () => {
+    const eventbus = (window as any).Vaadin.copilot.eventbus;
+    if (eventbus) {
+      eventbus.emit("vite-after-update", {});
+    }
+  });
 }
 
