@@ -13,8 +13,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 
+@Audited
 @Entity
 @Table(name = "item")
 @Getter
@@ -30,6 +33,7 @@ public class Position {
 
     private String name;
 
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "flow_id")
     private Flow flow;

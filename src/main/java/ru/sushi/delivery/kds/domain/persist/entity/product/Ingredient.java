@@ -11,7 +11,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.envers.AuditOverride;
+import org.hibernate.envers.Audited;
 
+@Audited
+@AuditOverride(forClass = Product.class)
 @Entity
 @Table(name = "ingredient")
 @Getter

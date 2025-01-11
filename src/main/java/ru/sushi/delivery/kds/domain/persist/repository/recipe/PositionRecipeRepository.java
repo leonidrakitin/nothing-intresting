@@ -13,7 +13,7 @@ public interface PositionRecipeRepository extends JpaRepository<PositionRecipe, 
 
     @Query("""
         select recipe from PositionRecipe recipe
-        where recipe.positionId in :positionIds
+        where recipe.position.id in :positionIds
     """)
     List<Recipe> findByPositionIds(List<Long> positionId);
 }

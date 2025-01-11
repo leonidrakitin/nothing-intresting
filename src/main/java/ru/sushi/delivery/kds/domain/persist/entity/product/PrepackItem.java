@@ -14,7 +14,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
 import ru.sushi.delivery.kds.dto.act.ProcessingActDto;
 import ru.sushi.delivery.kds.model.SourceType;
@@ -22,6 +24,7 @@ import ru.sushi.delivery.kds.model.SourceType;
 import java.time.Instant;
 
 @Audited
+@AuditOverride(forClass = SourceItem.class)
 @Entity
 @Table(name = "prepack_item")
 @Getter
@@ -36,6 +39,7 @@ public class PrepackItem extends SourceItem {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "prepack_item_id_seq_gen")
     private Long id;
 
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "prepack_id")
     private Prepack prepack;

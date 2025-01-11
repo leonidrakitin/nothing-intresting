@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.dto.act.InvoiceActDto;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Audited
+@AuditOverride(forClass = Act.class)
 @Entity
 @Table(name = "invoice_act")
 @Getter

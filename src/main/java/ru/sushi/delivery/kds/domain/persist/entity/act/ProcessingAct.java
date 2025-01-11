@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Prepack;
@@ -25,6 +26,8 @@ import ru.sushi.delivery.kds.dto.act.ProcessingActDto;
 import java.util.ArrayList;
 import java.util.List;
 
+@Audited
+@AuditOverride(forClass = Act.class)
 @Entity
 @Table(name = "processing_act")
 @Getter
@@ -43,6 +46,7 @@ public class ProcessingAct extends Act {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "processing_act_id_seq_gen")
     private Long id;
 
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "prepack_id")
     private Prepack prepack;

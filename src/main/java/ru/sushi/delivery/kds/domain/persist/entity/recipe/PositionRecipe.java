@@ -13,11 +13,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Position;
 
 @Audited
+@AuditOverride(forClass = Recipe.class)
 @Entity
 @Table(name = "recipe_item")
 @Getter

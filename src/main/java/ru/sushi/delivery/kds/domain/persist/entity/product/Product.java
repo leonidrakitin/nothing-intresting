@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 
 import java.time.Duration;
@@ -27,6 +29,7 @@ public abstract class Product {
 
     private String name;
 
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "measurement_unit_id")
     private Measurement measurementUnit;

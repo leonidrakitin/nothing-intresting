@@ -16,9 +16,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.dto.act.ProcessingSourceItemDto;
 import ru.sushi.delivery.kds.model.SourceType;
 
+@Audited
 @Entity
 @Table(name = "processing_act_item")
 @Getter
@@ -37,6 +40,7 @@ public class ProcessingSourceItem {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "processing_act_item_id_seq_gen")
     private Long id;
 
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "processing_id")
     private ProcessingAct processingAct;
