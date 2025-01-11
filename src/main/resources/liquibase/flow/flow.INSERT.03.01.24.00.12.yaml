@@ -1,26 +1,5 @@
 databaseChangeLog:
   - changeSet:
-      id: flow.02.01.24.22.33
-      author: rakitin
-      changes:
-        - createTable:
-            tableName: flow
-            columns:
-              - column:
-                  name: id
-                  type: BIGINT
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-                    autoIncrement: true
-              - column:
-                  name: name
-                  type: VARCHAR(255)
-                  constraints:
-                    nullable: false
-
-  - changeSet:
       id: flow.INSERT.03.01.24.00.12
       author: rakitin
       changes:
@@ -33,10 +12,6 @@ databaseChangeLog:
               - column:
                   name: name
                   value: "Холодные роллы"
-  - changeSet:
-      id: flow.INSERT.03.01.24.00.16
-      author: rakitin
-      changes:
         - insert:
             tableName: flow
             columns:
@@ -46,10 +21,6 @@ databaseChangeLog:
               - column:
                   name: name
                   value: "Горячие роллы"
-  - changeSet:
-      id: flow.INSERT.03.01.24.00.17
-      author: rakitin
-      changes:
         - insert:
             tableName: flow
             columns:

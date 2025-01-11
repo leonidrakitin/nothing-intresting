@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -30,7 +31,8 @@ import ru.sushi.delivery.kds.domain.persist.entity.product.Position;
 public class PositionRecipe extends Recipe {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(name = "position_recipe_id_seq_gen", sequenceName = "position_recipe_id_generator", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "position_recipe_id_seq_gen")
     private Long id;
 
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)

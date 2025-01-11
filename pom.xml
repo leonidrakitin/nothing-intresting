@@ -1,0 +1,61 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>liquibase-example</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <!-- Версия Liquibase -->
+        <liquibase.version>4.23.0</liquibase.version>
+        <!-- Драйвер базы данных -->
+        <postgresql.version>42.5.1</postgresql.version>
+        <!-- URL базы данных -->
+        <database.url>jdbc:postgresql://localhost:5432/kds</database.url>
+        <database.username>root</database.username>
+        <database.password>123456</database.password>
+
+        <outputChangeLogFile>src/main/resources/liquibase/generated-changelog.yaml</outputChangeLogFile>
+
+    </properties>
+
+    <dependencies>
+        <!-- Liquibase Core -->
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>${liquibase.version}</version>
+        </dependency>
+
+        <!-- PostgreSQL Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-maven-plugin</artifactId>
+                <version>${liquibase.version}</version>
+                <configuration>
+                    <!-- Настройки подключения к базе данных -->
+                    <url>${database.url}</url>
+                    <username>${database.username}</username>
+                    <password>${database.password}</password>
+                    <driver>org.postgresql.Driver</driver>
+
+                    <!-- Путь для сохранения файла changelog -->
+                    <changeLogFile>src/main/resources/db/changelog/db.changelog-master.xml</changeLogFile>
+                    <outputChangeLogFile>src/main/resources/liquibase/generated-changelog.yaml</outputChangeLogFile>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,6 +1,6 @@
 databaseChangeLog:
   - include:
-      file: audit/master.yaml
+      file: init-changelog.yaml
       relativeToChangelogFile: true
   - include:
       file: measurement/master.yaml
@@ -12,21 +12,6 @@ databaseChangeLog:
       file: flow/master.yaml
       relativeToChangelogFile: true
   - include:
-      file: item/master.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: ingredient/master.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: order/master.yaml
-      relativeToChangelogFile: true
-  - include:
       file: screen/master.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: prepack/master.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: recipes/master.yaml
       relativeToChangelogFile: true
 

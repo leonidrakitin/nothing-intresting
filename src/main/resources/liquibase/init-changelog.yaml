@@ -1,0 +1,2193 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1736598409360-1
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: flow_step_pkey
+                  name: id
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: step_order
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: flow_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: station_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: step_type
+                  type: VARCHAR(255)
+            tableName: flow_step
+  - changeSet:
+      id: 1736598409360-2
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_reason
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: ingredient_item_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: barcode
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expiration_date
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: ingredient_item_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: ingredient_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_comment
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: ingredient_item_aud
+  - changeSet:
+      id: 1736598409360-3
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_reason
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: barcode
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expiration_date
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: ingredient_item_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: ingredient_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_comment
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: ingredient_item
+  - changeSet:
+      id: 1736598409360-4
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: price
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: invoice_act_item_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: invoice_act_item_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: invoice_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: VARCHAR(255)
+            tableName: invoice_act_item_aud
+  - changeSet:
+      id: 1736598409360-5
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: price
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: invoice_act_item_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: invoice_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: VARCHAR(255)
+            tableName: invoice_act_item
+  - changeSet:
+      id: 1736598409360-6
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: current_flow_step
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: order_item_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: order_item_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: order_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: position_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: station_changed_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status_updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+            tableName: order_item_aud
+  - changeSet:
+      id: 1736598409360-7
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: current_flow_step
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: order_item_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: order_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: position_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: station_changed_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status_updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+            tableName: order_item
+  - changeSet:
+      id: 1736598409360-8
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: orders_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: orders_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status_update_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+            tableName: orders_aud
+  - changeSet:
+      id: 1736598409360-9
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: orders_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status_update_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+            tableName: orders
+  - changeSet:
+      id: 1736598409360-10
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_reason
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: prepack_item_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: barcode
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expiration_date
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: prepack_item_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: prepack_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_comment
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: prepack_item_aud
+  - changeSet:
+      id: 1736598409360-11
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_reason
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: barcode
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expiration_date
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: prepack_item_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: prepack_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: discontinued_comment
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: prepack_item
+  - changeSet:
+      id: 1736598409360-12
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: init_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: processing_act_item_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: processing_act_item_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: processing_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: VARCHAR(255)
+            tableName: processing_act_item_aud
+  - changeSet:
+      id: 1736598409360-13
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: init_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: processing_act_item_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: processing_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: VARCHAR(255)
+            tableName: processing_act_item
+  - changeSet:
+      id: 1736598409360-14
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: final_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: init_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_percentage
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: recipe_item_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: recipe_item_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: position_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: station_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: VARCHAR(255)
+            tableName: recipe_item_aud
+  - changeSet:
+      id: 1736598409360-15
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: final_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: init_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_percentage
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: recipe_item_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: position_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: station_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: VARCHAR(255)
+            tableName: recipe_item
+  - changeSet:
+      id: 1736598409360-16
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: final_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: init_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_percentage
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: recipe_prepack_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: recipe_prepack_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: prepack_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: VARCHAR(255)
+            tableName: recipe_prepack_aud
+  - changeSet:
+      id: 1736598409360-17
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: final_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: init_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_percentage
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: recipe_prepack_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: prepack_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source_type
+                  type: VARCHAR(255)
+            tableName: recipe_prepack
+  - changeSet:
+      id: 1736598409360-18
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: station_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: order_status_at_station
+                  type: VARCHAR(255)
+            tableName: station
+  - changeSet:
+      id: 1736598409360-19
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: employee_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-20
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: flow_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-21
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: flow_step_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-22
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: ingredient_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-23
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: invoice_act_item_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-24
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: measurement_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-25
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: orders_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-26
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: orders_item_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-27
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: processing_act_item_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-28
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 50
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: revinfo_seq
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-29
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: screen_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-30
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: station_id_generator
+            startValue: 1
+  - changeSet:
+      id: 1736598409360-31
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: salary
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: employee_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+            tableName: employee
+  - changeSet:
+      id: 1736598409360-32
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: flow_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+            tableName: flow
+  - changeSet:
+      id: 1736598409360-33
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expiration_duration
+                  type: numeric(21)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: notify_after_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: ingredient_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: measurement_unit_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: ingredient
+  - changeSet:
+      id: 1736598409360-34
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expiration_duration
+                  type: numeric(21)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: notify_after_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: ingredient_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: ingredient_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: measurement_unit_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: ingredient_aud
+  - changeSet:
+      id: 1736598409360-35
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: date
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: employee_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: invoice_act_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: invoice_act
+  - changeSet:
+      id: 1736598409360-36
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: invoice_act_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: date
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: employee_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: invoice_act_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: invoice_act_aud
+  - changeSet:
+      id: 1736598409360-37
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: flow_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: item_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+            tableName: item
+  - changeSet:
+      id: 1736598409360-38
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: item_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: flow_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: item_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+            tableName: item_aud
+  - changeSet:
+      id: 1736598409360-39
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: measurement_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+            tableName: measurement
+  - changeSet:
+      id: 1736598409360-40
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expiration_duration
+                  type: numeric(21)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: notify_after_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: prepack_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: measurement_unit_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: prepack
+  - changeSet:
+      id: 1736598409360-41
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expiration_duration
+                  type: numeric(21)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: notify_after_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: prepack_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: prepack_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: measurement_unit_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: prepack_aud
+  - changeSet:
+      id: 1736598409360-42
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: date
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: employee_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: processing_act_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: prepack_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: processing_act
+  - changeSet:
+      id: 1736598409360-43
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: processing_act_aud_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: date
+                  type: TIMESTAMP WITHOUT TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: employee_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: processing_act_aud_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: prepack_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: updated_by
+                  type: VARCHAR(255)
+            tableName: processing_act_aud
+  - changeSet:
+      id: 1736598409360-44
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: revinfo_pkey
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtstmp
+                  type: BIGINT
+            tableName: revinfo
+  - changeSet:
+      id: 1736598409360-45
+      author: admin (generated)
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: screen_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: station_id
+                  type: BIGINT
+            tableName: screen
+
+  - changeSet:
+      id: 1736598409360-46
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: invoice_id
+            baseTableName: invoice_act_item
+            constraintName: fk_invoice_act_item_invoice_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: invoice_act
+            validate: true
+  - changeSet:
+      id: 1736598409360-47
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: station_id
+            baseTableName: flow_step
+            constraintName: fk_flow_step_station_id_invoice_act_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: station
+            validate: true
+  - changeSet:
+      id: 1736598409360-48
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: ingredient_id
+            baseTableName: ingredient_item
+            constraintName: fk_ingredient_item_ingredient_id_station_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: ingredient
+            validate: true
+  - changeSet:
+      id: 1736598409360-49
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: prepack_id
+            baseTableName: processing_act
+            constraintName: fk_processing_act_prepack_id_ingredient_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: prepack
+            validate: true
+  - changeSet:
+      id: 1736598409360-50
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: processing_id
+            baseTableName: processing_act_item
+            constraintName: fk_processing_act_item_processing_id_prepack_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: processing_act
+            validate: true
+  - changeSet:
+      id: 1736598409360-51
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: prepack_aud
+            constraintName: fk_prepack_aud_rev_processing_act_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-52
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: item_aud
+            constraintName: fk_item_aud_rev_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-53
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: invoice_act_item_aud
+            constraintName: fk_invoice_act_item_aud_rev_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-54
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: station_id
+            baseTableName: screen
+            constraintName: fk_screen_station_id_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: station
+            validate: true
+  - changeSet:
+      id: 1736598409360-55
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: prepack_id
+            baseTableName: recipe_prepack
+            constraintName: fk_recipe_prepack_prepack_id_station_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: prepack
+            validate: true
+  - changeSet:
+      id: 1736598409360-56
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: flow_id
+            baseTableName: item
+            constraintName: fk_item_flow_id_prepack_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: flow
+            validate: true
+  - changeSet:
+      id: 1736598409360-57
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: position_id
+            baseTableName: recipe_item
+            constraintName: fk_recipe_item_position_id_flow_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: item
+            validate: true
+  - changeSet:
+      id: 1736598409360-58
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: processing_act_aud
+            constraintName: fk_processing_act_aud_rev_item_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-59
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: position_id
+            baseTableName: order_item
+            constraintName: fk_order_item_position_id_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: item
+            validate: true
+  - changeSet:
+      id: 1736598409360-60
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: orders_aud
+            constraintName: fk_orders_aud_rev_item_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-61
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: recipe_prepack_aud
+            constraintName: fk_recipe_prepack_aud_rev_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-62
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: measurement_unit_id
+            baseTableName: prepack
+            constraintName: fk_prepack_measurement_unit_id_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: measurement
+            validate: true
+  - changeSet:
+      id: 1736598409360-63
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: invoice_act_aud
+            constraintName: fk_invoice_act_aud_rev_measurement_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-64
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: ingredient_item_aud
+            constraintName: fk_ingredient_item_aud_rev_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-65
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: prepack_id
+            baseTableName: prepack_item
+            constraintName: fk_prepack_item_prepack_id_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: prepack
+            validate: true
+  - changeSet:
+      id: 1736598409360-66
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: ingredient_aud
+            constraintName: fk_ingredient_aud_rev_prepack_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-67
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: recipe_item_aud
+            constraintName: fk_recipe_item_aud_rev_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-68
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: measurement_unit_id
+            baseTableName: ingredient
+            constraintName: fk_ingredient_measurement_unit_id_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: measurement
+            validate: true
+  - changeSet:
+      id: 1736598409360-69
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: order_item_aud
+            constraintName: fk_order_item_aud_rev_measurement_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-70
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: flow_id
+            baseTableName: flow_step
+            constraintName: fk_flow_step_flow_id_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: flow
+            validate: true
+  - changeSet:
+      id: 1736598409360-71
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: prepack_item_aud
+            constraintName: fk_prepack_item_aud_rev_flow_id
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-72
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rev
+            baseTableName: processing_act_item_aud
+            constraintName: fk_processing_act_item_aud_rev_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: rev
+            referencedTableName: revinfo
+            validate: true
+  - changeSet:
+      id: 1736598409360-73
+      author: admin (generated)
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: order_id
+            baseTableName: order_item
+            constraintName: fk_order_item_order_id_revinfo_rev
+            deferrable: false
+            initiallyDeferred: false
+            onDelete: NO ACTION
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: orders
+            validate: true
+
+  - changeSet:
+      id: 1736598093486-2
+      author: admin
+      changes:
+        - addUniqueConstraint:
+            constraintName: uq_flow_step_flow_id_step_order
+            columnNames: flow_id, step_order
+            tableName: flow_step
+  - changeSet:
+      id: 1731518093486-3
+      author: admin
+      changes:
+        - addUniqueConstraint:
+            constraintName: uq_employee_name
+            columnNames: name
+            tableName: employee

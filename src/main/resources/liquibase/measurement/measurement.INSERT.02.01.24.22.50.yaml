@@ -1,26 +1,5 @@
 databaseChangeLog:
   - changeSet:
-      id: measurement.02.01.24.22.38
-      author: rakitin
-      changes:
-        - createTable:
-            tableName: measurement
-            columns:
-              - column:
-                  name: id
-                  type: BIGINT
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-                    autoIncrement: true
-              - column:
-                  name: name
-                  type: VARCHAR(255)
-                  constraints:
-                    nullable: false
-
-  - changeSet:
       id: measurement.INSERT.02.01.24.22.50
       author: rakitin
       changes:
@@ -33,7 +12,6 @@ databaseChangeLog:
               - column:
                   name: name
                   value: "г"
-
         - insert:
             tableName: measurement
             columns:
