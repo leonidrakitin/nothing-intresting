@@ -4,11 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.util.List;
 
-// Пример DTO для отображения всего заказа и позиций
 @Data
 @Builder
 @AllArgsConstructor
@@ -18,5 +18,14 @@ public class OrderFullDto {
     private String name;
     private OrderStatus status;
     private List<OrderItemDto> items;
+
+    public static OrderFullDto of(Order order, List<OrderItemDto> orderItems) {
+        return OrderFullDto.builder()
+                .id(order.getId())
+                .name(order.getName())
+                .status(order.getStatus())
+                .items(orderItems)
+                .build();
+    }
 }
 

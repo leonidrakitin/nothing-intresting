@@ -12,6 +12,8 @@ import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Position;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
+import ru.sushi.delivery.kds.dto.OrderFullDto;
+import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.model.FlowStepType;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
@@ -31,11 +33,12 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
-    private final FlowCacheService flowCacheService;
-    private final OrderChangesListener orderChangesListener;
     private final CashListener cashListener;
+    private final IngredientService ingredientService;
+    private final FlowCacheService flowCacheService;
+    private final OrderItemRepository orderItemRepository;
+    private final OrderChangesListener orderChangesListener;
+    private final OrderRepository orderRepository;
     private final RecipeService recipeService;
 
     public void calculateOrderBalance(Order order) {
@@ -61,8 +64,8 @@ public class OrderService {
         }
         orderItemRepository.saveAll(orderItems);
         flowSteps.forEach(flowStep -> this.orderChangesListener.broadcast(
-            flowStep.getStation().getId(),
-            BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
+                flowStep.getStation().getId(),
+                BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
         ));
     }
 
@@ -131,8 +134,8 @@ public class OrderService {
 
             if (nextFlowStep.getStepType() != FlowStepType.FINAL_STEP) {
                 this.orderChangesListener.broadcast(
-                    nextFlowStep.getStation().getId(),
-                    BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новые позиции")
+                        nextFlowStep.getStation().getId(),
+                        BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новые позиции")
                 );
             }
             else {
@@ -157,11 +160,7 @@ public class OrderService {
         int minimumStatus = this.definePriorityByOrderStatus(OrderStatus.READY);
 
         for (OrderItem orderItem : orderItems) {
-            Station currentStation = this.flowCacheService.getStep(
-                    orderItem.getPosition().getFlow().getId(),
-                    orderItem.getCurrentFlowStep()
-                )
-                .getStation();
+            Station currentStation = this.getStationFromOrderItem(orderItem);
             int currentPriorityStatus = this.definePriorityByOrderStatus(currentStation.getOrderStatusAtStation());
             if (currentPriorityStatus > 0 && minimumStatus == 0) {
                 minimumStatus = 1;
@@ -181,8 +180,33 @@ public class OrderService {
         }
     }
 
-    public List<Order> getAllOrdersWithItems() {
-        return orderRepository.findAllActive();
+    public List<OrderFullDto> getAllActiveOrdersWithItems() {
+        return orderRepository.findAllActive().stream()
+                .map(order -> OrderFullDto.of(order, this.getOrderItemData(order)))
+                .toList();
+    }
+
+    private List<OrderItemDto> getOrderItemData(Order order) {
+        return order.getOrderItems().stream()
+                .map(orderItem -> OrderItemDto.builder()
+                                .id(orderItem.getId())
+                                .orderId(order.getId())
+                                .name(orderItem.getPosition().getName())
+                                .ingredients(this.ingredientService.getPositionIngredients(orderItem.getPosition().getId()))
+                                .status(orderItem.getStatus())
+                                .currentStation(this.getStationFromOrderItem(orderItem))
+                                .createdAt(orderItem.getStatusUpdatedAt())
+                                .build()
+                )
+                .toList();
+    }
+
+    private Station getStationFromOrderItem(OrderItem orderItem) {
+        return this.flowCacheService.getStep(
+                        orderItem.getPosition().getFlow().getId(),
+                        orderItem.getCurrentFlowStep()
+                )
+                .getStation();
     }
 
     public void cancelOrderItem(Long orderId) {

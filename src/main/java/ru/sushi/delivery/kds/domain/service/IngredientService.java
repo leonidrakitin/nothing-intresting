@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.repository.product.IngredientRepository;
+import ru.sushi.delivery.kds.dto.IngredientDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -30,8 +31,14 @@ public class IngredientService {
 //        );
 //    }
 
-    public List<Ingredient> getItemIngredients(Long itemId) {
-        return ingredientCache.getOrDefault(itemId, List.of());
+    public List<IngredientDTO> getPositionIngredients(Long positionId) {
+        return this.ingredientCache.getOrDefault(positionId, List.of()).stream()
+                .map(ingredient -> IngredientDTO.builder()
+                                .name(ingredient.getName())
+//                            .stationId(ingredient.getStationId()) //TODO from recipe
+                                .build()
+                )
+                .toList();
     }
 
     public Ingredient get(Long id) {
