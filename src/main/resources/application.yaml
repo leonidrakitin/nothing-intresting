@@ -4,7 +4,7 @@ application:
 vaadin:
   launch-browser: true
 server:
-  address: 192.168.0.15
+#  address: 192.168.0.15
   port: 8000
   servlet:
     encoding:
@@ -17,16 +17,19 @@ spring:
     username: ${SQL_USERNAME:root}
     password: ${SQL_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
-    jpa:
-      properties:
-        hibernate:
-          id:
-            new_generator_mappings: false
-            optimizer: none
-
-  #  jpa:
-#    database: postgresql
-#    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+  jpa:
+    database: postgresql
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+    #      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        id:
+          new_generator_mappings: false
+          optimizer: none
   liquibase:
     enabled: true
     change-log: classpath:/liquibase/db.changelog-master.yaml
