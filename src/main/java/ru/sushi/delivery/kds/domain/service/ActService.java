@@ -1,5 +1,6 @@
 package ru.sushi.delivery.kds.domain.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.Employee;
@@ -73,6 +74,7 @@ public class ActService {
         this.prepackItemRepository.saveAll(prepackItems);
     }
 
+    @Transactional
     public void createProcessingAct(ProcessingActDto processingData) {
         List<ProcessingSourceItem> processingSourceItems = new ArrayList<>();
         List<IngredientItem> ingredientItems = new ArrayList<>();
