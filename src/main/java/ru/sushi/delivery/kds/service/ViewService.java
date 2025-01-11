@@ -6,10 +6,10 @@ import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
-import ru.sushi.delivery.kds.domain.persist.entity.product.Position;
+import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.service.IngredientService;
+import ru.sushi.delivery.kds.domain.service.MenuItemService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
-import ru.sushi.delivery.kds.domain.service.PositionService;
 import ru.sushi.delivery.kds.domain.service.ScreenService;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
@@ -26,15 +26,15 @@ public class ViewService {
 
     private final OrderService orderService;
     private final ScreenService screenService;
-    private final PositionService positionService;
+    private final MenuItemService menuItemService;
     private final IngredientService ingredientService;
 
-    public void createOrder(String name, List<Position> positions) {
-        this.orderService.createOrder(name, positions);
+    public void createOrder(String name, List<MenuItem> menuItems) {
+        this.orderService.createOrder(name, menuItems);
     }
 
-    public List<Position> getAllMenuItems() {
-        return this.positionService.getAllMenuItems();
+    public List<MenuItem> getAllMenuItems() {
+        return this.menuItemService.getAllMenuItems();
     }
 
     public List<KitchenDisplayInfoDto> getAvailableDisplaysData() {
@@ -78,8 +78,8 @@ public class ViewService {
         this.orderService.cancelOrderItem(orderItemId);
     }
 
-    public void addItemToOrder(Long orderId, Position position) {
-        this.orderService.createOrderItem(orderId, position);
+    public void addItemToOrder(Long orderId, MenuItem menuItem) {
+        this.orderService.createOrderItem(orderId, menuItem);
     }
 
     public void cancelOrder(Long orderId){
@@ -90,8 +90,8 @@ public class ViewService {
         return OrderItemDto.builder()
             .id(item.getId())
             .orderId(item.getOrder().getId())
-            .name(item.getPosition().getName())
-            .ingredients(this.ingredientService.getPositionIngredients(item.getPosition().getId()))
+            .name(item.getMenuItem().getName())
+            .ingredients(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId()))
             .status(item.getStatus())
             .createdAt(item.getStatusUpdatedAt())
             .build();

@@ -31,8 +31,8 @@ public class IngredientService {
 //        );
 //    }
 
-    public List<IngredientDTO> getPositionIngredients(Long positionId) {
-        return this.ingredientCache.getOrDefault(positionId, List.of()).stream()
+    public List<IngredientDTO> getMenuItemIngredients(Long menuItemId) {
+        return this.ingredientCache.getOrDefault(menuItemId, List.of()).stream()
                 .map(ingredient -> IngredientDTO.builder()
                                 .name(ingredient.getName())
 //                            .stationId(ingredient.getStationId()) //TODO from recipe

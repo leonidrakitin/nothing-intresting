@@ -321,7 +321,7 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                  name: position_id
+                  name: menu_item_id
                   type: BIGINT
               - column:
                   constraints:
@@ -365,7 +365,7 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                  name: position_id
+                  name: menu_item_id
                   type: BIGINT
               - column:
                   constraints:
@@ -632,7 +632,7 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                  name: init_amount
+                  name: final_amount
                   type: FLOAT8
               - column:
                   constraints:
@@ -678,7 +678,7 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
-                  name: init_amount
+                  name: final_amount
                   type: FLOAT8
               - column:
                   constraints:
@@ -733,7 +733,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     primaryKey: true
-                    primaryKeyName: recipe_item_aud_pkey
+                    primaryKeyName: recipe_menu_item_aud_pkey
                   name: rev
                   type: INTEGER
               - column:
@@ -745,13 +745,13 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     primaryKey: true
-                    primaryKeyName: recipe_item_aud_pkey
+                    primaryKeyName: recipe_menu_item_aud_pkey
                   name: id
                   type: BIGINT
               - column:
                   constraints:
                     nullable: false
-                  name: position_id
+                  name: menu_item_id
                   type: BIGINT
               - column:
                   constraints:
@@ -768,7 +768,7 @@ databaseChangeLog:
                     nullable: false
                   name: source_type
                   type: VARCHAR(255)
-            tableName: recipe_item_aud
+            tableName: recipe_menu_item_aud
   - changeSet:
       id: 1736598409360-15
       author: admin (generated)
@@ -799,13 +799,13 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     primaryKey: true
-                    primaryKeyName: recipe_item_pkey
+                    primaryKeyName: recipe_menu_item_pkey
                   name: id
                   type: BIGINT
               - column:
                   constraints:
                     nullable: false
-                  name: position_id
+                  name: menu_item_id
                   type: BIGINT
               - column:
                   constraints:
@@ -822,7 +822,7 @@ databaseChangeLog:
                     nullable: false
                   name: source_type
                   type: VARCHAR(255)
-            tableName: recipe_item
+            tableName: recipe_menu_item
   - changeSet:
       id: 1736598409360-16
       author: admin (generated)
@@ -1409,7 +1409,7 @@ databaseChangeLog:
                     nullable: false
                   name: name
                   type: VARCHAR(255)
-            tableName: item
+            tableName: menu_item
   - changeSet:
       id: 1736598409360-38
       author: admin (generated)
@@ -1445,7 +1445,7 @@ databaseChangeLog:
                     nullable: false
                   name: name
                   type: VARCHAR(255)
-            tableName: item_aud
+            TableName: menu_item_aud
   - changeSet:
       id: 1736598409360-39
       author: admin (generated)
@@ -1850,7 +1850,7 @@ databaseChangeLog:
       changes:
         - addForeignKeyConstraint:
             baseColumnNames: rev
-            baseTableName: item_aud
+            baseTableName: menu_item_aud
             constraintName: fk_item_aud_rev_revinfo_rev
             deferrable: false
             initiallyDeferred: false
@@ -1910,7 +1910,7 @@ databaseChangeLog:
       changes:
         - addForeignKeyConstraint:
             baseColumnNames: flow_id
-            baseTableName: item
+            baseTableName: menu_item
             constraintName: fk_item_flow_id_prepack_id
             deferrable: false
             initiallyDeferred: false
@@ -1924,15 +1924,15 @@ databaseChangeLog:
       author: admin (generated)
       changes:
         - addForeignKeyConstraint:
-            baseColumnNames: position_id
-            baseTableName: recipe_item
-            constraintName: fk_recipe_item_position_id_flow_id
+            baseColumnNames: menu_item_id
+            baseTableName: recipe_menu_item
+            constraintName: fk_recipe_menu_item_menu_item_id_flow_id
             deferrable: false
             initiallyDeferred: false
             onDelete: NO ACTION
             onUpdate: NO ACTION
             referencedColumnNames: id
-            referencedTableName: item
+            referencedTableName: menu_item
             validate: true
   - changeSet:
       id: 1736598409360-58
@@ -1954,15 +1954,15 @@ databaseChangeLog:
       author: admin (generated)
       changes:
         - addForeignKeyConstraint:
-            baseColumnNames: position_id
+            baseColumnNames: menu_item_id
             baseTableName: order_item
-            constraintName: fk_order_item_position_id_revinfo_rev
+            constraintName: fk_order_item_menu_item_id_revinfo_rev
             deferrable: false
             initiallyDeferred: false
             onDelete: NO ACTION
             onUpdate: NO ACTION
             referencedColumnNames: id
-            referencedTableName: item
+            referencedTableName: menu_item
             validate: true
   - changeSet:
       id: 1736598409360-60
@@ -2075,8 +2075,8 @@ databaseChangeLog:
       changes:
         - addForeignKeyConstraint:
             baseColumnNames: rev
-            baseTableName: recipe_item_aud
-            constraintName: fk_recipe_item_aud_rev_revinfo_rev
+            baseTableName: recipe_menu_item_aud
+            constraintName: fk_recipe_menu_item_aud_rev_revinfo_rev
             deferrable: false
             initiallyDeferred: false
             onDelete: NO ACTION

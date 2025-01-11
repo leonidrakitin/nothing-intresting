@@ -3,7 +3,7 @@ package ru.sushi.delivery.kds.domain.persist.entity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import ru.sushi.delivery.kds.domain.persist.entity.product.Position;
+import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 
 import java.util.List;
 
@@ -13,5 +13,5 @@ import java.util.List;
 public class ItemSet {
     private final Long id;
     private final String name;
-    private final List<Position> positions;
+    private final List<MenuItem> menuItems;
 }

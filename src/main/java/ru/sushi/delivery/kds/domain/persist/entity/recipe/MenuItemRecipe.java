@@ -17,28 +17,28 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
-import ru.sushi.delivery.kds.domain.persist.entity.product.Position;
+import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 
 @Audited
 @AuditOverride(forClass = Recipe.class)
 @Entity
-@Table(name = "recipe_item")
+@Table(name = "recipe_menu_item")
 @Getter
 @Setter
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor(force = true)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class PositionRecipe extends Recipe {
+public class MenuItemRecipe extends Recipe {
 
     @Id
-    @SequenceGenerator(name = "position_recipe_id_seq_gen", sequenceName = "position_recipe_id_generator", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "position_recipe_id_seq_gen")
+    @SequenceGenerator(name = "menu_item_recipe_id_seq_gen", sequenceName = "menu_item_recipe_id_generator", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "menu_item_recipe_id_seq_gen")
     private Long id;
 
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
-    @JoinColumn(name = "position_id")
-    private Position position;
+    @JoinColumn(name = "menu_item_id")
+    private MenuItem menuItem;
 
     /**
      * <p>ID станции, на которой становится виден ингридиент.</p>

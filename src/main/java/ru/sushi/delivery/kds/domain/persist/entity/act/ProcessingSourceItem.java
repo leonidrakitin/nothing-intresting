@@ -50,14 +50,14 @@ public class ProcessingSourceItem {
     @Enumerated(EnumType.STRING)
     private SourceType sourceType;
 
-    private Double initAmount;
+    private Double finalAmount;
 
     public static ProcessingSourceItem of(ProcessingAct processingAct, ProcessingSourceItemDto item) {
         return ProcessingSourceItem.builder()
                 .processingAct(processingAct)
                 .sourceId(item.getSourceId())
                 .sourceType(item.getSourceType())
-                .initAmount(item.getInitAmount())
+                .finalAmount(item.getFinalAmount())
                 .build();
     }
 }

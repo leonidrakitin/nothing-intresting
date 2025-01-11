@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
-import ru.sushi.delivery.kds.domain.persist.entity.product.Position;
+import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 
 import java.time.Instant;
@@ -45,8 +45,8 @@ public class OrderItem {
 
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
-    @JoinColumn(name = "position_id")
-    private Position position;
+    @JoinColumn(name = "menu_item_id")
+    private MenuItem menuItem;
 
     @Builder.Default
     private Integer currentFlowStep = 1;
@@ -61,10 +61,10 @@ public class OrderItem {
     @Builder.Default
     private Instant stationChangedAt = Instant.now();
 
-    public static OrderItem of(Order order, Position position) {
+    public static OrderItem of(Order order, MenuItem menuItem) {
         return OrderItem.builder()
                 .order(order)
-                .position(position)
+                .menuItem(menuItem)
                 .build();
     }
 }

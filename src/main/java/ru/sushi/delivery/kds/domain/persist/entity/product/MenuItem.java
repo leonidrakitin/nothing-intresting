@@ -20,13 +20,13 @@ import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 
 @Audited
 @Entity
-@Table(name = "item")
+@Table(name = "menu_item")
 @Getter
 @Setter
 @Builder(toBuilder = true)
 @NoArgsConstructor(force = true)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class Position {
+public class MenuItem {
 
     @Id
     @SequenceGenerator(name = "ingredient_id_seq_gen", sequenceName = "ingredient_id_generator", allocationSize = 1)

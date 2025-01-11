@@ -9,7 +9,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.FlowStep;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
-import ru.sushi.delivery.kds.domain.persist.entity.product.Position;
+import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
@@ -42,23 +42,23 @@ public class OrderService {
     private final RecipeService recipeService;
 
     public void calculateOrderBalance(Order order) {
-        List<Long> orderPositionIds = order.getOrderItems().stream()
-                .map(OrderItem::getPosition)
-                .map(Position::getId)
+        List<Long> orderMenuItemIds = order.getOrderItems().stream()
+                .map(OrderItem::getMenuItem)
+                .map(MenuItem::getId)
                 .toList();
-        this.recipeService.calculatePositionsBalance(orderPositionIds);
+        this.recipeService.calculateMenuItemsBalance(orderMenuItemIds);
     }
 
-    public void createOrder(String name, List<Position> positions) {
+    public void createOrder(String name, List<MenuItem> menuItems) {
         Order order = orderRepository.save(Order.of(name));
 
         List<OrderItem> orderItems = new ArrayList<>();
         Set<FlowStep> flowSteps = new HashSet<>();
-        for (Position position : positions) {
-            OrderItem orderItem = OrderItem.of(order, position);
+        for (MenuItem menuItem : menuItems) {
+            OrderItem orderItem = OrderItem.of(order, menuItem);
             orderItems.add(orderItem);
             flowSteps.add(this.flowCacheService.getStep(
-                orderItem.getPosition().getFlow().getId(),
+                orderItem.getMenuItem().getFlow().getId(),
                 orderItem.getCurrentFlowStep()
             ));
         }
@@ -79,12 +79,12 @@ public class OrderService {
         Integer doneStepOrder = null;
         for (OrderItem orderItem : this.getOrderItems(orderId)) {
             FlowStep step = this.flowCacheService.getStep(
-                    orderItem.getPosition().getFlow().getId(),
+                    orderItem.getMenuItem().getFlow().getId(),
                     orderItem.getCurrentFlowStep()
             );
 
             if (doneStepOrder == null) {
-                doneStepOrder = this.flowCacheService.getDoneStep(orderItem.getPosition().getFlow().getId()).getStepOrder();
+                doneStepOrder = this.flowCacheService.getDoneStep(orderItem.getMenuItem().getFlow().getId()).getStepOrder();
             }
 
             if (step.getStepType() != FlowStepType.FINAL_STEP) {
@@ -123,7 +123,7 @@ public class OrderService {
         };
         if (orderItem.getStatus() == OrderItemStationStatus.COMPLETED) {
             FlowStep nextFlowStep = this.flowCacheService.getNextStep(
-                orderItem.getPosition().getFlow().getId(),
+                orderItem.getMenuItem().getFlow().getId(),
                 orderItem.getCurrentFlowStep()
             );
             orderItem = orderItem.toBuilder()
@@ -191,8 +191,8 @@ public class OrderService {
                 .map(orderItem -> OrderItemDto.builder()
                                 .id(orderItem.getId())
                                 .orderId(order.getId())
-                                .name(orderItem.getPosition().getName())
-                                .ingredients(this.ingredientService.getPositionIngredients(orderItem.getPosition().getId()))
+                                .name(orderItem.getMenuItem().getName())
+                                .ingredients(this.ingredientService.getMenuItemIngredients(orderItem.getMenuItem().getId()))
                                 .status(orderItem.getStatus())
                                 .currentStation(this.getStationFromOrderItem(orderItem))
                                 .createdAt(orderItem.getStatusUpdatedAt())
@@ -203,7 +203,7 @@ public class OrderService {
 
     private Station getStationFromOrderItem(OrderItem orderItem) {
         return this.flowCacheService.getStep(
-                        orderItem.getPosition().getFlow().getId(),
+                        orderItem.getMenuItem().getFlow().getId(),
                         orderItem.getCurrentFlowStep()
                 )
                 .getStation();
@@ -219,11 +219,11 @@ public class OrderService {
                 .ifPresent(orderItemRepository::save);
     }
 
-    public void createOrderItem(Long orderId, Position position) {
+    public void createOrderItem(Long orderId, MenuItem menuItem) {
         orderItemRepository.save(
                 OrderItem.builder()
                         .order(Order.of(orderId))
-                        .position(position)
+                        .menuItem(menuItem)
                         .build()
         );
     }

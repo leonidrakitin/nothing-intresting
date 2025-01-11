@@ -9,5 +9,5 @@ import ru.sushi.delivery.kds.model.SourceType;
 public class ProcessingSourceItemDto {
     private final Long sourceId;
     private final SourceType sourceType;
-    private final Double initAmount;
+    private final Double finalAmount;
 }

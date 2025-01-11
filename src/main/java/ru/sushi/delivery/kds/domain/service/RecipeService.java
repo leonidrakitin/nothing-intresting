@@ -10,7 +10,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.product.SourceItem;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.Recipe;
 import ru.sushi.delivery.kds.domain.persist.repository.product.IngredientItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.product.PrepackItemRepository;
-import ru.sushi.delivery.kds.domain.persist.repository.recipe.PositionRecipeRepository;
+import ru.sushi.delivery.kds.domain.persist.repository.recipe.MenuItemRecipeRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.recipe.PrepackRecipeRepository;
 import ru.sushi.delivery.kds.dto.PrepackRecipeItemDto;
 import ru.sushi.delivery.kds.model.DiscontinuedReason;
@@ -29,7 +29,7 @@ public class RecipeService {
 
     private final IngredientItemRepository ingredientItemRepository;
     private final IngredientItemService ingredientItemService;
-    private final PositionRecipeRepository positionRecipeRepository;
+    private final MenuItemRecipeRepository menuItemRecipeRepository;
     private final PrepackRecipeRepository prepackRecipeRepository;
     private final PrepackItemRepository prepackItemRepository;
     private final PrepackItemService prepackItemService;
@@ -101,15 +101,15 @@ public class RecipeService {
     }
 
     @Transactional
-    public void calculatePositionsBalance(List<Long> positionIds) {
-        List<Recipe> positionRecipes = this.positionRecipeRepository.findByPositionIds(positionIds);
-        positionRecipes.forEach(this::calculateRecipe);
-        this.checkAndNotifyIfAlmostFinished(positionRecipes);
+    public void calculateMenuItemsBalance(List<Long> menuItemIds) {
+        List<Recipe> menuItemRecipes = this.menuItemRecipeRepository.findByMenuItemIds(menuItemIds);
+        menuItemRecipes.forEach(this::calculateRecipe);
+        this.checkAndNotifyIfAlmostFinished(menuItemRecipes);
     }
 
-    private void checkAndNotifyIfAlmostFinished(List<Recipe> positionRecipes) {
+    private void checkAndNotifyIfAlmostFinished(List<Recipe> menuItemRecipes) {
         Set<SourceItem> checkedSourceItems = new HashSet<>();
-        ListIterator<Recipe> recipeIterator = positionRecipes.listIterator();
+        ListIterator<Recipe> recipeIterator = menuItemRecipes.listIterator();
         while (recipeIterator.hasNext()) {
             Recipe recipe = recipeIterator.next();
             if (recipe.getSourceType() == SourceType.PREPACK) {
