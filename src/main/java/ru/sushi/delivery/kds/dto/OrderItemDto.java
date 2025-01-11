@@ -2,8 +2,7 @@ package ru.sushi.delivery.kds.dto;
 
 import lombok.Builder;
 import lombok.Data;
-import ru.sushi.delivery.kds.domain.persist.entity.Ingredient;
-import ru.sushi.delivery.kds.domain.persist.entity.Station;
+import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 
 import java.time.Instant;

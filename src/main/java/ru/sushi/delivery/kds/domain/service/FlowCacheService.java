@@ -3,8 +3,8 @@ package ru.sushi.delivery.kds.domain.service;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.domain.persist.entity.FlowStep;
-import ru.sushi.delivery.kds.domain.persist.repository.FlowStepRepository;
+import ru.sushi.delivery.kds.domain.persist.entity.flow.FlowStep;
+import ru.sushi.delivery.kds.domain.persist.repository.flow.FlowStepRepository;
 
 import java.util.HashMap;
 import java.util.List;

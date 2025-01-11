@@ -3,16 +3,15 @@ package ru.sushi.delivery.kds.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.domain.persist.entity.Ingredient;
-import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
-import ru.sushi.delivery.kds.domain.persist.entity.Screen;
-import ru.sushi.delivery.kds.domain.persist.entity.Station;
+import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
+import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
+import ru.sushi.delivery.kds.domain.persist.entity.product.Position;
 import ru.sushi.delivery.kds.domain.service.FlowCacheService;
-import ru.sushi.delivery.kds.domain.service.IngredientCacheService;
-import ru.sushi.delivery.kds.domain.service.ItemService;
+import ru.sushi.delivery.kds.domain.service.IngredientService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
+import ru.sushi.delivery.kds.domain.service.PositionService;
 import ru.sushi.delivery.kds.domain.service.ScreenService;
 import ru.sushi.delivery.kds.dto.IngredientDTO;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
@@ -30,16 +29,16 @@ public class ViewService {
 
     private final OrderService orderService;
     private final ScreenService screenService;
-    private final ItemService itemService;
-    private final IngredientCacheService ingredientCacheService;
+    private final PositionService positionService;
+    private final IngredientService ingredientService;
     private final FlowCacheService flowCacheService;
 
-    public void createOrder(String name, List<Item> items) {
-        this.orderService.createOrder(name, items);
+    public void createOrder(String name, List<Position> positions) {
+        this.orderService.createOrder(name, positions);
     }
 
-    public List<Item> getAllMenuItems() {
-        return this.itemService.getAllMenuItems();
+    public List<Position> getAllMenuItems() {
+        return this.positionService.getAllMenuItems();
     }
 
     public List<KitchenDisplayInfoDto> getAvailableDisplaysData() {
@@ -91,8 +90,8 @@ public class ViewService {
         orderService.cancelOrderItem(orderItemId);
     }
 
-    public void addItemToOrder(Long orderId, Item item) {
-        orderService.createOrderItem(orderId, item);
+    public void addItemToOrder(Long orderId, Position position) {
+        orderService.createOrderItem(orderId, position);
     }
 
     public void cancelOrder(Long orderId){
@@ -104,21 +103,21 @@ public class ViewService {
             .map(orderItem -> OrderItemDto.builder()
                 .id(orderItem.getId())
                 .orderId(order.getId())
-                .name(orderItem.getItem().getName())
+                .name(orderItem.getPosition().getName())
                 .ingredients(
-                    this.ingredientCacheService
-                        .getItemIngredients(orderItem.getItem().getId())
+                    this.ingredientService
+                        .getItemIngredients(orderItem.getPosition().getId())
                         .stream()
                         .map(ingredient -> IngredientDTO.builder()
                             .name(ingredient.getName())
-                            .stationId(ingredient.getStationId())
+//                            .stationId(ingredient.getStationId()) //TODO from recipe
                             .build()
                         )
                         .toList()
                 )
                 .status(orderItem.getStatus())
                 .currentStation(this.flowCacheService.getStep(
-                            orderItem.getItem().getFlow().getId(),
+                            orderItem.getPosition().getFlow().getId(),
                             orderItem.getCurrentFlowStep()
                         )
                         .getStation()
@@ -133,12 +132,12 @@ public class ViewService {
         return OrderItemDto.builder()
             .id(item.getId())
             .orderId(item.getOrder().getId())
-            .name(item.getItem().getName())
+            .name(item.getPosition().getName())
             .ingredients(
-                this.ingredientCacheService.getItemIngredients(item.getItem().getId()).stream()
+                this.ingredientService.getItemIngredients(item.getPosition().getId()).stream()
                     .map(ingredient -> IngredientDTO.builder()
                         .name(ingredient.getName())
-                        .stationId(ingredient.getStationId())
+//                        .stationId(ingredient.getStationId()) //todo from recipe
                         .build()
                     )
                     .toList()

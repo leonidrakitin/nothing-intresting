@@ -2,8 +2,8 @@ package ru.sushi.delivery.kds.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.domain.persist.entity.Screen;
-import ru.sushi.delivery.kds.domain.persist.repository.ScreenRepository;
+import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
+import ru.sushi.delivery.kds.domain.persist.repository.flow.ScreenRepository;
 
 import java.util.Collection;
 import java.util.Optional;

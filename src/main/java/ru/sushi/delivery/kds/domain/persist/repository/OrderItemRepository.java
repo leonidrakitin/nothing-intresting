@@ -14,8 +14,8 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     @Query("""
             select o from OrderItem o
-            left join Item i on i.id = o.item.id
-            left join FlowStep step on step.flow.id = i.flow.id and step.stepOrder = o.currentFlowStep
+            left join Position p on p.id = o.position.id
+            left join FlowStep step on step.flow.id = p.flow.id and step.stepOrder = o.currentFlowStep
             where step.station.id = :stationId
             order by o.stationChangedAt
     """)

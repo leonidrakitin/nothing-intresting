@@ -17,8 +17,8 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.persist.entity.Item;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemSet;
+import ru.sushi.delivery.kds.domain.persist.entity.product.Position;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 @Route("create")
 public class CreateOrderView extends HorizontalLayout implements BroadcastListener {
 
-    private final List<Item> chosenItems = new ArrayList<>();
+    private final List<Position> chosenPositions = new ArrayList<>();
     private final ViewService viewService;
     private final CashListener cashListener;
 
@@ -45,15 +45,15 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     private final VerticalLayout setsTabLayout = new VerticalLayout();
 
     // Grids слева
-    private final Grid<Item> rollsGrid = new Grid<>(Item.class, false);
+    private final Grid<Position> rollsGrid = new Grid<>(Position.class, false);
     private final Grid<ItemSet> setsGrid = new Grid<>(ItemSet.class, false);
 
     // Списки из BusinessLogic (исходный список)
-    private final List<Item> menuItems;
+    private final List<Position> menuPositions;
     private final List<ItemSet> menuItemSets;
 
     // Таблица «Корзины» (справа, первая вкладка)
-    private final Grid<Item> chosenGrid = new Grid<>(Item.class, false);
+    private final Grid<Position> chosenGrid = new Grid<>(Position.class, false);
 
     // Таблица «Все заказы» (справа, вторая вкладка)
     private final Grid<OrderFullDto> ordersGrid = new Grid<>(OrderFullDto.class, false);
@@ -73,7 +73,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         getStyle().set("gap", "20px");
 
         // Загружаем списки из бизнес-логики
-        this.menuItems = viewService.getAllMenuItems(); // Роллы
+        this.menuPositions = viewService.getAllMenuItems(); // Роллы
         this.menuItemSets = List.of();                  // Сеты (пример, для иллюстрации)
 
         // ----------------------------
@@ -110,23 +110,23 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         rollsSearchField.addValueChangeListener(e -> {
             String searchValue = e.getValue().trim().toLowerCase();
             if (searchValue.isEmpty()) {
-                rollsGrid.setItems(menuItems);
+                rollsGrid.setItems(menuPositions);
             } else {
                 rollsGrid.setItems(
-                    menuItems.stream()
+                    menuPositions.stream()
                         .filter(item -> item.getName().toLowerCase().contains(searchValue))
                         .collect(Collectors.toList())
                 );
             }
         });
 
-        rollsGrid.setItems(menuItems);
-        rollsGrid.addColumn(Item::getName).setHeader("Наименование");
+        rollsGrid.setItems(menuPositions);
+        rollsGrid.addColumn(Position::getName).setHeader("Наименование");
         rollsGrid.setWidthFull();
         rollsGrid.addItemClickListener(e -> {
-            Item clickedItem = e.getItem();
-            chosenItems.add(clickedItem);
-            Notification.show("Добавлен: " + clickedItem.getName());
+            Position clickedPosition = e.getItem();
+            chosenPositions.add(clickedPosition);
+            Notification.show("Добавлен: " + clickedPosition.getName());
             chosenGrid.getDataProvider().refreshAll();
         });
 
@@ -158,7 +158,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsGrid.setWidthFull();
         setsGrid.addItemClickListener(e -> {
             ItemSet clickedSet = e.getItem();
-            chosenItems.addAll(clickedSet.getItems());
+            chosenPositions.addAll(clickedSet.getPositions());
             Notification.show("Добавлен сет: " + clickedSet.getName());
             chosenGrid.getDataProvider().refreshAll();
         });
@@ -223,15 +223,15 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         cartLayout.setWidthFull();
 
         H3 chosenTitle = new H3("Корзина:");
-        chosenGrid.addColumn(Item::getName).setHeader("Наименование");
-        chosenGrid.setItems(chosenItems);
+        chosenGrid.addColumn(Position::getName).setHeader("Наименование");
+        chosenGrid.setItems(chosenPositions);
 
         Button createOrderButton = new Button("Создать заказ");
         Button clearCartButton = new Button("Очистить корзину");
         HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, clearCartButton);
 
         createOrderButton.addClickListener(e -> {
-            if (chosenItems.isEmpty()) {
+            if (chosenPositions.isEmpty()) {
                 Notification.show("Корзина пуста, нельзя создать заказ");
                 return;
             }
@@ -244,18 +244,18 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             }
 
             // Создаём заказ
-            viewService.createOrder(orderNumber, chosenItems);
+            viewService.createOrder(orderNumber, chosenPositions);
             Notification.show("Заказ создан! Номер: " + orderNumber +
-                ", Позиции: " + chosenItems.size());
+                ", Позиции: " + chosenPositions.size());
 
             // Очищаем корзину
-            chosenItems.clear();
+            chosenPositions.clear();
             chosenGrid.getDataProvider().refreshAll();
             orderNumberField.clear();
         });
 
         clearCartButton.addClickListener(e -> {
-            chosenItems.clear();
+            chosenPositions.clear();
             chosenGrid.getDataProvider().refreshAll();
             Notification.show("Корзина очищена");
         });
@@ -437,9 +437,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         rollSearchField.setPlaceholder("Введите название...");
         rollSearchField.setValueChangeMode(ValueChangeMode.EAGER);
 
-        Grid<Item> rollsGrid = new Grid<>(Item.class, false);
+        Grid<Position> rollsGrid = new Grid<>(Position.class, false);
         rollsGrid.setWidthFull();
-        rollsGrid.addColumn(Item::getName).setHeader("Наименование");
+        rollsGrid.addColumn(Position::getName).setHeader("Наименование");
 
         // Добавляем колонку с кнопкой «Добавить»
         rollsGrid.addComponentColumn(item -> {
@@ -454,16 +454,16 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             return addButton;
         }).setHeader("Действие");
 
-        rollsGrid.setItems(menuItems); // Изначально все
+        rollsGrid.setItems(menuPositions); // Изначально все
 
         // Фильтрация при вводе
         rollSearchField.addValueChangeListener(ev -> {
             String search = ev.getValue().toLowerCase().trim();
             if (search.isEmpty()) {
-                rollsGrid.setItems(menuItems);
+                rollsGrid.setItems(menuPositions);
             } else {
                 rollsGrid.setItems(
-                    menuItems.stream()
+                    menuPositions.stream()
                         .filter(item -> item.getName().toLowerCase().contains(search))
                         .collect(Collectors.toList())
                 );
@@ -487,7 +487,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsGrid.addComponentColumn(set -> {
             Button addButton = new Button("Добавить");
             addButton.addClickListener(click -> {
-                for (Item i : set.getItems()) {
+                for (Position i : set.getPositions()) {
                     viewService.addItemToOrder(orderId, i);
                 }
                 Notification.show("Добавлен сет: " + set.getName());

@@ -2,8 +2,8 @@ package ru.sushi.delivery.kds.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.domain.persist.entity.Station;
-import ru.sushi.delivery.kds.domain.persist.repository.StationRepository;
+import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
+import ru.sushi.delivery.kds.domain.persist.repository.flow.StationRepository;
 import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.util.Collection;
