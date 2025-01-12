@@ -54,11 +54,12 @@ public class InvoiceActItem {
 
     private Double price;
 
-    public static InvoiceActItem of(InvoiceAct invoiceAct, InvoiceActItemDto item) {
+    public static InvoiceActItem of(SourceType sourceType, InvoiceAct invoiceAct, InvoiceActItemDto item) {
         return InvoiceActItem.builder()
+                .id(item.getId())
                 .price(item.getPrice())
                 .amount(item.getAmount())
-                .sourceType(item.getSourceType())
+                .sourceType(sourceType)
                 .sourceId(item.getSourceId())
                 .invoiceAct(invoiceAct)
                 .build();

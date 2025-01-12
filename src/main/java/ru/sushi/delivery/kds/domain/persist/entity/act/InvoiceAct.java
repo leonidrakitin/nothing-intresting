@@ -18,7 +18,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
-import ru.sushi.delivery.kds.dto.act.InvoiceActDto;
+import ru.sushi.delivery.kds.domain.controller.dto.InvoiceActDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +39,8 @@ public class InvoiceAct extends Act {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "invoice_act_id_seq_gen")
     private Long id;
 
+    private String vendor;
+
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @OneToMany(mappedBy = "invoiceAct", fetch = FetchType.LAZY)
     @Builder.Default
@@ -46,8 +48,10 @@ public class InvoiceAct extends Act {
 
     public static InvoiceAct of(InvoiceActDto invoiceData) {
         return InvoiceAct.builder()
+                .id(invoiceData.getId())
                 .employeeId(invoiceData.getEmployeeId())
                 .name(invoiceData.getName())
+                .vendor(invoiceData.getVendor())
                 .build();
     }
 }

@@ -2,7 +2,6 @@ package ru.sushi.delivery.kds.domain.persist.entity.recipe;
 
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,9 +19,6 @@ import ru.sushi.delivery.kds.model.SourceType;
 @MappedSuperclass
 public abstract class Recipe {
 
-    @Id
-    private Long id;
-
     private Long sourceId;
 
     @Enumerated(EnumType.STRING)
@@ -37,4 +33,6 @@ public abstract class Recipe {
 
     @Builder.Default
     private Double lossesPercentage = 0.0;
+
+    public abstract Long getId();
 }

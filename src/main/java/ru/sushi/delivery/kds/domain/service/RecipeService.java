@@ -8,8 +8,6 @@ import ru.sushi.delivery.kds.domain.persist.entity.product.IngredientItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.PrepackItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.SourceItem;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.Recipe;
-import ru.sushi.delivery.kds.domain.persist.repository.product.IngredientItemRepository;
-import ru.sushi.delivery.kds.domain.persist.repository.product.PrepackItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.recipe.MenuItemRecipeRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.recipe.PrepackRecipeRepository;
 import ru.sushi.delivery.kds.dto.PrepackRecipeItemDto;
@@ -27,19 +25,11 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class RecipeService {
 
-    private final IngredientItemRepository ingredientItemRepository;
     private final IngredientItemService ingredientItemService;
     private final MenuItemRecipeRepository menuItemRecipeRepository;
     private final PrepackRecipeRepository prepackRecipeRepository;
-    private final PrepackItemRepository prepackItemRepository;
     private final PrepackItemService prepackItemService;
-
-    public List<SourceItem> getSourceItems(Long sourceId, SourceType sourceType) {
-        return switch (sourceType) {
-            case INGREDIENT -> this.ingredientItemRepository.findActiveByIngredientId(sourceId);
-            case PREPACK -> this.prepackItemRepository.findActiveByPrepackId(sourceId);
-        };
-    }
+    private final SourceService sourceService;
 
     public List<PrepackRecipeItemDto> getPrepackRecipe(Long prepackId) {
         return this.prepackRecipeRepository.findByPrepackId(prepackId).stream()
@@ -56,7 +46,7 @@ public class RecipeService {
         sourceItem.setDiscontinuedComment(String.format(
                 "%s '%s' был списан сотрудником %s по причине 'продукт испорчен'",
                 sourceItem.getSourceType().getValue(),
-                this.getSourceItemName(sourceItem),
+                this.sourceService.getSourceItemName(sourceItem),
                 employeeName
         ));
         log.info(sourceItem.getDiscontinuedComment());
@@ -68,7 +58,7 @@ public class RecipeService {
         sourceItem.setDiscontinuedComment(String.format(
                 "%s '%s' был списан сотрудником %s по причине %s",
                 sourceItem.getSourceType().getValue(),
-                this.getSourceItemName(sourceItem),
+                this.sourceService.getSourceItemName(sourceItem),
                 employeeName,
                 reason
         ));
@@ -85,13 +75,13 @@ public class RecipeService {
                 item.setDiscontinuedComment(String.format(
                         "%s '%s' автоматически был списан системой",
                         item.getSourceType().getValue(),
-                        this.getSourceItemName(item)
+                        this.sourceService.getSourceItemName(item)
                 ));
             } else {
                 item.setDiscontinuedComment(String.format(
                         "%s '%s' автоматически был списан в минус системой",
                         item.getSourceType().getValue(),
-                        this.getSourceItemName(item)
+                        this.sourceService.getSourceItemName(item)
                 ));
                 item.setDiscontinuedComment("Закончился при приготовлении  (авто)");
             }
@@ -116,7 +106,8 @@ public class RecipeService {
                 this.prepackRecipeRepository.findByPrepackId(recipe.getSourceId())
                         .forEach(recipeIterator::add);
             }
-            SourceItem sourceItem = this.getSourceItems(recipe.getSourceId(), recipe.getSourceType()).getFirst();
+            SourceItem sourceItem = this.sourceService.getSourceActiveItems(recipe.getSourceId(), recipe.getSourceType())
+                    .getFirst();
             if (checkedSourceItems.contains(sourceItem)) {
                 continue;
             }
@@ -129,7 +120,10 @@ public class RecipeService {
 
     private void calculateRecipe(Recipe recipe) {
         double spentAmount = recipe.getInitAmount();
-        ListIterator<SourceItem> sourceItems = this.getSourceItems(recipe.getSourceId(), recipe.getSourceType())
+        ListIterator<SourceItem> sourceItems = this.sourceService.getSourceActiveItems(
+                        recipe.getSourceId(),
+                        recipe.getSourceType()
+                )
                 .listIterator();
 
         while (spentAmount > 0) {
@@ -149,13 +143,6 @@ public class RecipeService {
             case PREPACK -> this.prepackItemService.checkIfAlmostEmpty(
                     ((PrepackItem) sourceItem).getPrepack()
             );
-        };
-    }
-
-    private String getSourceItemName(SourceItem sourceItem) {
-        return switch (sourceItem.getSourceType()) {
-            case INGREDIENT -> ((IngredientItem) sourceItem).getIngredient().getName();
-            case PREPACK -> ((PrepackItem) sourceItem).getPrepack().getName();
         };
     }
 }

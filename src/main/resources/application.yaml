@@ -5,8 +5,10 @@ vaadin:
   launch-browser: true
 server:
 #  address: 192.168.0.15
+  address: 192.168.0.6
   port: 8000
   servlet:
+#    context-path: /api/v1
     encoding:
       charset: UTF-8
       enabled: true
@@ -21,8 +23,8 @@ spring:
     database: postgresql
     show-sql: true
     hibernate:
-      ddl-auto: validate
-    #      ddl-auto: create-drop
+#      ddl-auto: validate
+#      ddl-auto: create-drop
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -31,5 +33,5 @@ spring:
           new_generator_mappings: false
           optimizer: none
   liquibase:
-    enabled: true
+    enabled: false
     change-log: classpath:/liquibase/db.changelog-master.yaml

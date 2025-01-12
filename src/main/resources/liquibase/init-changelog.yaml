@@ -45,10 +45,8 @@ databaseChangeLog:
                   name: amount
                   type: FLOAT8
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_reason
-                  type: SMALLINT
+                  type: VARCHAR(255)
               - column:
                   constraints:
                     nullable: false
@@ -65,10 +63,8 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: source_type
-                  type: SMALLINT
+                  type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: barcode
                   type: BIGINT
               - column:
@@ -76,16 +72,15 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: expiration_date
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -103,19 +98,14 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_comment
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: ingredient_item_aud
@@ -131,18 +121,14 @@ databaseChangeLog:
                   name: amount
                   type: FLOAT8
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_reason
-                  type: SMALLINT
+                  type: VARCHAR(255)
               - column:
                   constraints:
                     nullable: false
                   name: source_type
-                  type: SMALLINT
+                  type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: barcode
                   type: BIGINT
               - column:
@@ -150,16 +136,15 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: expiration_date
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -177,19 +162,14 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_comment
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: ingredient_item
@@ -328,11 +308,13 @@ databaseChangeLog:
                     nullable: false
                   name: station_changed_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
                   name: status_updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -372,11 +354,13 @@ databaseChangeLog:
                     nullable: false
                   name: station_changed_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
                   name: status_updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -406,6 +390,7 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -418,6 +403,7 @@ databaseChangeLog:
                     nullable: false
                   name: status_update_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -440,6 +426,7 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -452,6 +439,7 @@ databaseChangeLog:
                     nullable: false
                   name: status_update_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -475,10 +463,8 @@ databaseChangeLog:
                   name: amount
                   type: FLOAT8
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_reason
-                  type: SMALLINT
+                  type: VARCHAR(255)
               - column:
                   constraints:
                     nullable: false
@@ -495,10 +481,8 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: source_type
-                  type: SMALLINT
+                  type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: barcode
                   type: BIGINT
               - column:
@@ -506,16 +490,17 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
                   name: expiration_date
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -533,19 +518,14 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_comment
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: prepack_item_aud
@@ -561,18 +541,14 @@ databaseChangeLog:
                   name: amount
                   type: FLOAT8
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_reason
-                  type: SMALLINT
+                  type: VARCHAR(255)
               - column:
                   constraints:
                     nullable: false
                   name: source_type
-                  type: SMALLINT
+                  type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: barcode
                   type: BIGINT
               - column:
@@ -580,16 +556,15 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: expiration_date
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -607,19 +582,14 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: discontinued_comment
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: prepack_item
@@ -958,162 +928,6 @@ databaseChangeLog:
                   type: VARCHAR(255)
             tableName: station
   - changeSet:
-      id: 1736598409360-19
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: employee_id_generator
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-20
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: flow_id_generator
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-21
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: flow_step_id_generator
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-22
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: ingredient_id_generator
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-23
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: invoice_act_item_id_generator
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-24
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: measurement_id_generator
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-25
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: orders_id_generator
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-26
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: orders_item_id_generator
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-27
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: processing_act_item_id_generator
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-28
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 50
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: revinfo_seq
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-29
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: screen_id_generator
-            startValue: 1
-  - changeSet:
-      id: 1736598409360-30
-      author: admin (generated)
-      changes:
-        - createSequence:
-            cacheSize: 1
-            cycle: false
-            dataType: bigint
-            incrementBy: 1
-            maxValue: 9223372036854775807
-            minValue: 1
-            sequenceName: station_id_generator
-            startValue: 1
-  - changeSet:
       id: 1736598409360-31
       author: admin (generated)
       changes:
@@ -1177,6 +991,7 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -1194,9 +1009,8 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
@@ -1205,8 +1019,6 @@ databaseChangeLog:
                   name: name
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: ingredient
@@ -1243,6 +1055,7 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -1260,9 +1073,8 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
@@ -1271,8 +1083,6 @@ databaseChangeLog:
                   name: name
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: ingredient_aud
@@ -1287,14 +1097,14 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
                   name: date
                   type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: employee_id
                   type: BIGINT
               - column:
@@ -1309,19 +1119,19 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
                   constraints:
                     nullable: false
+                  name: vendor
+                  type: VARCHAR(255)
+              - column:
                   name: name
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: invoice_act
@@ -1348,14 +1158,14 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
                   name: date
                   type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: employee_id
                   type: BIGINT
               - column:
@@ -1370,19 +1180,19 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
                   constraints:
                     nullable: false
+                  name: vendor
+                  type: VARCHAR(255)
+              - column:
                   name: name
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: invoice_act_aud
@@ -1486,6 +1296,7 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -1503,9 +1314,8 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
@@ -1514,8 +1324,6 @@ databaseChangeLog:
                   name: name
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: prepack
@@ -1552,6 +1360,7 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
@@ -1569,9 +1378,8 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
@@ -1580,8 +1388,6 @@ databaseChangeLog:
                   name: name
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: prepack_aud
@@ -1601,14 +1407,14 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
                   name: date
                   type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: employee_id
                   type: BIGINT
               - column:
@@ -1628,9 +1434,8 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
@@ -1639,8 +1444,6 @@ databaseChangeLog:
                   name: name
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: processing_act
@@ -1672,14 +1475,14 @@ databaseChangeLog:
                     nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
                   constraints:
                     nullable: false
                   name: date
                   type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: employee_id
                   type: BIGINT
               - column:
@@ -1699,9 +1502,8 @@ databaseChangeLog:
                     nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: created_by
                   type: VARCHAR(255)
               - column:
@@ -1710,8 +1512,6 @@ databaseChangeLog:
                   name: name
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_by
                   type: VARCHAR(255)
             tableName: processing_act_aud
@@ -2191,3 +1991,323 @@ databaseChangeLog:
             constraintName: uq_employee_name
             columnNames: name
             tableName: employee
+
+  - changeSet:
+      id: 1736698435075-19
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: employee_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: employee
+            columnName: id
+            defaultValueComputed: "nextval('employee_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-20
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: flow_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: flow
+            columnName: id
+            defaultValueComputed: "nextval('flow_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-21
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: flow_step_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: flow_step
+            columnName: id
+            defaultValueComputed: "nextval('flow_step_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-22
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: ingredient_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: ingredient
+            columnName: id
+            defaultValueComputed: "nextval('ingredient_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-23
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: ingredient_item_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: ingredient_item
+            columnName: id
+            defaultValueComputed: "nextval('ingredient_item_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-24
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: invoice_act_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: invoice_act
+            columnName: id
+            defaultValueComputed: "nextval('invoice_act_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-25
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: invoice_act_item_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: invoice_act_item
+            columnName: id
+            defaultValueComputed: "nextval('invoice_act_item_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-26
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: measurement_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: measurement
+            columnName: id
+            defaultValueComputed: "nextval('measurement_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-27
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: menu_item_recipe_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: recipe_menu_item
+            columnName: id
+            defaultValueComputed: "nextval('menu_item_recipe_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-28
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: orders_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: orders
+            columnName: id
+            defaultValueComputed: "nextval('orders_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-29
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: orders_item_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: order_item
+            columnName: id
+            defaultValueComputed: "nextval('orders_item_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-30
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: prepack_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: prepack
+            columnName: id
+            defaultValueComputed: "nextval('prepack_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-31
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: prepack_item_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: prepack_item
+            columnName: id
+            defaultValueComputed: "nextval('prepack_item_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-32
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: prepack_recipe_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: recipe_prepack
+            columnName: id
+            defaultValueComputed: "nextval('prepack_recipe_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-33
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: processing_act_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: processing_act
+            columnName: id
+            defaultValueComputed: "nextval('processing_act_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-34
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: processing_act_item_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: processing_act_item
+            columnName: id
+            defaultValueComputed: "nextval('processing_act_item_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-35
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 50
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: revinfo_seq
+            startValue: 1
+  - changeSet:
+      id: 1736698435075-36
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: screen_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: screen
+            columnName: id
+            defaultValueComputed: "nextval('screen_id_generator'::regclass)"
+  - changeSet:
+      id: 1736698435075-37
+      author: admin (generated)
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: station_id_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: station
+            columnName: id
+            defaultValueComputed: "nextval('station_id_generator'::regclass)"

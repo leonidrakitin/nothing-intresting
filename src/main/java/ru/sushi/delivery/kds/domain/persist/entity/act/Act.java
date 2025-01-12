@@ -1,6 +1,5 @@
 package ru.sushi.delivery.kds.domain.persist.entity.act;
 
-import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,9 +19,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public abstract class Act {
 
-    @Id
-    private Long id;
-
     private Long employeeId;
 
     private String name;
@@ -39,4 +35,6 @@ public abstract class Act {
     private Instant createdAt = Instant.now();
 
     private String createdBy;
+
+    public abstract Long getId();
 }

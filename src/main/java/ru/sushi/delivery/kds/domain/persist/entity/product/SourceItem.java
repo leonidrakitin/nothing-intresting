@@ -1,6 +1,7 @@
 package ru.sushi.delivery.kds.domain.persist.entity.product;
 
-import jakarta.persistence.Id;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.MappedSuperclass;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,9 +22,7 @@ import java.time.Instant;
 @AllArgsConstructor
 public abstract class SourceItem {
 
-    @Id
-    private Long id;
-
+    @Enumerated(EnumType.STRING)
     private SourceType sourceType;
 
     private Long barcode;
@@ -36,6 +35,7 @@ public abstract class SourceItem {
 
     private String discontinuedComment;
 
+    @Enumerated(EnumType.STRING)
     private DiscontinuedReason discontinuedReason;
 
     @Builder.Default
@@ -47,4 +47,6 @@ public abstract class SourceItem {
     private String updatedBy;
 
     private String createdBy;
+
+    public abstract Long getId();
 }
