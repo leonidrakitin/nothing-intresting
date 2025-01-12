@@ -34,6 +34,6 @@ public class ProcessingController {
 
     @PostMapping("/delete/{processingActId}")
     public void saveProcessing(final long processingActId) {
-        this.actService.deleteProcessingAct(processingActId);
+//        this.actService.deleteProcessingAct(processingActId);
     }
 }

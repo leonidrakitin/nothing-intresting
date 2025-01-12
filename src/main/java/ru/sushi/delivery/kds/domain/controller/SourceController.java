@@ -16,12 +16,12 @@ public class SourceController {
 
     private final SourceService sourceService;
 
-    @GetMapping
+    @GetMapping("/all")
     public List<SourceDto> getAllSources() {
         return this.sourceService.getAllSources();
     }
 
-    @GetMapping
+    @GetMapping("/prepacks")
     public List<SourceDto> getAllPrepacks() {
         return this.sourceService.getAllSources();
     }

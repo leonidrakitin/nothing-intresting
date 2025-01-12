@@ -58,10 +58,10 @@ public class ProcessingSourceItem {
                 .sourceId(item.getSourceId())
                 .sourceType(item.getSourceType())
                 .finalAmount(item.getFinalAmount())
-                .initAmount(item.getInitAmount()) //todo add new fields !!!!audit + table
-                .lossesAmount(item.getLossesAmount()) //todo add new fields !!!!audit + table
-                .lossesPercentage(item.getLossesPercentage()) //todo add new fields !!!!audit + table
-                .finalAmount(item.getFinalAmount())
+//                .initAmount(item.getInitAmount()) //todo add new fields !!!!audit + table
+//                .lossesAmount(item.getLossesAmount()) //todo add new fields !!!!audit + table
+//                .lossesPercentage(item.getLossesPercentage()) //todo add new fields !!!!audit + table
+//                .finalAmount(item.getFinalAmount())
                 .build();
     }
 }
