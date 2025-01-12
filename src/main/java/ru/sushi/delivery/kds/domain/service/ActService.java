@@ -71,6 +71,11 @@ public class ActService {
     }
 
     @Transactional
+    public void deleteInvoiceAct(long invoiceId) {
+        this.invoiceActRepository.deleteById(invoiceId);
+    }
+
+    @Transactional
     public void saveInvoiceAct(InvoiceActDto invoiceData) {
         List<InvoiceActItem> invoiceActItems = new ArrayList<>();
         List<IngredientItem> ingredientItems = new ArrayList<>();
