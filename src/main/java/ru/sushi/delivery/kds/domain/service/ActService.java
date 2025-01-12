@@ -50,6 +50,7 @@ public class ActService {
     private final PrepackItemService prepackItemService;
     private final ProcessingActRepository processingActRepository;
     private final ProcessingSourceItemRepository processingSourceItemRepository;
+    private final RecipeService recipeService;
     private final EmployeeService employeeService;
 
     @Transactional
@@ -119,34 +120,18 @@ public class ActService {
 
     @Transactional
     public void createProcessingAct(ProcessingActDto processingData) {
-        List<ProcessingSourceItem> processingSourceItems = new ArrayList<>();
-        List<IngredientItem> ingredientItems = new ArrayList<>();
-        List<PrepackItem> prepackItems = new ArrayList<>();
-
-        Employee employee = this.employeeService.get(processingData.getEmployeeId());
-
         Prepack targetPrepack = this.prepackService.get(processingData.getPrepackId());
-        PrepackItem targetPrepackItem = PrepackItem.of(targetPrepack, processingData);
+        this.prepackItemRepository.save(PrepackItem.of(targetPrepack, processingData));
 
         ProcessingAct processingAct = ProcessingAct.of(targetPrepack, processingData);
+        this.processingActRepository.save(processingAct);
 
+        List<ProcessingSourceItem> processingSourceItems = new ArrayList<>();
         for (PrepackRecipeItemDto item : processingData.getItemDataList()) {
             processingSourceItems.add(ProcessingSourceItem.of(processingAct, item));
-            if (item.getSourceType() == SourceType.INGREDIENT) {
-                IngredientItem ingredientItem = this.ingredientItemService.get(item.getSourceId());
-                ingredientItems.add(this.updateIngredientItemBalance(ingredientItem, item, employee));
-            } else if (item.getSourceType() == SourceType.PREPACK) {
-                PrepackItem prepackItem = this.prepackItemService.get(item.getSourceId());
-                prepackItems.add(this.updatePrepackItem(prepackItem, item, employee));
-            } else {
-                throw new UnsupportedOperationException("Unsupported source type: " + item.getSourceType());
-            }
+            this.recipeService.writeOffSourceItems(item.getFinalAmount(), item.getSourceId(), item.getSourceType());
         }
-        this.prepackItemRepository.save(targetPrepackItem);
-        this.processingActRepository.save(processingAct);
         this.processingSourceItemRepository.saveAll(processingSourceItems);
-        this.ingredientItemRepository.saveAll(ingredientItems);
-        this.prepackItemRepository.saveAll(prepackItems);
     }
 
     private double calculateBalanceIfPossible(

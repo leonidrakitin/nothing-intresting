@@ -16,6 +16,7 @@ import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
@@ -91,6 +92,18 @@ public class RecipeService {
     }
 
     @Transactional
+    public void writeOffSourceItems(double spentAmount, Long sourceId, SourceType sourceType) {
+        Iterator<SourceItem> itemIterator = this.sourceService.getSourceActiveItems(sourceId, sourceType).iterator();
+        while (spentAmount > 0) {
+            if (!itemIterator.hasNext()) {
+                log.error("Unexpected behaviour spent amount was not write-off = " + spentAmount);
+                return;
+            }
+            spentAmount = this.writeOffFinishedItem(itemIterator.next(), spentAmount, itemIterator.hasNext());
+        }
+    }
+
+    @Transactional
     public void calculateMenuItemsBalance(List<Long> menuItemIds) {
         List<Recipe> menuItemRecipes = this.menuItemRecipeRepository.findByMenuItemIds(menuItemIds);
         menuItemRecipes.forEach(this::calculateRecipe);
@@ -120,19 +133,7 @@ public class RecipeService {
 
     private void calculateRecipe(Recipe recipe) {
         double spentAmount = recipe.getInitAmount();
-        ListIterator<SourceItem> sourceItems = this.sourceService.getSourceActiveItems(
-                        recipe.getSourceId(),
-                        recipe.getSourceType()
-                )
-                .listIterator();
-
-        while (spentAmount > 0) {
-            if (!sourceItems.hasNext()) {
-                log.error("Unexpected behaviour recipe spent amount was not write-off");
-                return;
-            }
-            spentAmount = this.writeOffFinishedItem(sourceItems.next(), spentAmount, sourceItems.hasNext());
-        }
+        this.writeOffSourceItems(spentAmount, recipe.getSourceId(), recipe.getSourceType());
     }
 
     private boolean checkIfAlmostFinished(SourceItem sourceItem) {
