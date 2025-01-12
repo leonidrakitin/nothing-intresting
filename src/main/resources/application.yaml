@@ -23,7 +23,7 @@ spring:
     database: postgresql
     show-sql: true
     hibernate:
-#      ddl-auto: validate
+      ddl-auto: validate
 #      ddl-auto: create-drop
     properties:
       hibernate:
@@ -33,5 +33,5 @@ spring:
           new_generator_mappings: false
           optimizer: none
   liquibase:
-    enabled: false
+    enabled: true
     change-log: classpath:/liquibase/db.changelog-master.yaml

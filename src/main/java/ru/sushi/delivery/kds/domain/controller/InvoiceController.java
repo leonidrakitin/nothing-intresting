@@ -3,6 +3,7 @@ package ru.sushi.delivery.kds.domain.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,7 +28,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/{invoiceId}")
-    public InvoiceActDto getInvoice(final long invoiceId) {
+    public InvoiceActDto getInvoice(@PathVariable final Long invoiceId) {
         return this.actService.getInvoice(invoiceId);
     }
 

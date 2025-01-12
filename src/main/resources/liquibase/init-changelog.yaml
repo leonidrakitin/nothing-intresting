@@ -1003,8 +1003,8 @@ databaseChangeLog:
                   name: measurement_unit_id
                   type: BIGINT
               - column:
-                name: pieceInGrams
-                type: BIGINT
+                  name: piece_in_grams
+                  type: BIGINT
               - column:
                   constraints:
                     nullable: false
@@ -1084,7 +1084,7 @@ databaseChangeLog:
                   name: name
                   type: VARCHAR(255)
               - column:
-                  name: pieceInGrams
+                  name: piece_in_grams
                   type: BIGINT
               - column:
                   name: updated_by

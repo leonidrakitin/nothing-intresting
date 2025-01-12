@@ -11,6 +11,7 @@ import java.util.List;
 @Getter
 @RequiredArgsConstructor
 public class GetInvoicesResponse {
+    private final Long id;
     private final String vendor;
     private final LocalDate date;
     private final Double totalCost;
@@ -21,6 +22,7 @@ public class GetInvoicesResponse {
         Double totalCost = invoiceActItems.stream().mapToDouble(InvoiceActItem::getPrice).sum();
         int totalSize = invoiceActItems.size();
         return new GetInvoicesResponse(
+                invoiceAct.getId(),
                 invoiceAct.getVendor(),
                 invoiceAct.getDate().toLocalDate(),
                 totalCost,

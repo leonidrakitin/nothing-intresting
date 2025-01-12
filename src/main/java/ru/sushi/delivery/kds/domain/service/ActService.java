@@ -11,8 +11,6 @@ import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeItemDto;
 import ru.sushi.delivery.kds.domain.controller.dto.ProcessingActDto;
 import ru.sushi.delivery.kds.domain.controller.dto.request.GetInvoicesRequest;
 import ru.sushi.delivery.kds.domain.controller.dto.response.GetInvoicesResponse;
-import ru.sushi.delivery.kds.domain.persist.entity.Employee;
-import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.act.InvoiceAct;
 import ru.sushi.delivery.kds.domain.persist.entity.act.InvoiceActItem;
 import ru.sushi.delivery.kds.domain.persist.entity.act.ProcessingAct;
@@ -30,7 +28,6 @@ import ru.sushi.delivery.kds.domain.persist.repository.product.PrepackItemReposi
 import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
 import ru.sushi.delivery.kds.model.SourceType;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -43,15 +40,13 @@ public class ActService {
     private final InvoiceActRepository invoiceActRepository;
     private final InvoiceActItemRepository invoiceActItemRepository;
     private final IngredientItemRepository ingredientItemRepository;
-    private final IngredientItemService ingredientItemService;
     private final IngredientService ingredientService;
     private final PrepackItemRepository prepackItemRepository;
     private final PrepackService prepackService;
-    private final PrepackItemService prepackItemService;
     private final ProcessingActRepository processingActRepository;
     private final ProcessingSourceItemRepository processingSourceItemRepository;
     private final RecipeService recipeService;
-    private final EmployeeService employeeService;
+    private final SourceService sourceService;
 
     @Transactional
     public List<GetInvoicesResponse> getAllInvoices(GetInvoicesRequest request) {
@@ -71,7 +66,7 @@ public class ActService {
     @Transactional
     public InvoiceActDto getInvoice(long invoiceId) {
         return this.invoiceActRepository.findById(invoiceId)
-                .map(InvoiceActDto::of)
+                .map(this::buildInvoiceActDto)
                 .orElseThrow(() -> new NotFoundException("Invoice not found by id " + invoiceId));
     }
 
@@ -134,59 +129,26 @@ public class ActService {
         this.processingSourceItemRepository.saveAll(processingSourceItems);
     }
 
-    private double calculateBalanceIfPossible(
-            Double itemAmount,
-            Double spendAmount,
-            String name,
-            Measurement measurement
-    ) {
-        double balance = itemAmount - spendAmount;
-        if (balance < 0) {
-            throw new IllegalArgumentException(String.format(
-                    "There is not enough '%s' in warehouse, it's %.1f%s, needed %.1f%s",
-                    name,
-                    itemAmount,
-                    measurement.getName(),
-                    spendAmount,
-                    measurement.getName()
-            ));
-        }
-        return balance;
+    private InvoiceActDto buildInvoiceActDto(InvoiceAct invoiceAct) {
+        return new InvoiceActDto(
+                invoiceAct.getId(),
+                invoiceAct.getEmployeeId(),
+                invoiceAct.getName(),
+                invoiceAct.getVendor(),
+                invoiceAct.getDate().toLocalDate(),
+                invoiceAct.getInvoiceActItems().stream().map(this::buildInvoiceActItemDto).toList()
+        );
     }
 
-    private IngredientItem updateIngredientItemBalance(
-            IngredientItem ingredientItem,
-            PrepackRecipeItemDto item,
-            Employee employee
-    ) {
-        double balance = this.calculateBalanceIfPossible(
-                item.getInitAmount(),
-                item.getFinalAmount(),
-                ingredientItem.getIngredient().getName(),
-                ingredientItem.getIngredient().getMeasurementUnit()
+    private InvoiceActItemDto buildInvoiceActItemDto(InvoiceActItem invoiceItem) {
+        return new InvoiceActItemDto(
+                invoiceItem.getId(),
+                this.sourceService.getSourceItemName(invoiceItem.getSourceId(), invoiceItem.getSourceType()),
+                invoiceItem.getSourceId(),
+                invoiceItem.getSourceType().name(),
+                invoiceItem.getAmount(),
+                invoiceItem.getPrice(),
+                null
         );
-        return ingredientItem.toBuilder()
-                .amount(balance)
-                .updatedAt(Instant.now())
-                .updatedBy(employee.getName())
-                .build();
-    }
-
-    private PrepackItem updatePrepackItem(
-            PrepackItem prepackItem,
-            PrepackRecipeItemDto item,
-            Employee employee
-    ) {
-        double balance = this.calculateBalanceIfPossible(
-                item.getInitAmount(),
-                item.getFinalAmount(),
-                prepackItem.getPrepack().getName(),
-                prepackItem.getPrepack().getMeasurementUnit()
-        );
-        return prepackItem.toBuilder()
-                .amount(balance)
-                .updatedAt(Instant.now())
-                .updatedBy(employee.getName())
-                .build();
     }
 }

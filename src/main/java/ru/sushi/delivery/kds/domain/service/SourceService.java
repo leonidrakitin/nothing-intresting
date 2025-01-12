@@ -1,10 +1,12 @@
 package ru.sushi.delivery.kds.domain.service;
 
+import com.vaadin.flow.router.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
 import ru.sushi.delivery.kds.domain.persist.entity.product.IngredientItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.PrepackItem;
+import ru.sushi.delivery.kds.domain.persist.entity.product.Product;
 import ru.sushi.delivery.kds.domain.persist.entity.product.SourceItem;
 import ru.sushi.delivery.kds.domain.persist.repository.product.IngredientItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.product.IngredientRepository;
@@ -61,6 +63,15 @@ public class SourceService {
         return switch (sourceItem.getSourceType()) {
             case INGREDIENT -> ((IngredientItem) sourceItem).getIngredient().getName();
             case PREPACK -> ((PrepackItem) sourceItem).getPrepack().getName();
+        };
+    }
+
+    public String getSourceItemName(Long sourceId, SourceType sourceType) {
+        return switch (sourceType) {
+            case INGREDIENT -> this.ingredientRepository.findById(sourceId).map(Product::getName)
+                    .orElseThrow(() -> new NotFoundException("Ingredient not found by id " + sourceId));
+            case PREPACK -> this.prepackRepository.findById(sourceId).map(Product::getName)
+                    .orElseThrow(() -> new NotFoundException("Prepack not found by " + sourceId));
         };
     }
 }
