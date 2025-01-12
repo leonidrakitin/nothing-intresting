@@ -20,8 +20,8 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
+import ru.sushi.delivery.kds.domain.controller.dto.ProcessingActDto;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Prepack;
-import ru.sushi.delivery.kds.dto.act.ProcessingActDto;
 
 import java.util.ArrayList;
 import java.util.List;

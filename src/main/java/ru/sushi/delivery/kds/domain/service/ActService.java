@@ -7,6 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.controller.dto.InvoiceActDto;
+import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeItemDto;
+import ru.sushi.delivery.kds.domain.controller.dto.ProcessingActDto;
 import ru.sushi.delivery.kds.domain.controller.dto.request.GetInvoicesRequest;
 import ru.sushi.delivery.kds.domain.controller.dto.response.GetInvoicesResponse;
 import ru.sushi.delivery.kds.domain.persist.entity.Employee;
@@ -26,8 +28,6 @@ import ru.sushi.delivery.kds.domain.persist.repository.act.ProcessingSourceItemR
 import ru.sushi.delivery.kds.domain.persist.repository.product.IngredientItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.product.PrepackItemRepository;
 import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
-import ru.sushi.delivery.kds.dto.act.ProcessingActDto;
-import ru.sushi.delivery.kds.dto.act.ProcessingSourceItemDto;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
@@ -130,26 +130,14 @@ public class ActService {
 
         ProcessingAct processingAct = ProcessingAct.of(targetPrepack, processingData);
 
-        for (ProcessingSourceItemDto item : processingData.getItemDataList()) {
+        for (PrepackRecipeItemDto item : processingData.getItemDataList()) {
             processingSourceItems.add(ProcessingSourceItem.of(processingAct, item));
             if (item.getSourceType() == SourceType.INGREDIENT) {
                 IngredientItem ingredientItem = this.ingredientItemService.get(item.getSourceId());
-                double balance = this.calculateBalanceIfPossible(
-                        ingredientItem.getAmount(),
-                        processingAct,
-                        ingredientItem.getIngredient().getName(),
-                        ingredientItem.getIngredient().getMeasurementUnit()
-                );
-                ingredientItems.add(this.updateIngredientItem(ingredientItem, balance, employee));
+                ingredientItems.add(this.updateIngredientItemBalance(ingredientItem, item, employee));
             } else if (item.getSourceType() == SourceType.PREPACK) {
                 PrepackItem prepackItem = this.prepackItemService.get(item.getSourceId());
-                double balance = this.calculateBalanceIfPossible(
-                        prepackItem.getAmount(),
-                        processingAct,
-                        prepackItem.getPrepack().getName(),
-                        prepackItem.getPrepack().getMeasurementUnit()
-                );
-                prepackItems.add(this.updatePrepackItem(prepackItem, balance, employee));
+                prepackItems.add(this.updatePrepackItem(prepackItem, item, employee));
             } else {
                 throw new UnsupportedOperationException("Unsupported source type: " + item.getSourceType());
             }
@@ -163,20 +151,35 @@ public class ActService {
 
     private double calculateBalanceIfPossible(
             Double itemAmount,
-            ProcessingAct processingData,
+            Double spendAmount,
             String name,
             Measurement measurement
     ) {
-        double balance = itemAmount - processingData.getAmount();
+        double balance = itemAmount - spendAmount;
         if (balance < 0) {
             throw new IllegalArgumentException(String.format(
-                    "There is not enough '%s' in warehouse, it's %.1f%s", name, itemAmount, measurement.getName()
+                    "There is not enough '%s' in warehouse, it's %.1f%s, needed %.1f%s",
+                    name,
+                    itemAmount,
+                    measurement.getName(),
+                    spendAmount,
+                    measurement.getName()
             ));
         }
         return balance;
     }
 
-    private IngredientItem updateIngredientItem(IngredientItem ingredientItem, double balance, Employee employee) {
+    private IngredientItem updateIngredientItemBalance(
+            IngredientItem ingredientItem,
+            PrepackRecipeItemDto item,
+            Employee employee
+    ) {
+        double balance = this.calculateBalanceIfPossible(
+                item.getInitAmount(),
+                item.getFinalAmount(),
+                ingredientItem.getIngredient().getName(),
+                ingredientItem.getIngredient().getMeasurementUnit()
+        );
         return ingredientItem.toBuilder()
                 .amount(balance)
                 .updatedAt(Instant.now())
@@ -184,7 +187,17 @@ public class ActService {
                 .build();
     }
 
-    private PrepackItem updatePrepackItem(PrepackItem prepackItem, double balance, Employee employee) {
+    private PrepackItem updatePrepackItem(
+            PrepackItem prepackItem,
+            PrepackRecipeItemDto item,
+            Employee employee
+    ) {
+        double balance = this.calculateBalanceIfPossible(
+                item.getInitAmount(),
+                item.getFinalAmount(),
+                prepackItem.getPrepack().getName(),
+                prepackItem.getPrepack().getMeasurementUnit()
+        );
         return prepackItem.toBuilder()
                 .amount(balance)
                 .updatedAt(Instant.now())

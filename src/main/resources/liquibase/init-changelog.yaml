@@ -934,8 +934,6 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
-                  constraints:
-                    nullable: false
                   name: salary
                   type: FLOAT8
               - column:
@@ -1004,6 +1002,9 @@ databaseChangeLog:
                     nullable: false
                   name: measurement_unit_id
                   type: BIGINT
+              - column:
+                name: pieceInGrams
+                type: BIGINT
               - column:
                   constraints:
                     nullable: false
@@ -1082,6 +1083,9 @@ databaseChangeLog:
                     nullable: false
                   name: name
                   type: VARCHAR(255)
+              - column:
+                  name: pieceInGrams
+                  type: BIGINT
               - column:
                   name: updated_by
                   type: VARCHAR(255)

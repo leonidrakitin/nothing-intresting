@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
-import ru.sushi.delivery.kds.dto.act.ProcessingSourceItemDto;
+import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeItemDto;
 import ru.sushi.delivery.kds.model.SourceType;
 
 @Audited
@@ -52,11 +52,15 @@ public class ProcessingSourceItem {
 
     private Double finalAmount;
 
-    public static ProcessingSourceItem of(ProcessingAct processingAct, ProcessingSourceItemDto item) {
+    public static ProcessingSourceItem of(ProcessingAct processingAct, PrepackRecipeItemDto item) {
         return ProcessingSourceItem.builder()
                 .processingAct(processingAct)
                 .sourceId(item.getSourceId())
                 .sourceType(item.getSourceType())
+                .finalAmount(item.getFinalAmount())
+                .initAmount(item.getInitAmount()) //todo add new fields !!!!audit + table
+                .lossesAmount(item.getLossesAmount()) //todo add new fields !!!!audit + table
+                .lossesPercentage(item.getLossesPercentage()) //todo add new fields !!!!audit + table
                 .finalAmount(item.getFinalAmount())
                 .build();
     }

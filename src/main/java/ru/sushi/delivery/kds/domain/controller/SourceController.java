@@ -20,4 +20,9 @@ public class SourceController {
     public List<SourceDto> getAllSources() {
         return this.sourceService.getAllSources();
     }
+
+    @GetMapping
+    public List<SourceDto> getAllPrepacks() {
+        return this.sourceService.getAllSources();
+    }
 }

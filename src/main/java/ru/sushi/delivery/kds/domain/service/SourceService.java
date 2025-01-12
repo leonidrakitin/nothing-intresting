@@ -41,6 +41,15 @@ public class SourceService {
         ).toList();
     }
 
+    public List<SourceDto> getAllPrepacks() {
+        return this.prepackRepository.findAll().stream()
+                .map(prepack -> new SourceDto(
+                        prepack.getId(),
+                        prepack.getName(),
+                        SourceType.PREPACK.name()
+                )).toList();
+    }
+
     public List<SourceItem> getSourceActiveItems(Long sourceId, SourceType sourceType) {
         return switch (sourceType) {
             case INGREDIENT -> this.ingredientItemRepository.findActiveByIngredientId(sourceId);

@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: employee.INSERT.12.01.25
+      author: rakitin
+      changes:
+        - insert:
+            tableName: employee
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: "Кичигин Д."

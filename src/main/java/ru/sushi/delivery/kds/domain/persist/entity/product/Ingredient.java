@@ -30,4 +30,6 @@ public class Ingredient extends Product {
     @SequenceGenerator(name = "ingredient_id_seq_gen", sequenceName = "ingredient_id_generator", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "ingredient_id_seq_gen")
     private Long id;
+
+    private Long pieceInGrams;
 }

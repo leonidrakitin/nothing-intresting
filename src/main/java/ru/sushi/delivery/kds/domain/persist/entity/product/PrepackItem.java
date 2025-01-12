@@ -17,8 +17,8 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
+import ru.sushi.delivery.kds.domain.controller.dto.ProcessingActDto;
 import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
-import ru.sushi.delivery.kds.dto.act.ProcessingActDto;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
