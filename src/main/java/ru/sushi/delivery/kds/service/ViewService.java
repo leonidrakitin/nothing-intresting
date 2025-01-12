@@ -7,6 +7,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.domain.service.FlowCacheService;
 import ru.sushi.delivery.kds.domain.service.IngredientService;
 import ru.sushi.delivery.kds.domain.service.MenuItemService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
@@ -28,6 +29,7 @@ public class ViewService {
     private final ScreenService screenService;
     private final MenuItemService menuItemService;
     private final IngredientService ingredientService;
+    private final FlowCacheService flowCacheService; //todo remove
 
     public void createOrder(String name, List<MenuItem> menuItems) {
         this.orderService.createOrder(name, menuItems);
@@ -45,11 +47,11 @@ public class ViewService {
         return kitchenDisplayData;
     }
 
-    public Optional<Long> getScreenStationIfExists(String screenId) {
+    public Optional<Long> getScreenStationIfExists(Long screenId) {
         return this.screenService.get(screenId).map(Screen::getStation).map(Station::getId);
     }
 
-    public List<OrderItemDto> getScreenOrderItems(String screenId) {
+    public List<OrderItemDto> getScreenOrderItems(Long screenId) {
         Screen screen = this.screenService.getOrThrow(screenId);
         return this.orderService.getAllItemsByStationId(screen.getStation().getId()).stream()
             .map(this::buildOrderItemDto)
@@ -88,12 +90,22 @@ public class ViewService {
 
     private OrderItemDto buildOrderItemDto(OrderItem item) {
         return OrderItemDto.builder()
-            .id(item.getId())
-            .orderId(item.getOrder().getId())
-            .name(item.getMenuItem().getName())
-            .ingredients(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId()))
-            .status(item.getStatus())
-            .createdAt(item.getStatusUpdatedAt())
-            .build();
+                .id(item.getId())
+                .orderId(item.getOrder().getId())
+                .name(item.getMenuItem().getName())
+                .ingredients(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId()))
+                .status(item.getStatus())
+                .createdAt(item.getStatusUpdatedAt())
+                //todo remove
+                .currentStation(
+                        this.flowCacheService.getStep(item.getMenuItem().getFlow().getId(), item.getCurrentFlowStep())
+                                .getStation()
+                )
+                //todo remove
+                .flowStepType(
+                        this.flowCacheService.getStep(item.getMenuItem().getFlow().getId(), item.getCurrentFlowStep())
+                                .getStepType()
+                )
+                .build();
     }
 }

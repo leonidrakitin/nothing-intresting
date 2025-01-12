@@ -14,11 +14,11 @@ public class ScreenService {
 
     private final ScreenRepository screenRepository;
 
-    public Optional<Screen> get(String id) {
+    public Optional<Screen> get(Long id) {
         return screenRepository.findById(id);
     }
 
-    public Screen getOrThrow(String id) {
+    public Screen getOrThrow(Long id) {
         return screenRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Screen not found"));
     }

@@ -8,10 +8,12 @@ import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.FlowStep;
+import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
+import ru.sushi.delivery.kds.domain.persist.repository.flow.ScreenRepository;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.model.FlowStepType;
@@ -21,6 +23,7 @@ import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
 import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
+import ru.sushi.delivery.kds.websocket.WSMessageSender;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -40,6 +43,8 @@ public class OrderService {
     private final OrderChangesListener orderChangesListener;
     private final OrderRepository orderRepository;
     private final RecipeService recipeService;
+    private final ScreenRepository screenRepository; //todo to service
+    private final WSMessageSender wsMessageSender;
 
     public void calculateOrderBalance(Order order) {
         List<Long> orderMenuItemIds = order.getOrderItems().stream()
@@ -63,10 +68,16 @@ public class OrderService {
             ));
         }
         orderItemRepository.saveAll(orderItems);
-        flowSteps.forEach(flowStep -> this.orderChangesListener.broadcast(
-                flowStep.getStation().getId(),
-                BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
-        ));
+        flowSteps.forEach(flowStep -> {
+            this.orderChangesListener.broadcast(
+                    flowStep.getStation().getId(),
+                    BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
+            );
+
+            Screen screen = this.screenRepository.findByStationId(flowStep.getStation().getId());
+            this.wsMessageSender.sendNotification(screen.getId(), "Новый заказ!");
+        });
+        this.wsMessageSender.sendRefreshAll();
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
@@ -102,6 +113,7 @@ public class OrderService {
         order = order.toBuilder().status(OrderStatus.READY).build();
         this.orderRepository.save(order);
 
+        this.wsMessageSender.sendRefreshAll();
     }
 
     @Transactional
@@ -147,6 +159,8 @@ public class OrderService {
         }
         this.orderItemRepository.save(orderItem);
         this.updateOrderStatus(orderItem.getOrder());
+
+        this.wsMessageSender.sendRefreshAll();
     }
 
     @Transactional
@@ -189,14 +203,15 @@ public class OrderService {
     private List<OrderItemDto> getOrderItemData(Order order) {
         return order.getOrderItems().stream()
                 .map(orderItem -> OrderItemDto.builder()
-                                .id(orderItem.getId())
-                                .orderId(order.getId())
-                                .name(orderItem.getMenuItem().getName())
-                                .ingredients(this.ingredientService.getMenuItemIngredients(orderItem.getMenuItem().getId()))
-                                .status(orderItem.getStatus())
-                                .currentStation(this.getStationFromOrderItem(orderItem))
-                                .createdAt(orderItem.getStatusUpdatedAt())
-                                .build()
+                        .id(orderItem.getId())
+                        .orderId(order.getId())
+                        .name(orderItem.getMenuItem().getName())
+                        .ingredients(this.ingredientService.getMenuItemIngredients(orderItem.getMenuItem().getId()))
+                        .status(orderItem.getStatus())
+                        .currentStation(this.getStationFromOrderItem(orderItem))
+                        .flowStepType(this.getStepTypeFromOrderItem(orderItem))
+                        .createdAt(orderItem.getStatusUpdatedAt())
+                        .build()
                 )
                 .toList();
     }
@@ -207,6 +222,14 @@ public class OrderService {
                         orderItem.getCurrentFlowStep()
                 )
                 .getStation();
+    }
+
+    private FlowStepType getStepTypeFromOrderItem(OrderItem orderItem) {
+        return this.flowCacheService.getStep(
+                        orderItem.getMenuItem().getFlow().getId(),
+                        orderItem.getCurrentFlowStep()
+                )
+                .getStepType();
     }
 
     public void cancelOrderItem(Long orderId) {
