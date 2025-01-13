@@ -588,7 +588,22 @@ databaseChangeLog:
               - column:
                   constraints:
                     nullable: false
+                  name: init_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
                   name: final_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_percentage
                   type: FLOAT8
               - column:
                   constraints:
@@ -635,6 +650,21 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: final_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: init_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_amount
+                  type: FLOAT8
+              - column:
+                  constraints:
+                    nullable: false
+                  name: losses_percentage
                   type: FLOAT8
               - column:
                   constraints:
@@ -1383,8 +1413,6 @@ databaseChangeLog:
                   name: created_by
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: name
                   type: VARCHAR(255)
               - column:

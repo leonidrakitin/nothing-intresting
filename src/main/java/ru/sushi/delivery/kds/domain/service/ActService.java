@@ -144,8 +144,13 @@ public class ActService {
 
         List<ProcessingSourceItem> processingSourceItems = new ArrayList<>();
         for (PrepackRecipeItemDto item : processingData.getItemDataList()) {
-            processingSourceItems.add(ProcessingSourceItem.of(processingAct, item));
-            this.recipeService.writeOffSourceItems(item.getFinalAmount(), item.getSourceId(), item.getSourceType());
+            SourceType sourceType = SourceType.valueOf(item.getSourceType());
+            processingSourceItems.add(ProcessingSourceItem.of(sourceType, processingAct, item));
+            this.recipeService.writeOffSourceItems(
+                    item.getFinalAmount(),
+                    item.getSourceId(),
+                    SourceType.valueOf(item.getSourceType())
+            );
         }
         this.processingSourceItemRepository.saveAll(processingSourceItems);
     }

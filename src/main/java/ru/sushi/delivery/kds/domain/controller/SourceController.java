@@ -23,6 +23,6 @@ public class SourceController {
 
     @GetMapping("/prepacks")
     public List<SourceDto> getAllPrepacks() {
-        return this.sourceService.getAllSources();
+        return this.sourceService.getAllPrepacks();
     }
 }

@@ -4,9 +4,6 @@ application:
 vaadin:
   launch-browser: true
 server:
-#  address: 192.168.0.15
-  address: 192.168.0.6
-  port: 8000
   servlet:
 #    context-path: /api/v1
     encoding:

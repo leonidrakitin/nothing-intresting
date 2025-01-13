@@ -3,6 +3,7 @@ package ru.sushi.delivery.kds.domain.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +24,7 @@ public class ProcessingController {
     private final RecipeService recipeService;
 
     @GetMapping("/recipe/{prepackId}")
-    public List<PrepackRecipeItemDto> getPrepackRecipe(final long prepackId) {
+    public List<PrepackRecipeItemDto> getPrepackRecipe(@PathVariable final Long prepackId) {
         return this.recipeService.getPrepackRecipe(prepackId);
     }
 
@@ -35,6 +36,6 @@ public class ProcessingController {
     //todo do not forget remove processing act items + prepack items
     @PostMapping("/delete/{processingActId}")
     public void saveProcessing(final long processingActId) {
-//        this.actService.deleteProcessingAct(processingActId);
+        //this.actService.deleteProcessingAct(processingActId);
     }
 }

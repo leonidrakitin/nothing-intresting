@@ -34,7 +34,10 @@ public class RecipeService {
 
     public List<PrepackRecipeItemDto> getPrepackRecipe(Long prepackId) {
         return this.prepackRecipeRepository.findByPrepackId(prepackId).stream()
-                .map(PrepackRecipeItemDto::of)
+                .map(recipe -> PrepackRecipeItemDto.of(
+                        this.sourceService.getSourceItemName(recipe.getSourceId(), recipe.getSourceType()),
+                        recipe
+                ))
                 .toList();
     }
 
@@ -96,8 +99,12 @@ public class RecipeService {
         Iterator<SourceItem> itemIterator = this.sourceService.getSourceActiveItems(sourceId, sourceType).iterator();
         while (spentAmount > 0) {
             if (!itemIterator.hasNext()) {
-                log.error("Unexpected behaviour spent amount was not write-off = " + spentAmount);
-                return;
+                throw new IllegalArgumentException(String.format(
+                        "Unexpected behaviour spent amount was not write-off, needed %f, sourceId %d, sourceType %s",
+                        spentAmount,
+                        sourceId,
+                        sourceType
+                ));
             }
             spentAmount = this.writeOffFinishedItem(itemIterator.next(), spentAmount, itemIterator.hasNext());
         }

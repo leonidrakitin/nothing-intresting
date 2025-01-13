@@ -52,16 +52,26 @@ public class ProcessingSourceItem {
 
     private Double finalAmount;
 
-    public static ProcessingSourceItem of(ProcessingAct processingAct, PrepackRecipeItemDto item) {
+    private Double initAmount;
+
+    private Double lossesAmount;
+
+    private Double lossesPercentage;
+
+    public static ProcessingSourceItem of(
+            SourceType sourceType,
+            ProcessingAct processingAct,
+            PrepackRecipeItemDto item
+    ) {
         return ProcessingSourceItem.builder()
                 .processingAct(processingAct)
                 .sourceId(item.getSourceId())
-                .sourceType(item.getSourceType())
+                .sourceType(sourceType)
                 .finalAmount(item.getFinalAmount())
-//                .initAmount(item.getInitAmount()) //todo add new fields !!!!audit + table
-//                .lossesAmount(item.getLossesAmount()) //todo add new fields !!!!audit + table
-//                .lossesPercentage(item.getLossesPercentage()) //todo add new fields !!!!audit + table
-//                .finalAmount(item.getFinalAmount())
+                .initAmount(item.getInitAmount()) //todo add new fields !!!!audit + table
+                .lossesAmount(item.getLossesAmount()) //todo add new fields !!!!audit + table
+                .lossesPercentage(item.getLossesPercentage()) //todo add new fields !!!!audit + table
+                .finalAmount(item.getFinalAmount())
                 .build();
     }
 }

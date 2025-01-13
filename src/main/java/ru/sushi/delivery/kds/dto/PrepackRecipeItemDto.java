@@ -18,11 +18,11 @@ public class PrepackRecipeItemDto {
     private final Double lossesAmount;
     private final Double lossesPercentage;
 
-    public static PrepackRecipeItemDto of(PrepackRecipe prepackRecipe) {
+    public static PrepackRecipeItemDto of(String name, PrepackRecipe prepackRecipe) {
         return PrepackRecipeItemDto.builder()
                 .sourceId(prepackRecipe.getSourceId())
                 .sourceType(prepackRecipe.getSourceType())
-                .name(prepackRecipe.getPrepack().getName())
+                .name(name)
                 .initAmount(prepackRecipe.getInitAmount())
                 .finalAmount(prepackRecipe.getFinalAmount())
                 .lossesAmount(prepackRecipe.getLossesAmount())
