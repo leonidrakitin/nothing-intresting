@@ -961,8 +961,6 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
-                  constraints:
-                    nullable: false
                   name: expiration_duration
                   type: numeric(21)
               - column:
@@ -1246,13 +1244,9 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
-                  constraints:
-                    nullable: false
                   name: expiration_duration
                   type: numeric(21)
               - column:
-                  constraints:
-                    nullable: false
                   name: notify_after_amount
                   type: FLOAT8
               - column:
