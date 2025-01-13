@@ -74,6 +74,7 @@ public class ActService {
 
     @Transactional
     public void deleteInvoiceAct(long invoiceId) {
+        // todo delete ingredients/prepack items that connected
         this.invoiceActItemRepository.deleteByInvoiceActId(invoiceId);
         this.invoiceActRepository.deleteById(invoiceId);
     }
@@ -88,7 +89,8 @@ public class ActService {
         this.invoiceActRepository.save(invoiceAct);
 
         Set<Long> currentActsItemIds = new HashSet<>(
-                this.invoiceActItemRepository.findAllByInvoiceActId(invoiceAct.getId()).stream()
+                this.invoiceActItemRepository.findAllByInvoiceActId(invoiceAct.getId())
+                        .stream()
                         .map(InvoiceActItem::getId)
                         .toList()
         );
@@ -97,45 +99,48 @@ public class ActService {
             throw new IllegalArgumentException("Item data is empty");
         }
 
-        for (InvoiceActItemDto item : invoiceData.getItemDataList()) {
-            SourceType sourceType = SourceType.valueOf(item.getSourceType());
-            invoiceActItems.add(InvoiceActItem.of(sourceType, invoiceAct, item));
+        for (InvoiceActItemDto itemActData : invoiceData.getItemDataList()) {
+            SourceType sourceType = SourceType.valueOf(itemActData.getSourceType());
+            InvoiceActItem itemAct = InvoiceActItem.of(sourceType, invoiceAct, itemActData);
+            invoiceActItems.add(itemAct);
             if (sourceType == SourceType.INGREDIENT) {
-                IngredientItem ingredientItem = Optional.ofNullable(item.getId())
+                IngredientItem ingredientItem = Optional.ofNullable(itemActData.getId())
                         .map(this.ingredientItemRepository::findById)
                         .flatMap(Function.identity())
                         .orElseGet(() -> {
-                            Ingredient ingredient = this.ingredientService.get(item.getSourceId());
-                            return IngredientItem.of(ingredient, item);
+                            Ingredient ingredient = this.ingredientService.get(itemActData.getSourceId());
+                            return IngredientItem.of(ingredient, itemActData, itemAct);
                         });
                 ingredientItems.add(ingredientItem);
             } else if (sourceType == SourceType.PREPACK) {
-                PrepackItem prepackItem = Optional.ofNullable(item.getId())
+                PrepackItem prepackItem = Optional.ofNullable(itemActData.getId())
                         .map(this.prepackItemRepository::findById)
                         .flatMap(Function.identity())
                         .orElseGet(() -> {
-                            Prepack prepack = this.prepackService.get(item.getSourceId());
-                            return PrepackItem.of(prepack, item);
+                            Prepack prepack = this.prepackService.get(itemActData.getSourceId());
+                            return PrepackItem.of(prepack, itemActData, itemAct);
                         });
                 prepackItems.add(prepackItem);
             } else {
-                throw new UnsupportedOperationException("Unsupported source type: " + item.getSourceType());
+                throw new UnsupportedOperationException("Unsupported source type: " + itemActData.getSourceType());
             }
-            currentActsItemIds.remove(item.getId());
+            currentActsItemIds.remove(itemActData.getId());
         }
         this.invoiceActItemRepository.saveAll(invoiceActItems);
         this.ingredientItemRepository.saveAll(ingredientItems);
         this.prepackItemRepository.saveAll(prepackItems);
+
         this.invoiceActItemRepository.deleteAllById(currentActsItemIds);
+        // todo delete ingredients/prepack items that connected
     }
 
     @Transactional
     public void createProcessingAct(ProcessingActDto processingData) {
         Prepack targetPrepack = this.prepackService.get(processingData.getPrepackId());
-        this.prepackItemRepository.save(PrepackItem.of(targetPrepack, processingData));
-
         ProcessingAct processingAct = ProcessingAct.of(targetPrepack, processingData);
         this.processingActRepository.save(processingAct);
+        PrepackItem prepackItem = PrepackItem.of(targetPrepack, processingData, processingAct);
+        this.prepackItemRepository.save(prepackItem);
 
         List<ProcessingSourceItem> processingSourceItems = new ArrayList<>();
         for (PrepackRecipeItemDto item : processingData.getItemDataList()) {

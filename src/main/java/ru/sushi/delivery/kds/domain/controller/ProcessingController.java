@@ -32,6 +32,7 @@ public class ProcessingController {
         this.actService.createProcessingAct(request);
     }
 
+    //todo do not forget remove processing act items + prepack items
     @PostMapping("/delete/{processingActId}")
     public void saveProcessing(final long processingActId) {
 //        this.actService.deleteProcessingAct(processingActId);

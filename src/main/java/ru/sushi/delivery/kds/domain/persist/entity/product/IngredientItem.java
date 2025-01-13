@@ -17,6 +17,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
+import ru.sushi.delivery.kds.domain.persist.entity.act.InvoiceActItem;
 import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
 import ru.sushi.delivery.kds.model.SourceType;
 
@@ -43,11 +44,12 @@ public class IngredientItem extends SourceItem {
     @JoinColumn(name = "ingredient_id", nullable = false)
     private Ingredient ingredient;
 
-    public static IngredientItem of(Ingredient ingredient, InvoiceActItemDto item) {
+    public static IngredientItem of(Ingredient ingredient, InvoiceActItemDto itemActDto, InvoiceActItem itemAct) {
         return IngredientItem.builder()
+                .invoiceActItem(itemAct)
                 .sourceType(SourceType.INGREDIENT)
-                .amount(item.getAmount())
-                .barcode(item.getBarcode())
+                .amount(itemActDto.getAmount())
+                .barcode(itemActDto.getBarcode())
                 .expirationDate(Instant.now().plus(ingredient.getExpirationDuration()))
                 .ingredient(ingredient)
                 .build();

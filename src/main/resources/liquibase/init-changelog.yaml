@@ -40,8 +40,6 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
-                  constraints:
-                    nullable: false
                   name: amount
                   type: FLOAT8
               - column:
@@ -60,16 +58,12 @@ databaseChangeLog:
                   name: revtype
                   type: SMALLINT
               - column:
-                  constraints:
-                    nullable: false
                   name: source_type
                   type: VARCHAR(255)
               - column:
                   name: barcode
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -89,13 +83,12 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: ingredient_id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
+                  name: invoice_act_item_id
+                  type: BIGINT
+              - column:
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -156,6 +149,9 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: ingredient_id
+                  type: BIGINT
+              - column:
+                  name: invoice_act_item_id
                   type: BIGINT
               - column:
                   constraints:
@@ -448,8 +444,6 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
-                  constraints:
-                    nullable: false
                   name: amount
                   type: FLOAT8
               - column:
@@ -468,16 +462,12 @@ databaseChangeLog:
                   name: revtype
                   type: SMALLINT
               - column:
-                  constraints:
-                    nullable: false
                   name: source_type
                   type: VARCHAR(255)
               - column:
                   name: barcode
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -486,8 +476,6 @@ databaseChangeLog:
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: expiration_date
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -499,13 +487,15 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: prepack_id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
+                  name: processing_act_id
+                  type: BIGINT
+              - column:
+                  name: invoice_act_item_id
+                  type: BIGINT
+              - column:
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -566,6 +556,12 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                   name: prepack_id
+                  type: BIGINT
+              - column:
+                  name: processing_act_id
+                  type: BIGINT
+              - column:
+                  name: invoice_act_item_id
                   type: BIGINT
               - column:
                   constraints:

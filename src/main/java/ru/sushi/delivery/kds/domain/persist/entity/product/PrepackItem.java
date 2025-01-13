@@ -1,11 +1,13 @@
 package ru.sushi.delivery.kds.domain.persist.entity.product;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -18,6 +20,8 @@ import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.domain.controller.dto.ProcessingActDto;
+import ru.sushi.delivery.kds.domain.persist.entity.act.InvoiceActItem;
+import ru.sushi.delivery.kds.domain.persist.entity.act.ProcessingAct;
 import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
 import ru.sushi.delivery.kds.model.SourceType;
 
@@ -44,21 +48,28 @@ public class PrepackItem extends SourceItem {
     @JoinColumn(name = "prepack_id")
     private Prepack prepack;
 
-    public static PrepackItem of(Prepack prepack, InvoiceActItemDto item) {
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "processing_act_id")
+    private ProcessingAct processingAct;
+
+    public static PrepackItem of(Prepack prepack, InvoiceActItemDto item, InvoiceActItem itemAct) {
         return PrepackItem.builder()
+                .invoiceActItem(itemAct)
                 .sourceType(SourceType.PREPACK)
-                .amount(item.getAmount())
+                .amount(itemAct.getAmount())
                 .barcode(item.getBarcode())
                 .expirationDate(Instant.now().plus(prepack.getExpirationDuration()))
                 .prepack(prepack)
                 .build();
     }
 
-    public static PrepackItem of(Prepack prepack, ProcessingActDto item) {
+    public static PrepackItem of(Prepack prepack, ProcessingActDto actDto, ProcessingAct act) {
         return PrepackItem.builder()
+                .processingAct(act)
                 .sourceType(SourceType.PREPACK)
-                .amount(item.getAmount())
-                .barcode(item.getBarcode())
+                .amount(act.getAmount())
+                .barcode(actDto.getBarcode())
                 .expirationDate(Instant.now().plus(prepack.getExpirationDuration()))
                 .prepack(prepack)
                 .build();
