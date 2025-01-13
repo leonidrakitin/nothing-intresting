@@ -180,13 +180,9 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
-                  constraints:
-                    nullable: false
                   name: amount
                   type: FLOAT8
               - column:
-                  constraints:
-                    nullable: false
                   name: price
                   type: FLOAT8
               - column:
@@ -209,18 +205,12 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: invoice_id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: source_id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: source_type
                   type: VARCHAR(255)
             tableName: invoice_act_item_aud
@@ -1030,13 +1020,9 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
-                  constraints:
-                    nullable: false
                   name: expiration_duration
                   type: numeric(21)
               - column:
-                  constraints:
-                    nullable: false
                   name: notify_after_amount
                   type: FLOAT8
               - column:
@@ -1047,13 +1033,9 @@ databaseChangeLog:
                   name: rev
                   type: INTEGER
               - column:
-                  constraints:
-                    nullable: false
                   name: revtype
                   type: SMALLINT
               - column:
-                  constraints:
-                    nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -1065,13 +1047,9 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: measurement_unit_id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -1079,8 +1057,6 @@ databaseChangeLog:
                   name: created_by
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: name
                   type: VARCHAR(255)
               - column:
@@ -1158,14 +1134,10 @@ databaseChangeLog:
                   name: revtype
                   type: SMALLINT
               - column:
-                  constraints:
-                    nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: date
                   type: TIMESTAMP WITHOUT TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -1180,8 +1152,6 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -1238,13 +1208,9 @@ databaseChangeLog:
                   name: rev
                   type: INTEGER
               - column:
-                  constraints:
-                    nullable: false
                   name: revtype
                   type: SMALLINT
               - column:
-                  constraints:
-                    nullable: false
                   name: flow_id
                   type: BIGINT
               - column:
@@ -1255,8 +1221,6 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: name
                   type: VARCHAR(255)
             TableName: menu_item_aud
@@ -1338,13 +1302,9 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
-                  constraints:
-                    nullable: false
                   name: expiration_duration
                   type: numeric(21)
               - column:
-                  constraints:
-                    nullable: false
                   name: notify_after_amount
                   type: FLOAT8
               - column:
@@ -1355,13 +1315,9 @@ databaseChangeLog:
                   name: rev
                   type: INTEGER
               - column:
-                  constraints:
-                    nullable: false
                   name: revtype
                   type: SMALLINT
               - column:
-                  constraints:
-                    nullable: false
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -1373,13 +1329,9 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: measurement_unit_id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -1387,8 +1339,6 @@ databaseChangeLog:
                   name: created_by
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: name
                   type: VARCHAR(255)
               - column:
@@ -1458,8 +1408,6 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
-                  constraints:
-                    nullable: false
                   name: amount
                   type: FLOAT8
               - column:
@@ -1481,8 +1429,6 @@ databaseChangeLog:
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
               - column:
-                  constraints:
-                    nullable: false
                   name: date
                   type: TIMESTAMP WITHOUT TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -1497,13 +1443,9 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: prepack_id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: updated_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"
@@ -1511,8 +1453,6 @@ databaseChangeLog:
                   name: created_by
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: name
                   type: VARCHAR(255)
               - column:

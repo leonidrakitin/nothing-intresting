@@ -29,8 +29,10 @@ import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 @Service
@@ -72,6 +74,7 @@ public class ActService {
 
     @Transactional
     public void deleteInvoiceAct(long invoiceId) {
+        this.invoiceActItemRepository.deleteByInvoiceActId(invoiceId);
         this.invoiceActRepository.deleteById(invoiceId);
     }
 
@@ -83,6 +86,12 @@ public class ActService {
 
         InvoiceAct invoiceAct = InvoiceAct.of(invoiceData);
         this.invoiceActRepository.save(invoiceAct);
+
+        Set<Long> currentActsItemIds = new HashSet<>(
+                this.invoiceActItemRepository.findAllByInvoiceActId(invoiceAct.getId()).stream()
+                        .map(InvoiceActItem::getId)
+                        .toList()
+        );
 
         if (invoiceData.getItemDataList().isEmpty()) {
             throw new IllegalArgumentException("Item data is empty");
@@ -112,10 +121,12 @@ public class ActService {
             } else {
                 throw new UnsupportedOperationException("Unsupported source type: " + item.getSourceType());
             }
+            currentActsItemIds.remove(item.getId());
         }
         this.invoiceActItemRepository.saveAll(invoiceActItems);
         this.ingredientItemRepository.saveAll(ingredientItems);
         this.prepackItemRepository.saveAll(prepackItems);
+        this.invoiceActItemRepository.deleteAllById(currentActsItemIds);
     }
 
     @Transactional
