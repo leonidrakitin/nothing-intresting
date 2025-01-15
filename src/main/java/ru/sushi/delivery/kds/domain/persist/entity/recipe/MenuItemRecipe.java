@@ -17,7 +17,10 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
+import ru.sushi.delivery.kds.domain.controller.dto.MenuItemRecipeDto;
+import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.model.SourceType;
 
 @Audited
 @AuditOverride(forClass = Recipe.class)
@@ -44,4 +47,16 @@ public class MenuItemRecipe extends Recipe {
      * <p>ID станции, на которой становится виден ингридиент.</p>
      */
     private Long stationId;
+
+    public static MenuItemRecipe of(MenuItemRecipeDto menuItemRecipeDto, SourceDto sourceDto, MenuItem menuItem) {
+        return MenuItemRecipe.builder()
+                .menuItem(menuItem)
+                .sourceId(sourceDto.getId())
+                .sourceType(SourceType.valueOf(sourceDto.getType()))
+                .initAmount(menuItemRecipeDto.getInitAmount())
+                .finalAmount(menuItemRecipeDto.getFinalAmount())
+                .lossesAmount(menuItemRecipeDto.getLossesAmount())
+                .lossesPercentage(menuItemRecipeDto.getLossesPercentage())
+                .build();
+    }
 }

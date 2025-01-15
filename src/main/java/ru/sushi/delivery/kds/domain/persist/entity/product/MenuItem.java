@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
+import ru.sushi.delivery.kds.domain.controller.dto.MenuItemData;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 
 @Audited
@@ -39,4 +40,11 @@ public class MenuItem {
     @ManyToOne
     @JoinColumn(name = "flow_id")
     private Flow flow;
+
+    public static MenuItem of(MenuItemData menuItemData, Flow flow) {
+        return MenuItem.builder()
+                .name(menuItemData.getName())
+                .flow(flow)
+                .build();
+    }
 }

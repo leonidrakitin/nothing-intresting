@@ -10,7 +10,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.recipe.PrepackRecipe;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PrepackRecipeDto {
+public class PrepackRecipeData {
 
     private Long id;
     private String sourceName;
@@ -19,8 +19,8 @@ public class PrepackRecipeDto {
     private Double lossesAmount;
     private Double lossesPercentage;
 
-    public static PrepackRecipeDto of(PrepackRecipe prepackRecipe, String sourceName) {
-        return PrepackRecipeDto.builder()
+    public static PrepackRecipeData of(PrepackRecipe prepackRecipe, String sourceName) {
+        return PrepackRecipeData.builder()
                 .id(prepackRecipe.getId())
                 .sourceName(sourceName)
                 .initAmount(prepackRecipe.getInitAmount())

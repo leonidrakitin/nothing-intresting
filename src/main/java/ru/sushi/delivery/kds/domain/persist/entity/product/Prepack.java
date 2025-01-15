@@ -14,6 +14,8 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
+import ru.sushi.delivery.kds.domain.controller.dto.PrepackData;
+import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 
 @Audited
 @AuditOverride(forClass = Product.class)
@@ -30,4 +32,13 @@ public class Prepack extends Product {
     @SequenceGenerator(name = "prepack_id_seq_gen", sequenceName = "prepack_id_generator", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "prepack_id_seq_gen")
     private Long id;
+
+    public static Prepack of(PrepackData prepackData, Measurement measurement) {
+        return Prepack.builder()
+                .name(prepackData.getName())
+                .measurementUnit(measurement)
+                .expirationDuration(prepackData.getExpirationDuration())
+                .notifyAfterAmount(prepackData.getNotifyAfterAmount())
+                .build();
+    }
 }

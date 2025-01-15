@@ -24,7 +24,7 @@ public class IngredientDto {
 
     private Duration expirationDuration;
 
-    private double notifyAfterAmount;
+    private Double notifyAfterAmount;
 
     public static IngredientDto of(Ingredient ingredient) {
         return IngredientDto.builder()

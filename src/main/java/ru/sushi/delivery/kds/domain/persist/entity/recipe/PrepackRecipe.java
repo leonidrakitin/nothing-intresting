@@ -17,7 +17,10 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
+import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeData;
+import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Prepack;
+import ru.sushi.delivery.kds.model.SourceType;
 
 @Audited
 @AuditOverride(forClass = Recipe.class)
@@ -39,4 +42,16 @@ public class PrepackRecipe extends Recipe {
     @ManyToOne
     @JoinColumn(name = "prepack_id")
     private Prepack prepack;
+
+    public static PrepackRecipe of(PrepackRecipeData recipeData, SourceDto sourceDto, Prepack prepack) {
+        return PrepackRecipe.builder()
+                .prepack(prepack)
+                .sourceId(sourceDto.getId())
+                .sourceType(SourceType.valueOf(sourceDto.getType()))
+                .initAmount(recipeData.getInitAmount())
+                .finalAmount(recipeData.getFinalAmount())
+                .lossesAmount(recipeData.getLossesAmount())
+                .lossesPercentage(recipeData.getLossesPercentage())
+                .build();
+    }
 }

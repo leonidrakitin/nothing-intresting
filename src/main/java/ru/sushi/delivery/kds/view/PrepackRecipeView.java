@@ -11,8 +11,8 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.controller.dto.PrepackDto;
-import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeDto;
+import ru.sushi.delivery.kds.domain.controller.dto.PrepackData;
+import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeData;
 import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
 import ru.sushi.delivery.kds.domain.service.PrepackService;
 import ru.sushi.delivery.kds.domain.service.RecipeService;
@@ -30,25 +30,27 @@ public class PrepackRecipeView extends VerticalLayout {
     private final SourceService sourceService;
 
     // Комбо-бокс для выбора заготовки
-    private final ComboBox<PrepackDto> prepackComboBox = new ComboBox<>("Выберите заготовку");
+    private final ComboBox<PrepackData> prepackComboBox = new ComboBox<>("Выберите заготовку");
 
     // Таблица для отображения рецепта выбранной заготовки
-    private final Grid<PrepackRecipeDto> recipeGrid = new Grid<>(PrepackRecipeDto.class, false);
+    private final Grid<PrepackRecipeData> recipeGrid = new Grid<>(PrepackRecipeData.class, false);
 
-    // --- Форма для добавления нового ингредиента (или заготовки) в рецепт ---
-    // Комбо-бокс для выбора источника (ингредиент / заготовка)
+    // --- Форма для добавления / редактирования строки рецепта ---
     private final ComboBox<SourceDto> sourceComboBox = new ComboBox<>("Источник");
-
-    // Поля для ввода значений
     private final NumberField initAmountField = new NumberField("Изначальное кол-во");
     private final NumberField finalAmountField = new NumberField("Итоговое кол-во");
     private final NumberField lossesAmountField = new NumberField("Потери");
     private final NumberField lossesPercentField = new NumberField("Потери (%)");
 
-    // Кнопка «Добавить» выносим в поле класса, чтобы управлять доступностью
-    private final Button addButton = new Button("Добавить в рецепт");
+    // Кнопки
+    private final Button saveButton = new Button("Добавить в рецепт");
+    private final Button cancelButton = new Button("Отменить изменения");
 
-    private PrepackDto selectedPrepack; // Текущая выбранная заготовка
+    // Текущая выбранная заготовка (выпадающий список)
+    private PrepackData selectedPrepack;
+
+    // Текущая строка рецепта, которую редактируем (null, если добавляем новую)
+    private PrepackRecipeData currentEditingRecipe = null;
 
     @Autowired
     public PrepackRecipeView(PrepackService prepackService,
@@ -60,46 +62,37 @@ public class PrepackRecipeView extends VerticalLayout {
 
         initMainComboBox();
         initRecipeGrid();
-        initAddIngredientForm();
+        initRecipeForm();
 
-        // Раскладываем на странице
+        // Размещаем компоненты на странице
         add(
                 prepackComboBox,
                 recipeGrid,
                 new Hr(),
-                createAddFormLayout() // Форма добавления
+                createAddFormLayout()
         );
 
-        // Сразу после инициализации делаем форму добавления неактивной,
-        // пока не будет выбрана заготовка
+        // Сразу после инициализации форма неактивна, пока не выбрали заготовку
         enableAddForm(false);
     }
 
+    /**
+     * Инициализация основного ComboBox (список заготовок)
+     */
     private void initMainComboBox() {
-        // Загружаем все заготовки
-        List<PrepackDto> allPrepacks = prepackService.getAllPrepacks();
+        List<PrepackData> allPrepacks = prepackService.getAllPrepacks();
         prepackComboBox.setItems(allPrepacks);
-
-        // Отображать только name
-        prepackComboBox.setItemLabelGenerator(PrepackDto::getName);
-
-        // Placeholder (поиск), кнопка очистки
+        prepackComboBox.setItemLabelGenerator(PrepackData::getName);
         prepackComboBox.setPlaceholder("Поиск заготовки...");
         prepackComboBox.setClearButtonVisible(true);
-
-        // Сделаем шире поле поиска
         prepackComboBox.setWidth("400px");
 
-        // Обработка выбора
         prepackComboBox.addValueChangeListener(event -> {
             selectedPrepack = event.getValue();
-
-            // Если выбрана заготовка — включаем форму добавления, иначе выключаем
             boolean enableForm = (selectedPrepack != null);
             enableAddForm(enableForm);
 
             if (enableForm) {
-                // Обновляем таблицу рецепта
                 refreshRecipeGrid(selectedPrepack.getId());
             }
             else {
@@ -108,114 +101,124 @@ public class PrepackRecipeView extends VerticalLayout {
         });
     }
 
+    /**
+     * Настраиваем таблицу (Grid) + добавляем колонку "Действия"
+     */
     private void initRecipeGrid() {
-        recipeGrid.addColumn(PrepackRecipeDto::getSourceName)
+        recipeGrid.addColumn(PrepackRecipeData::getSourceName)
                 .setHeader("Источник");
-
-        recipeGrid.addColumn(PrepackRecipeDto::getInitAmount)
+        recipeGrid.addColumn(PrepackRecipeData::getInitAmount)
                 .setHeader("Изнач. кол-во");
-
-        recipeGrid.addColumn(PrepackRecipeDto::getFinalAmount)
+        recipeGrid.addColumn(PrepackRecipeData::getFinalAmount)
                 .setHeader("Итог. кол-во");
-
-        recipeGrid.addColumn(PrepackRecipeDto::getLossesAmount)
+        recipeGrid.addColumn(PrepackRecipeData::getLossesAmount)
                 .setHeader("Потери");
-
-        recipeGrid.addColumn(PrepackRecipeDto::getLossesPercentage)
+        recipeGrid.addColumn(PrepackRecipeData::getLossesPercentage)
                 .setHeader("Потери (%)");
+
+        // Добавляем колонку "Действия" с кнопками "Изменить"/"Удалить"
+        recipeGrid.addComponentColumn(this::createActionButtons)
+                .setHeader("Действия")
+                .setAutoWidth(true);
     }
 
     /**
-     * Инициализируем форму для добавления ингредиента / заготовки в рецепт
+     * Создаём горизонтальный лэйаут с кнопками "Изменить" и "Удалить"
      */
-    private void initAddIngredientForm() {
-        // Список всех источников (INGREDIENT / PREPACK)
+    private HorizontalLayout createActionButtons(PrepackRecipeData recipeItem) {
+        Button editButton = new Button("Изменить", e -> loadRecipeItemIntoForm(recipeItem));
+        Button deleteButton = new Button("Удалить", e -> deleteRecipeItem(recipeItem));
+
+        HorizontalLayout layout = new HorizontalLayout(editButton, deleteButton);
+        layout.setDefaultVerticalComponentAlignment(Alignment.CENTER);
+        return layout;
+    }
+
+    /**
+     * Загрузить выбранную строку рецепта в форму (режим редактирования)
+     */
+    private void loadRecipeItemIntoForm(PrepackRecipeData recipeItem) {
+        this.currentEditingRecipe = recipeItem;
+
+        // Заполняем поля
+        // Предполагается, что у PrepackRecipeData есть sourceId, sourceName и т.д.
+        // Выбираем sourceComboBox по ID, если нужно
+        if (recipeItem.getSourceName() != null) {
+            // Ищем SourceDto по имени (или по id, если есть)
+            // Ниже - поиск по имени (не всегда идеален):
+            SourceDto sourceDto = sourceService.getAllSources().stream()
+                    .filter(s -> s.getName().equals(recipeItem.getSourceName()))
+                    .findFirst()
+                    .orElse(null);
+            sourceComboBox.setValue(sourceDto);
+        }
+        else {
+            sourceComboBox.clear();
+        }
+
+        initAmountField.setValue(recipeItem.getInitAmount() != null ? recipeItem.getInitAmount() : 0.0);
+        finalAmountField.setValue(recipeItem.getFinalAmount() != null ? recipeItem.getFinalAmount() : 0.0);
+        lossesAmountField.setValue(recipeItem.getLossesAmount() != null ? recipeItem.getLossesAmount() : 0.0);
+        lossesPercentField.setValue(recipeItem.getLossesPercentage() != null ? recipeItem.getLossesPercentage() : 0.0);
+
+        saveButton.setText("Изменить в рецепте");
+        cancelButton.setVisible(true);
+    }
+
+    /**
+     * Инициализация формы (ComboBox источника, поля, кнопки)
+     */
+    private void initRecipeForm() {
         List<SourceDto> allSources = sourceService.getAllSources();
         sourceComboBox.setItems(allSources);
         sourceComboBox.setItemLabelGenerator(SourceDto::getName);
         sourceComboBox.setPlaceholder("Ингредиент или заготовка...");
         sourceComboBox.setClearButtonVisible(true);
 
-        // Изначальные значения
         initAmountField.setValue(0.0);
         finalAmountField.setValue(0.0);
         lossesAmountField.setValue(0.0);
         lossesPercentField.setValue(0.0);
 
-        // Минимальные значения = 0
         initAmountField.setMin(0);
         finalAmountField.setMin(0);
         lossesAmountField.setMin(0);
         lossesPercentField.setMin(0);
 
-        // Ставим поля потерь в "read-only", чтобы пользователь не мог вручную их менять
         lossesAmountField.setReadOnly(true);
         lossesPercentField.setReadOnly(true);
 
-        // Пересчитываем потери при изменении initAmount / finalAmount
         initAmountField.addValueChangeListener(e -> recalcLosses());
         finalAmountField.addValueChangeListener(e -> recalcLosses());
 
-        // Обработчик кнопки «Добавить в рецепт»
-        addButton.addClickListener(event -> {
+        // По умолчанию «Отменить изменения» скрыта
+        cancelButton.setVisible(false);
+        cancelButton.addClickListener(e -> clearForm());
+
+        // Переключение логики сохранения (добавление/редактирование)
+        saveButton.addClickListener(event -> {
             if (selectedPrepack == null) {
                 Notification.show("Сначала выберите заготовку");
                 return;
             }
             SourceDto chosenSource = sourceComboBox.getValue();
             if (chosenSource == null) {
-                Notification.show("Выберите источник (ингредиент / заготовку)");
+                Notification.show("Выберите источник");
                 return;
             }
-
-            // Формируем DTO
-            PrepackRecipeDto newRecipeDto = PrepackRecipeDto.builder()
-                    .initAmount(initAmountField.getValue())
-                    .finalAmount(finalAmountField.getValue())
-                    .lossesAmount(lossesAmountField.getValue())
-                    .lossesPercentage(lossesPercentField.getValue())
-                    .build();
-
-            // Сохраняем
-            recipeService.savePrepackRecipe(newRecipeDto, chosenSource, selectedPrepack.getId());
-
-            // Оповещаем пользователя
-            Notification.show("Успешно добавлено!");
-
-            // Очищаем поля формы
-            clearAddForm();
-
-            // Обновляем таблицу
-            refreshRecipeGrid(selectedPrepack.getId());
+            if (currentEditingRecipe == null) {
+                // Режим добавления
+                createOrUpdateRecipe(null, chosenSource);
+            }
+            else {
+                // Режим редактирования
+                createOrUpdateRecipe(currentEditingRecipe.getId(), chosenSource);
+            }
         });
     }
 
     /**
-     * Метод для пересчёта потерь и процента потерь
-     */
-    private void recalcLosses() {
-        double init = initAmountField.getValue() != null ? initAmountField.getValue() : 0.0;
-        double fin = finalAmountField.getValue() != null ? finalAmountField.getValue() : 0.0;
-
-        double losses = init - fin;
-        if (losses < 0) {
-            // На всякий случай, если finalAmount > initAmount
-            losses = 0.0;
-        }
-
-        double percentage = 0.0;
-        if (init != 0) {
-            percentage = (losses / init) * 100.0;
-            // Округлим до сотых
-            percentage = Math.round(percentage * 100.0) / 100.0;
-        }
-
-        lossesAmountField.setValue(losses);
-        lossesPercentField.setValue(percentage);
-    }
-
-    /**
-     * Создаём макет (layout) формы добавления
+     * Создаём лэйаут, в который кладём поля и кнопки
      */
     private VerticalLayout createAddFormLayout() {
         HorizontalLayout fieldsLayout = new HorizontalLayout(
@@ -224,7 +227,8 @@ public class PrepackRecipeView extends VerticalLayout {
                 finalAmountField,
                 lossesAmountField,
                 lossesPercentField,
-                addButton
+                saveButton,
+                cancelButton
         );
         fieldsLayout.setDefaultVerticalComponentAlignment(Alignment.END);
 
@@ -235,30 +239,104 @@ public class PrepackRecipeView extends VerticalLayout {
     }
 
     /**
-     * Включает/выключает возможность добавления ингредиентов в рецепт
+     * Создаёт новую или обновляет существующую строку рецепта (если id != null)
      */
-    private void enableAddForm(boolean enable) {
-        sourceComboBox.setEnabled(enable);
-        initAmountField.setEnabled(enable);
-        finalAmountField.setEnabled(enable);
-        // Хотя поля потерь в read-only,
-        // всё равно отключим их, чтобы они выглядели заблокированными
-        // до выбора заготовки
-        lossesAmountField.setEnabled(enable);
-        lossesPercentField.setEnabled(enable);
-        addButton.setEnabled(enable);
+    private void createOrUpdateRecipe(Long recipeId, SourceDto chosenSource) {
+        PrepackRecipeData recipeDto = PrepackRecipeData.builder()
+                .id(recipeId) // null => создаём новую, не null => обновляем
+                .initAmount(initAmountField.getValue())
+                .finalAmount(finalAmountField.getValue())
+                .lossesAmount(lossesAmountField.getValue())
+                .lossesPercentage(lossesPercentField.getValue())
+                .build();
+
+        // Сохраняем (create/update)
+        recipeService.savePrepackRecipe(recipeDto, chosenSource, selectedPrepack.getId());
+
+        Notification.show(recipeId == null
+                ? "Успешно добавлено в рецепт!"
+                : "Изменения в рецепте сохранены!");
+
+        clearForm();
+        refreshRecipeGrid(selectedPrepack.getId());
     }
 
-    private void clearAddForm() {
+    /**
+     * Удаляем строку рецепта
+     */
+    private void deleteRecipeItem(PrepackRecipeData recipeItem) {
+        if (recipeItem.getId() == null) {
+            Notification.show("Невозможно удалить: отсутствует ID рецепта.");
+            return;
+        }
+        recipeService.deletePrepackRecipe(recipeItem);
+
+        Notification.show("Строка рецепта удалена!");
+        refreshRecipeGrid(selectedPrepack.getId());
+
+        // Если удалили то, что редактировали, сбросим форму
+        if (currentEditingRecipe != null
+                && currentEditingRecipe.getId() != null
+                && currentEditingRecipe.getId().equals(recipeItem.getId())) {
+            clearForm();
+        }
+    }
+
+    /**
+     * Пересчёт полей "Потери" и "Потери (%)"
+     */
+    private void recalcLosses() {
+        double init = initAmountField.getValue() != null ? initAmountField.getValue() : 0.0;
+        double fin = finalAmountField.getValue() != null ? finalAmountField.getValue() : 0.0;
+
+        double losses = init - fin;
+        if (losses < 0) {
+            losses = 0.0;
+        }
+
+        double percentage = 0.0;
+        if (init != 0) {
+            percentage = (losses / init) * 100.0;
+            percentage = Math.round(percentage * 100.0) / 100.0;
+        }
+
+        lossesAmountField.setValue(losses);
+        lossesPercentField.setValue(percentage);
+    }
+
+    /**
+     * Очищаем поля формы и возвращаемся в режим добавления
+     */
+    private void clearForm() {
         sourceComboBox.clear();
         initAmountField.setValue(0.0);
         finalAmountField.setValue(0.0);
         lossesAmountField.setValue(0.0);
         lossesPercentField.setValue(0.0);
+
+        currentEditingRecipe = null;
+        saveButton.setText("Добавить в рецепт");
+        cancelButton.setVisible(false);
     }
 
+    /**
+     * Включаем или выключаем форму добавления (зависит от выбранной заготовки)
+     */
+    private void enableAddForm(boolean enable) {
+        sourceComboBox.setEnabled(enable);
+        initAmountField.setEnabled(enable);
+        finalAmountField.setEnabled(enable);
+        lossesAmountField.setEnabled(enable);
+        lossesPercentField.setEnabled(enable);
+        saveButton.setEnabled(enable);
+        cancelButton.setEnabled(enable);
+    }
+
+    /**
+     * Обновляем таблицу рецепта для выбранной заготовки
+     */
     private void refreshRecipeGrid(Long prepackId) {
-        List<PrepackRecipeDto> recipeList =
+        List<PrepackRecipeData> recipeList =
                 recipeService.getPrepackRecipeByPrepackId(prepackId);
         recipeGrid.setItems(recipeList);
     }

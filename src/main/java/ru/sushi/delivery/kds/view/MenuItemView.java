@@ -5,13 +5,14 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.controller.dto.MenuItemDto;
+import ru.sushi.delivery.kds.domain.controller.dto.MenuItemData;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.FlowRepository;
 import ru.sushi.delivery.kds.domain.service.MenuItemService;
@@ -26,10 +27,18 @@ public class MenuItemView extends VerticalLayout {
     private final MenuItemService menuItemService;
     private final FlowRepository flowRepository;
 
-    private final Grid<MenuItemDto> menuItemGrid = new Grid<>();
+    private final Grid<MenuItemData> menuItemGrid = new Grid<>();
 
     private final TextField nameField = new TextField("Название");
-    private final ComboBox<Flow> flowComboBox = new ComboBox<>("Поток");
+    private final ComboBox<Flow> flowComboBox = new ComboBox<>("Отображение");
+
+    // Кнопка, которая переключается между "Добавить" и "Изменить"
+    private final Button saveButton = new Button("Добавить пункт меню");
+    // Кнопка "Отменить изменения"
+    private final Button cancelButton = new Button("Отменить изменения");
+
+    // Текущий пункт меню, который редактируем (если null — значит режим добавления)
+    private MenuItemData currentEditingMenuItem = null;
 
     @Autowired
     public MenuItemView(MenuItemService menuItemService, FlowRepository flowRepository) {
@@ -45,7 +54,76 @@ public class MenuItemView extends VerticalLayout {
     }
 
     /**
-     * Создаёт форму для создания/редактирования MenuItem
+     * Настраиваем Grid: колонки + колонка "Действия" (Изменить/Удалить).
+     */
+    private void configureGrid() {
+        menuItemGrid.setSizeFull();
+
+        menuItemGrid.addColumn(MenuItemData::getId)
+                .setHeader("ID")
+                .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
+        menuItemGrid.addColumn(MenuItemData::getName)
+                .setHeader("Название")
+                .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
+        menuItemGrid.addColumn(MenuItemData::getFlow)
+                .setHeader("Отображение")
+                .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
+        // Добавляем колонку «Действия»
+        menuItemGrid.addComponentColumn(this::createActionButtons)
+                .setHeader("Действия")
+                .setClassNameGenerator(item -> "text-center");
+    }
+
+    /**
+     * Создаём горизонтальный лэйаут с кнопками "Изменить" и "Удалить"
+     */
+    private HorizontalLayout createActionButtons(MenuItemData menuItem) {
+        Button editButton = new Button("Изменить", event -> {
+            loadMenuItemIntoForm(menuItem);
+        });
+
+        Button deleteButton = new Button("Удалить", event -> {
+            deleteMenuItem(menuItem);
+        });
+
+        editButton.getStyle().set("margin-right", "0.5em");
+        return new HorizontalLayout(editButton, deleteButton);
+    }
+
+    /**
+     * Загрузка выбранного пункта меню в поля формы (режим редактирования).
+     */
+    private void loadMenuItemIntoForm(MenuItemData menuItem) {
+        this.currentEditingMenuItem = menuItem;
+
+        // Заполняем поля
+        nameField.setValue(menuItem.getName() != null ? menuItem.getName() : "");
+        // Найдём Flow по названию из DTO (menuItem.getFlow()) и выставим в ComboBox
+        if (menuItem.getFlow() != null) {
+            Flow flow = flowRepository.findAll().stream()
+                    .filter(f -> f.getName().equals(menuItem.getFlow()))
+                    .findFirst()
+                    .orElse(null);
+            flowComboBox.setValue(flow);
+        }
+        else {
+            flowComboBox.clear();
+        }
+
+        // Меняем текст кнопки
+        saveButton.setText("Изменить пункт меню");
+        // Делаем кнопку «Отменить» видимой
+        cancelButton.setVisible(true);
+    }
+
+    /**
+     * Создаёт форму с TextField (название), ComboBox (поток) и кнопками
      */
     private FormLayout createForm() {
         nameField.setPlaceholder("Введите название пункта меню");
@@ -54,93 +132,104 @@ public class MenuItemView extends VerticalLayout {
         List<Flow> flows = flowRepository.findAll();
         flowComboBox.setItems(flows);
         flowComboBox.setItemLabelGenerator(Flow::getName);
-        flowComboBox.setPlaceholder("Выберите поток");
+        flowComboBox.setPlaceholder("Выберите ...");
 
-        Button addButton = new Button("Добавить пункт меню", event -> saveMenuItem());
-        addButton.getStyle().set("min-width", "150px"); // Минимальная ширина кнопки
+        // Кнопка «Отменить изменения» изначально скрыта
+        cancelButton.setVisible(false);
+        cancelButton.addClickListener(e -> clearForm());
+
+        // Логика при нажатии на основную кнопку
+        saveButton.addClickListener(e -> {
+            if (currentEditingMenuItem == null) {
+                // Режим добавления
+                createOrUpdateMenuItem(null);
+            }
+            else {
+                // Режим редактирования
+                createOrUpdateMenuItem(currentEditingMenuItem.getId());
+            }
+        });
+        saveButton.getStyle().set("min-width", "150px");
 
         // Создаём FormLayout
         FormLayout formLayout = new FormLayout();
         formLayout.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1),   // Все компоненты в один столбец
-                new FormLayout.ResponsiveStep("600px", 2) // Два компонента в ряд (по желанию можно добавить и третий шаг)
+                new FormLayout.ResponsiveStep("0", 1),   // все компоненты в один столбец
+                new FormLayout.ResponsiveStep("600px", 2) // два компонента в ряд
         );
 
-        // Добавляем компоненты в FormLayout
+        // Добавляем компоненты
         formLayout.add(
                 nameField,
                 flowComboBox,
-                addButton
+                new HorizontalLayout(saveButton, cancelButton)
         );
-
-        // Пример: Растягиваем кнопку на 2 столбца (если нужно)
-        formLayout.setColspan(addButton, 2);
 
         return formLayout;
     }
 
     /**
-     * Настраиваем Grid для отображения списка пунктов меню
+     * Создаём или обновляем пункт меню (если id != null, значит обновляем).
      */
-    private void configureGrid() {
-        menuItemGrid.setSizeFull();
-
-        menuItemGrid.addColumn(MenuItemDto::getId)
-                .setHeader("ID")
-                .setSortable(true)
-                .setClassNameGenerator(item -> "text-center");
-
-        menuItemGrid.addColumn(MenuItemDto::getName)
-                .setHeader("Название")
-                .setSortable(true)
-                .setClassNameGenerator(item -> "text-center");
-
-        menuItemGrid.addColumn(MenuItemDto::getFlow)
-                .setHeader("Поток")
-                .setSortable(true)
-                .setClassNameGenerator(item -> "text-center");
-    }
-
-    /**
-     * Сохраняет новый пункт меню, введённый в форму
-     */
-    private void saveMenuItem() {
+    private void createOrUpdateMenuItem(Long id) {
         String name = nameField.getValue();
         Flow selectedFlow = flowComboBox.getValue();
 
-        // Проверяем обязательные поля
         if (name == null || name.isEmpty() || selectedFlow == null) {
-            Notification.show("Название и поток обязательны для заполнения!");
+            Notification.show("Название и отображение обязательны для заполнения!");
             return;
         }
 
-        // Создаём DTO
-        MenuItemDto menuItemDTO = MenuItemDto.builder()
+        // Собираем DTO
+        MenuItemData menuItemData = MenuItemData.builder()
+                .id(id)
                 .name(name)
-                .flow(selectedFlow.getName()) // Сохраняем название потока
+                .flow(selectedFlow.getName())
                 .build();
 
-        // Сохраняем через сервис
-        menuItemService.saveMenuItem(menuItemDTO);
+        // Сохраняем (сервис сам определит create/update по наличию id)
+        menuItemService.saveMenuItem(menuItemData);
 
-        Notification.show("Пункт меню успешно добавлен!");
+        Notification.show(id == null ? "Пункт меню успешно добавлен!" : "Изменения сохранены!");
         clearForm();
         updateGrid();
     }
 
     /**
-     * Очищает поля формы
+     * Удаляем пункт меню
+     */
+    private void deleteMenuItem(MenuItemData menuItem) {
+        if (menuItem.getId() == null) {
+            Notification.show("Не удалось удалить: отсутствует ID пункта меню.");
+            return;
+        }
+        menuItemService.deleteMenuItem(menuItem);
+        Notification.show("Пункт меню удалён!");
+        updateGrid();
+
+        // Если удалили тот, который редактировали, сбрасываем форму
+        if (currentEditingMenuItem != null && currentEditingMenuItem.getId().equals(menuItem.getId())) {
+            clearForm();
+        }
+    }
+
+    /**
+     * Очищаем форму и возвращаемся в режим добавления
      */
     private void clearForm() {
         nameField.clear();
         flowComboBox.clear();
+
+        currentEditingMenuItem = null;
+        saveButton.setText("Добавить пункт меню");
+        cancelButton.setVisible(false);
     }
 
     /**
      * Обновляет данные в Grid
      */
     private void updateGrid() {
-        List<MenuItemDto> menuItems = menuItemService.getAllMenuItemsDTO();
+        List<MenuItemData> menuItems = menuItemService.getAllMenuItemsDTO();
         menuItemGrid.setItems(menuItems);
     }
 }

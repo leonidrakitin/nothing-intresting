@@ -3,13 +3,15 @@ package ru.sushi.delivery.kds.domain.service;
 import com.vaadin.flow.router.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.domain.controller.dto.PrepackDto;
+import ru.sushi.delivery.kds.domain.controller.dto.PrepackData;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Prepack;
 import ru.sushi.delivery.kds.domain.persist.repository.MeasurementRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.product.PrepackRepository;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -23,20 +25,38 @@ public class PrepackService {
                 .orElseThrow(() -> new NotFoundException("Prepack not found id " + id));
     }
 
-    public List<PrepackDto> getAllPrepacks() {
-        return this.prepackRepository.findAll().stream().map(PrepackDto::of).toList();
+    public List<PrepackData> getAllPrepacks() {
+        return this.prepackRepository.findAll().stream().map(PrepackData::of).toList();
     }
 
-    public void savePrepack(PrepackDto prepackDTO) {
-        Measurement measurement = measurementRepository.findByName(prepackDTO.getMeasurementUnitName())
+    public void deletePrepack(PrepackData prepackData) {
+        this.prepackRepository.deleteById(prepackData.getId());
+    }
+
+    public void savePrepack(PrepackData prepackData) {
+        Measurement measurement = this.measurementRepository.findByName(prepackData.getMeasurementUnitName())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid measurement unit"));
 
-        Prepack prepack = new Prepack();
-        prepack.setName(prepackDTO.getName());
-        prepack.setExpirationDuration(prepackDTO.getExpirationDuration());
-        prepack.setNotifyAfterAmount(prepackDTO.getNotifyAfterAmount());
-        prepack.setMeasurementUnit(measurement);
+        Prepack prepack = Optional.ofNullable(prepackData.getId())
+                .map(this.prepackRepository::findById)
+                .flatMap(Function.identity())
+                .map(p -> setNewPrepackData(p, prepackData, measurement))
+                .orElseGet(() -> Prepack.of(prepackData, measurement));
 
-        prepackRepository.save(prepack);
+        this.prepackRepository.save(prepack);
+    }
+
+    public Prepack setNewPrepackData(
+            Prepack prepack,
+            PrepackData prepackData,
+            Measurement measurement
+    ) {
+        return prepack.toBuilder()
+                .id(prepackData.getId())
+                .name(prepackData.getName())
+                .expirationDuration(prepackData.getExpirationDuration())
+                .notifyAfterAmount(prepackData.getNotifyAfterAmount())
+                .measurementUnit(measurement)
+                .build();
     }
 }

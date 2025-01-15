@@ -5,9 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.controller.dto.MenuItemRecipeDto;
-import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeDto;
+import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeData;
 import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
 import ru.sushi.delivery.kds.domain.persist.entity.product.IngredientItem;
+import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.domain.persist.entity.product.Prepack;
 import ru.sushi.delivery.kds.domain.persist.entity.product.PrepackItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.SourceItem;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.MenuItemRecipe;
@@ -24,7 +26,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -125,9 +129,9 @@ public class RecipeService {
         this.checkAndNotifyIfAlmostFinished(menuItemRecipes);
     }
 
-    public List<PrepackRecipeDto> getPrepackRecipeByPrepackId(Long prepackId) {
+    public List<PrepackRecipeData> getPrepackRecipeByPrepackId(Long prepackId) {
         List<PrepackRecipe> prepackRecipes = this.prepackRecipeRepository.findByPrepackId(prepackId);
-        return prepackRecipes.stream().map(prepackRecipe -> PrepackRecipeDto.of(
+        return prepackRecipes.stream().map(prepackRecipe -> PrepackRecipeData.of(
                         prepackRecipe,
                         this.sourceService.getSourceItemName(
                                 prepackRecipe.getSourceId(),
@@ -136,18 +140,38 @@ public class RecipeService {
         ).toList();
     }
 
-    public void savePrepackRecipe(PrepackRecipeDto prepackRecipeDto, SourceDto sourceDto, Long prepackId) {
-        this.prepackRecipeRepository.save(PrepackRecipe.builder()
-                .id(prepackRecipeDto.getId())
-                .prepack(this.prepackService.get(prepackId))
+    public void savePrepackRecipe(PrepackRecipeData prepackRecipeData, SourceDto sourceDto, Long prepackId) {
+        Prepack prepack = this.prepackService.get(prepackId);
+
+        PrepackRecipe prepackRecipe = Optional.ofNullable(prepackRecipeData.getId())
+                .map(this.prepackRecipeRepository::findById)
+                .flatMap(Function.identity())
+                .map(p -> setNewPrepackRecipeData(p, prepackRecipeData, sourceDto, prepack))
+                .orElseGet(() -> PrepackRecipe.of(prepackRecipeData, sourceDto, prepack));
+
+        this.prepackRecipeRepository.save(prepackRecipe);
+    }
+
+    public PrepackRecipe setNewPrepackRecipeData(
+            PrepackRecipe prepackRecipe,
+            PrepackRecipeData prepackRecipeData,
+            SourceDto sourceDto,
+            Prepack prepack
+    ) {
+        return prepackRecipe.toBuilder()
+                .id(prepackRecipeData.getId())
+                .prepack(prepack)
                 .sourceId(sourceDto.getId())
                 .sourceType(SourceType.valueOf(sourceDto.getType()))
-                .initAmount(prepackRecipeDto.getInitAmount())
-                .finalAmount(prepackRecipeDto.getFinalAmount())
-                .lossesAmount(prepackRecipeDto.getLossesAmount())
-                .lossesPercentage(prepackRecipeDto.getLossesPercentage())
-                .build()
-        );
+                .initAmount(prepackRecipeData.getInitAmount())
+                .finalAmount(prepackRecipeData.getFinalAmount())
+                .lossesAmount(prepackRecipeData.getLossesAmount())
+                .lossesPercentage(prepackRecipeData.getLossesPercentage())
+                .build();
+    }
+
+    public void deletePrepackRecipe(PrepackRecipeData prepackRecipeData) {
+        this.prepackRecipeRepository.deleteById(prepackRecipeData.getId());
     }
 
     public List<MenuItemRecipeDto> getMenuRecipeByMenuId(Long menuId) {
@@ -162,18 +186,37 @@ public class RecipeService {
     }
 
     public void saveMenuRecipe(MenuItemRecipeDto menuItemRecipeDto, SourceDto sourceDto, Long menuId) {
-        this.menuItemRecipeRepository.save(MenuItemRecipe.builder()
-                .id(menuItemRecipeDto.getId())
-                .menuItem(this.menuItemService.getMenuItemById(menuId))
-                .stationId(menuItemRecipeDto.getStationId())
+        MenuItem menuItem = this.menuItemService.getMenuItemById(menuId);
+
+        MenuItemRecipe menuItemRecipe = Optional.ofNullable(menuItemRecipeDto.getId())
+                .map(this.menuItemRecipeRepository::findById)
+                .flatMap(Function.identity())
+                .map(m -> setNewMenuItemRecipeData(m, menuItemRecipeDto, sourceDto, menuItem))
+                .orElseGet(() -> MenuItemRecipe.of(menuItemRecipeDto, sourceDto, menuItem));
+
+        this.menuItemRecipeRepository.save(menuItemRecipe);
+    }
+
+    public MenuItemRecipe setNewMenuItemRecipeData(
+            MenuItemRecipe menuItemRecipe,
+            MenuItemRecipeDto menuItemRecipeDto,
+            SourceDto sourceDto,
+            MenuItem menuItem
+    ) {
+        return menuItemRecipe.toBuilder()
+                .id(menuItemRecipe.getId())
+                .menuItem(menuItem)
                 .sourceId(sourceDto.getId())
                 .sourceType(SourceType.valueOf(sourceDto.getType()))
                 .initAmount(menuItemRecipeDto.getInitAmount())
                 .finalAmount(menuItemRecipeDto.getFinalAmount())
                 .lossesAmount(menuItemRecipeDto.getLossesAmount())
                 .lossesPercentage(menuItemRecipeDto.getLossesPercentage())
-                .build()
-        );
+                .build();
+    }
+
+    public void deleteMenuItemRecipe(MenuItemRecipeDto menuItemRecipeDto) {
+        this.menuItemRecipeRepository.deleteById(menuItemRecipeDto.getId());
     }
 
     private void checkAndNotifyIfAlmostFinished(List<Recipe> menuItemRecipes) {

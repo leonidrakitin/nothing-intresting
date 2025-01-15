@@ -12,7 +12,9 @@ import ru.sushi.delivery.kds.dto.IngredientCompactDTO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -54,18 +56,36 @@ public class IngredientService {
         return this.ingredientRepository.findAll().stream().map(IngredientDto::of).toList();
     }
 
-    public void saveIngredient(IngredientDto ingredientDTO) {
-        Measurement measurement = measurementRepository.findByName(ingredientDTO.getMeasurementUnitName())
+    public void delete(IngredientDto ingredientDto) {
+        this.ingredientRepository.deleteById(ingredientDto.getId());
+    }
+
+    public void save(IngredientDto ingredientData) {
+        Measurement measurement = measurementRepository.findByName(ingredientData.getMeasurementUnitName())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid measurement unit"));
 
-        Ingredient ingredient = new Ingredient();
-        ingredient.setName(ingredientDTO.getName());
-        ingredient.setPieceInGrams(ingredientDTO.getPieceInGrams());
-        ingredient.setExpirationDuration(ingredientDTO.getExpirationDuration());
-        ingredient.setNotifyAfterAmount(ingredientDTO.getNotifyAfterAmount());
-        ingredient.setMeasurementUnit(measurement);
+        Ingredient ingredient = Optional.ofNullable(ingredientData.getId())
+                .map(this.ingredientRepository::findById)
+                .flatMap(Function.identity())
+                .map(i -> this.setNewIngredientData(i, ingredientData, measurement))
+                .orElseGet(() -> Ingredient.of(ingredientData, measurement));
 
-        ingredientRepository.save(ingredient);
+        this.ingredientRepository.save(ingredient);
+    }
+
+    public Ingredient setNewIngredientData(
+            Ingredient ingredient,
+            IngredientDto ingredientData,
+            Measurement measurement
+    ) {
+        return ingredient.toBuilder()
+                .id(ingredientData.getId())
+                .name(ingredientData.getName())
+                .pieceInGrams(ingredientData.getPieceInGrams())
+                .expirationDuration(ingredientData.getExpirationDuration())
+                .notifyAfterAmount(ingredientData.getNotifyAfterAmount())
+                .measurementUnit(measurement)
+                .build();
     }
 
 }

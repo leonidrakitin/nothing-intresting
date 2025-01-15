@@ -10,7 +10,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MenuItemDto {
+public class MenuItemData {
 
     private String flow;
 
@@ -18,8 +18,8 @@ public class MenuItemDto {
 
     private String name;
 
-    public static MenuItemDto of(MenuItem menuItem) {
-        return MenuItemDto.builder()
+    public static MenuItemData of(MenuItem menuItem) {
+        return MenuItemData.builder()
                 .flow(menuItem.getFlow().getName())
                 .id(menuItem.getId())
                 .name(menuItem.getName())

@@ -5,6 +5,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -12,7 +13,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.controller.dto.PrepackDto;
+import ru.sushi.delivery.kds.domain.controller.dto.PrepackData;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.service.MeasurementService;
 import ru.sushi.delivery.kds.domain.service.PrepackService;
@@ -28,13 +29,21 @@ public class PrepackView extends VerticalLayout {
     private final PrepackService prepackService;
     private final MeasurementService measurementService;
 
-    private final Grid<PrepackDto> prepackGrid = new Grid<>();
+    private final Grid<PrepackData> prepackGrid = new Grid<>();
 
     private final TextField nameField = new TextField("Название");
     private final NumberField expirationDaysField = new NumberField("Срок годности (дни)");
     private final NumberField expirationHoursField = new NumberField("Срок годности (часы)");
     private final NumberField notifyAfterAmountField = new NumberField("Уведомить при остатке");
     private final ComboBox<Measurement> measurementUnitField = new ComboBox<>("Единица измерения");
+
+    // Кнопка, которая переключается между "Добавить" и "Изменить"
+    private final Button saveButton = new Button("Добавить новый ПФ");
+    // Кнопка "Отменить изменения"
+    private final Button cancelButton = new Button("Отменить изменения");
+
+    // Текущий ПФ, который редактируем (если null — значит режим добавления)
+    private PrepackData currentEditingPrepack = null;
 
     @Autowired
     public PrepackView(PrepackService prepackService, MeasurementService measurementService) {
@@ -44,70 +53,29 @@ public class PrepackView extends VerticalLayout {
         setSizeFull();
 
         configureGrid();
-        add(createForm(), prepackGrid);
+        add(prepackGrid, createForm());
 
         updateGrid();
     }
 
     /**
-     * Создаёт форму для создания/редактирования Prepack
-     */
-    private FormLayout createForm() {
-        nameField.setPlaceholder("Введите название");
-        notifyAfterAmountField.setPlaceholder("Введите количество для уведомления");
-        expirationDaysField.setPlaceholder("Введите количество дней");
-        expirationHoursField.setPlaceholder("Введите количество часов");
-
-        // Настройка выпадающего списка с единицами измерения
-        List<Measurement> measurements = measurementService.getAll();
-        measurementUnitField.setItems(measurements);
-        measurementUnitField.setItemLabelGenerator(Measurement::getName);
-        measurementUnitField.setPlaceholder("Выберите единицу измерения");
-
-        Button addButton = new Button("Добавить ПФ", e -> savePrepack());
-        addButton.getStyle().set("min-width", "150px"); // Минимальная ширина кнопки
-
-        // Создаём FormLayout
-        FormLayout formLayout = new FormLayout();
-        formLayout.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1),   // Все компоненты в один столбец
-                new FormLayout.ResponsiveStep("600px", 2), // Два компонента в ряд
-                new FormLayout.ResponsiveStep("900px", 3)  // Три компонента в ряд
-        );
-
-        // Добавляем компоненты в FormLayout
-        formLayout.add(
-                nameField,
-                expirationDaysField,
-                expirationHoursField,
-                notifyAfterAmountField,
-                measurementUnitField,
-                addButton
-        );
-
-        // Растягиваем кнопку на всю ширину (3 столбца)
-        formLayout.setColspan(addButton, 3);
-
-        return formLayout;
-    }
-
-    /**
-     * Настраиваем Grid для отображения списка ПФ
+     * Настраиваем Grid для отображения списка ПФ + добавляем колонку действий
      */
     private void configureGrid() {
         prepackGrid.setSizeFull();
 
-        prepackGrid.addColumn(PrepackDto::getId)
+        // Основные колонки
+        prepackGrid.addColumn(PrepackData::getId)
                 .setHeader("ID")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        prepackGrid.addColumn(PrepackDto::getName)
+        prepackGrid.addColumn(PrepackData::getName)
                 .setHeader("Название")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        prepackGrid.addColumn(PrepackDto::getMeasurementUnitName)
+        prepackGrid.addColumn(PrepackData::getMeasurementUnitName)
                 .setHeader("Единица измерения")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
@@ -117,21 +85,137 @@ public class PrepackView extends VerticalLayout {
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        prepackGrid.addColumn(PrepackDto::getNotifyAfterAmount)
+        prepackGrid.addColumn(PrepackData::getNotifyAfterAmount)
                 .setHeader("Уведомить при остатке")
                 .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
+        // Колонка с кнопками "Изменить" и "Удалить"
+        prepackGrid.addComponentColumn(this::createActionButtons)
+                .setHeader("Действия")
                 .setClassNameGenerator(item -> "text-center");
     }
 
     /**
-     * Сохраняет ПФ, введённый в форму
+     * Создаём горизонтальный лейаут с кнопками "Изменить" и "Удалить" для каждой строки
      */
-    private void savePrepack() {
+    private HorizontalLayout createActionButtons(PrepackData prepack) {
+        Button editButton = new Button("Изменить", event -> loadPrepackIntoForm(prepack));
+        Button deleteButton = new Button("Удалить", event -> deletePrepack(prepack));
+
+        editButton.getStyle().set("margin-right", "0.5em");
+        return new HorizontalLayout(editButton, deleteButton);
+    }
+
+    /**
+     * Загружаем данные выбранного ПФ в форму (режим редактирования)
+     */
+    private void loadPrepackIntoForm(PrepackData prepack) {
+        this.currentEditingPrepack = prepack;
+
+        // Поля
+        nameField.setValue(prepack.getName() != null ? prepack.getName() : "");
+        if (prepack.getExpirationDuration() != null) {
+            long days = prepack.getExpirationDuration().toDays();
+            long hours = prepack.getExpirationDuration().toHours() % 24;
+            expirationDaysField.setValue((double) days);
+            expirationHoursField.setValue((double) hours);
+        }
+        else {
+            expirationDaysField.clear();
+            expirationHoursField.clear();
+        }
+        notifyAfterAmountField.setValue(prepack.getNotifyAfterAmount() != null
+                ? prepack.getNotifyAfterAmount()
+                : 0.0
+        );
+
+        // Measurement
+        Measurement measurement = measurementService.getAll().stream()
+                .filter(m -> m.getName().equals(prepack.getMeasurementUnitName()))
+                .findFirst()
+                .orElse(null);
+        measurementUnitField.setValue(measurement);
+
+        // Меняем текст кнопки
+        saveButton.setText("Изменить ПФ");
+        // Делаем кнопку «Отменить» видимой
+        cancelButton.setVisible(true);
+    }
+
+    /**
+     * Создаём форму для создания/редактирования Prepack
+     */
+    private FormLayout createForm() {
+        nameField.setPlaceholder("Введите название");
+        notifyAfterAmountField.setPlaceholder("Введите количество для уведомления");
+        expirationDaysField.setPlaceholder("Введите количество дней");
+        expirationHoursField.setPlaceholder("Введите количество часов");
+
+        // Заполняем ComboBox единицами измерения
+        List<Measurement> measurements = measurementService.getAll();
+        measurementUnitField.setItems(measurements);
+        measurementUnitField.setItemLabelGenerator(Measurement::getName);
+        measurementUnitField.setPlaceholder("Выберите единицу измерения");
+
+        // Кнопка «Отменить изменения» изначально скрыта
+        cancelButton.setVisible(false);
+        cancelButton.addClickListener(e -> clearForm());
+
+        // Кнопка «Добавить/Изменить»
+        saveButton.addClickListener(e -> {
+            if (currentEditingPrepack == null) {
+                // Режим добавления
+                createOrUpdatePrepack(null);
+            }
+            else {
+                // Режим редактирования
+                createOrUpdatePrepack(currentEditingPrepack.getId());
+            }
+        });
+        saveButton.getStyle().set("min-width", "150px");
+
+        // Формируем layout
+        FormLayout formLayout = new FormLayout();
+        formLayout.setResponsiveSteps(
+                new FormLayout.ResponsiveStep("0", 1),    // все компоненты в один столбец
+                new FormLayout.ResponsiveStep("600px", 2),
+                new FormLayout.ResponsiveStep("900px", 3)
+        );
+
+        // Добавляем поля и кнопки
+        formLayout.add(
+                nameField,
+                expirationDaysField,
+                expirationHoursField,
+                notifyAfterAmountField,
+                measurementUnitField,
+                new HorizontalLayout(saveButton, cancelButton)
+        );
+
+        // (Необязательно) Если хотите растянуть кнопки на все 3 столбца:
+        // formLayout.setColspan(formLayout.getComponent(formLayout.getComponentCount()-1), 3);
+
+        return formLayout;
+    }
+
+    /**
+     * Создаём или обновляем ПФ (если передан id != null, значит обновляем)
+     */
+    private void createOrUpdatePrepack(Long id) {
         String name = nameField.getValue();
         Measurement selectedMeasurement = measurementUnitField.getValue();
-        Long expirationDays = expirationDaysField.getValue() != null ? expirationDaysField.getValue().longValue() : 0;
-        Long expirationHours = expirationHoursField.getValue() != null ? expirationHoursField.getValue().longValue() : 0;
-        double notifyAfterAmount = notifyAfterAmountField.getValue() != null ? notifyAfterAmountField.getValue() : 0.0;
+
+        Long expirationDays = expirationDaysField.getValue() != null
+                ? expirationDaysField.getValue().longValue()
+                : 0;
+        Long expirationHours = expirationHoursField.getValue() != null
+                ? expirationHoursField.getValue().longValue()
+                : 0;
+
+        double notifyAfterAmount = notifyAfterAmountField.getValue() != null
+                ? notifyAfterAmountField.getValue()
+                : 0.0;
 
         if (name == null || name.isEmpty() || selectedMeasurement == null) {
             Notification.show("Название и единица измерения обязательны для заполнения!");
@@ -140,22 +224,45 @@ public class PrepackView extends VerticalLayout {
 
         Duration expirationDuration = Duration.ofDays(expirationDays).plusHours(expirationHours);
 
-        PrepackDto prepackDTO = PrepackDto.builder()
+        // Собираем DTO
+        PrepackData prepackData = PrepackData.builder()
+                .id(id)
                 .name(name)
                 .measurementUnitName(selectedMeasurement.getName())
                 .expirationDuration(expirationDuration)
                 .notifyAfterAmount(notifyAfterAmount)
                 .build();
 
-        prepackService.savePrepack(prepackDTO);
+        // Предполагаем, что метод savePrepack в сервисе
+        // умеет и создавать, и обновлять в зависимости от того, есть ли ID
+        prepackService.savePrepack(prepackData);
 
-        Notification.show("ПФ добавлен!");
+        Notification.show(id == null ? "ПФ добавлен!" : "Изменения сохранены!");
+
         clearForm();
         updateGrid();
     }
 
     /**
-     * Очищает форму
+     * Удаляем ПФ
+     */
+    private void deletePrepack(PrepackData prepack) {
+        if (prepack.getId() == null) {
+            Notification.show("Не удалось удалить: отсутствует ID.");
+            return;
+        }
+        prepackService.deletePrepack(prepack);
+        Notification.show("ПФ удалён!");
+        updateGrid();
+
+        // Если удалили тот ПФ, который редактировали — сбросим форму
+        if (currentEditingPrepack != null && currentEditingPrepack.getId().equals(prepack.getId())) {
+            clearForm();
+        }
+    }
+
+    /**
+     * Очищаем форму и возвращаемся в режим добавления
      */
     private void clearForm() {
         nameField.clear();
@@ -163,18 +270,22 @@ public class PrepackView extends VerticalLayout {
         expirationHoursField.clear();
         notifyAfterAmountField.clear();
         measurementUnitField.clear();
+
+        currentEditingPrepack = null;
+        saveButton.setText("Добавить новый ПФ");
+        cancelButton.setVisible(false);
     }
 
     /**
-     * Обновляет данные в Grid
+     * Подгружаем список ПФ в таблицу
      */
     private void updateGrid() {
-        List<PrepackDto> prepacks = prepackService.getAllPrepacks();
+        List<PrepackData> prepacks = prepackService.getAllPrepacks();
         prepackGrid.setItems(prepacks);
     }
 
     /**
-     * Форматирует Duration в человекочитаемый вид
+     * Форматируем Duration в человекочитаемый вид
      */
     private String formatDuration(Duration duration) {
         if (duration == null) {

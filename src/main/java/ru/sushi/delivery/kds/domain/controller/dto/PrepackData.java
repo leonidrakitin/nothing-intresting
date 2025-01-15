@@ -12,7 +12,7 @@ import java.time.Duration;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PrepackDto {
+public class PrepackData {
 
     private Long id;
 
@@ -22,10 +22,10 @@ public class PrepackDto {
 
     private Duration expirationDuration;
 
-    private double notifyAfterAmount;
+    private Double notifyAfterAmount;
 
-    public static PrepackDto of(Prepack prepack) {
-        return PrepackDto.builder()
+    public static PrepackData of(Prepack prepack) {
+        return PrepackData.builder()
                 .id(prepack.getId())
                 .name(prepack.getName())
                 .measurementUnitName(prepack.getMeasurementUnit().getName())

@@ -14,6 +14,8 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.AuditOverride;
 import org.hibernate.envers.Audited;
+import ru.sushi.delivery.kds.domain.controller.dto.IngredientDto;
+import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 
 @Audited
 @AuditOverride(forClass = Product.class)
@@ -32,4 +34,14 @@ public class Ingredient extends Product {
     private Long id;
 
     private Long pieceInGrams;
+
+    public static Ingredient of(IngredientDto ingredientData, Measurement measurement) {
+        return Ingredient.builder()
+                .pieceInGrams(ingredientData.getPieceInGrams())
+                .name(ingredientData.getName())
+                .measurementUnit(measurement)
+                .expirationDuration(ingredientData.getExpirationDuration())
+                .notifyAfterAmount(ingredientData.getNotifyAfterAmount())
+                .build();
+    }
 }
