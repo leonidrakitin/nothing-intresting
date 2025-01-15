@@ -11,7 +11,7 @@ databaseChangeLog:
                   valueNumeric: 1
               - column:
                   name: name
-                  value: "Холодные роллы"
+                  value: "Только холодная станция"
         - insert:
             tableName: flow
             columns:
@@ -20,7 +20,7 @@ databaseChangeLog:
                   valueNumeric: 2
               - column:
                   name: name
-                  value: "Горячие роллы"
+                  value: "Обе станции"
         - insert:
             tableName: flow
             columns:
@@ -29,4 +29,4 @@ databaseChangeLog:
                   valueNumeric: 3
               - column:
                   name: name
-                  value: "Горячие закуски"
+                  value: "Только горячая станция"

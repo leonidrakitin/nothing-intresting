@@ -43,5 +43,35 @@ public class MainView extends VerticalLayout {
             UI.getCurrent().navigate("collector")
         );
         add(goToCollectorScreen);
+
+        Button goToIngredientView = new Button("Добавить ингредиент (Тест)");
+        goToIngredientView.addClickListener(e ->
+                UI.getCurrent().navigate("ingredients")
+        );
+        add(goToIngredientView);
+
+        Button goToPrepackView = new Button("Добавить пфку (Тест)");
+        goToPrepackView.addClickListener(e ->
+                UI.getCurrent().navigate("prepacks")
+        );
+        add(goToPrepackView);
+
+        Button goToMenuItemView = new Button("Добавить меню");
+        goToMenuItemView.addClickListener(e ->
+                UI.getCurrent().navigate("menu-items")
+        );
+        add(goToMenuItemView);
+
+        Button goToPrepackRecipeView = new Button("Добавить рецепт заготовки");
+        goToPrepackRecipeView.addClickListener(e ->
+                UI.getCurrent().navigate("prepack-recipe")
+        );
+        add(goToPrepackRecipeView);
+
+        Button goToMenuItemRecipeView = new Button("Добавить рецепт меню");
+        goToMenuItemRecipeView.addClickListener(e ->
+                UI.getCurrent().navigate("menu-item-recipe")
+        );
+        add(goToMenuItemRecipeView);
     }
 }

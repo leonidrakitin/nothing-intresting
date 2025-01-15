@@ -4,9 +4,14 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.sushi.delivery.kds.domain.controller.dto.MenuItemRecipeDto;
+import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeDto;
+import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
 import ru.sushi.delivery.kds.domain.persist.entity.product.IngredientItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.PrepackItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.SourceItem;
+import ru.sushi.delivery.kds.domain.persist.entity.recipe.MenuItemRecipe;
+import ru.sushi.delivery.kds.domain.persist.entity.recipe.PrepackRecipe;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.Recipe;
 import ru.sushi.delivery.kds.domain.persist.repository.recipe.MenuItemRecipeRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.recipe.PrepackRecipeRepository;
@@ -31,6 +36,8 @@ public class RecipeService {
     private final PrepackRecipeRepository prepackRecipeRepository;
     private final PrepackItemService prepackItemService;
     private final SourceService sourceService;
+    private final PrepackService prepackService;
+    private final MenuItemService menuItemService;
 
     public List<PrepackRecipeItemDto> getPrepackRecipe(Long prepackId) {
         return this.prepackRecipeRepository.findByPrepackId(prepackId).stream()
@@ -81,7 +88,8 @@ public class RecipeService {
                         item.getSourceType().getValue(),
                         this.sourceService.getSourceItemName(item)
                 ));
-            } else {
+            }
+            else {
                 item.setDiscontinuedComment(String.format(
                         "%s '%s' автоматически был списан в минус системой",
                         item.getSourceType().getValue(),
@@ -115,6 +123,57 @@ public class RecipeService {
         List<Recipe> menuItemRecipes = this.menuItemRecipeRepository.findByMenuItemIds(menuItemIds);
         menuItemRecipes.forEach(this::calculateRecipe);
         this.checkAndNotifyIfAlmostFinished(menuItemRecipes);
+    }
+
+    public List<PrepackRecipeDto> getPrepackRecipeByPrepackId(Long prepackId) {
+        List<PrepackRecipe> prepackRecipes = this.prepackRecipeRepository.findByPrepackId(prepackId);
+        return prepackRecipes.stream().map(prepackRecipe -> PrepackRecipeDto.of(
+                        prepackRecipe,
+                        this.sourceService.getSourceItemName(
+                                prepackRecipe.getSourceId(),
+                                prepackRecipe.getSourceType())
+                )
+        ).toList();
+    }
+
+    public void savePrepackRecipe(PrepackRecipeDto prepackRecipeDto, SourceDto sourceDto, Long prepackId) {
+        this.prepackRecipeRepository.save(PrepackRecipe.builder()
+                .id(prepackRecipeDto.getId())
+                .prepack(this.prepackService.get(prepackId))
+                .sourceId(sourceDto.getId())
+                .sourceType(SourceType.valueOf(sourceDto.getType()))
+                .initAmount(prepackRecipeDto.getInitAmount())
+                .finalAmount(prepackRecipeDto.getFinalAmount())
+                .lossesAmount(prepackRecipeDto.getLossesAmount())
+                .lossesPercentage(prepackRecipeDto.getLossesPercentage())
+                .build()
+        );
+    }
+
+    public List<MenuItemRecipeDto> getMenuRecipeByMenuId(Long menuId) {
+        List<MenuItemRecipe> menuItemRecipes = this.menuItemRecipeRepository.findByMenuItemId(menuId);
+        return menuItemRecipes.stream().map(menuItemRecipe -> MenuItemRecipeDto.of(
+                        menuItemRecipe,
+                        this.sourceService.getSourceItemName(
+                                menuItemRecipe.getSourceId(),
+                                menuItemRecipe.getSourceType())
+                )
+        ).toList();
+    }
+
+    public void saveMenuRecipe(MenuItemRecipeDto menuItemRecipeDto, SourceDto sourceDto, Long menuId) {
+        this.menuItemRecipeRepository.save(MenuItemRecipe.builder()
+                .id(menuItemRecipeDto.getId())
+                .menuItem(this.menuItemService.getMenuItemById(menuId))
+                .stationId(menuItemRecipeDto.getStationId())
+                .sourceId(sourceDto.getId())
+                .sourceType(SourceType.valueOf(sourceDto.getType()))
+                .initAmount(menuItemRecipeDto.getInitAmount())
+                .finalAmount(menuItemRecipeDto.getFinalAmount())
+                .lossesAmount(menuItemRecipeDto.getLossesAmount())
+                .lossesPercentage(menuItemRecipeDto.getLossesPercentage())
+                .build()
+        );
     }
 
     private void checkAndNotifyIfAlmostFinished(List<Recipe> menuItemRecipes) {

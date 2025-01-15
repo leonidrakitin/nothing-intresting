@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class IngredientDTO {
+public class IngredientCompactDTO {
     private final String name;
     private final Long stationId;
 }

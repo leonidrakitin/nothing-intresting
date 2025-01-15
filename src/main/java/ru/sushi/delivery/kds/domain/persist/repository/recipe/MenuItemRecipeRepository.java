@@ -16,4 +16,6 @@ public interface MenuItemRecipeRepository extends JpaRepository<MenuItemRecipe, 
         where recipe.menuItem.id in :menuItemIds
     """)
     List<Recipe> findByMenuItemIds(List<Long> menuItemId);
+
+    List<MenuItemRecipe> findByMenuItemId(Long id);
 }
