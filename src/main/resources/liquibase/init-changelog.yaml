@@ -587,22 +587,22 @@ databaseChangeLog:
             columns:
               - column:
                   constraints:
-                    nullable: false
+                    nullable: true
                   name: init_amount
                   type: FLOAT8
               - column:
                   constraints:
-                    nullable: false
+                    nullable: true
                   name: final_amount
                   type: FLOAT8
               - column:
                   constraints:
-                    nullable: false
+                    nullable: true
                   name: losses_amount
                   type: FLOAT8
               - column:
                   constraints:
-                    nullable: false
+                    nullable: true
                   name: losses_percentage
                   type: FLOAT8
               - column:
@@ -631,12 +631,12 @@ databaseChangeLog:
                   type: BIGINT
               - column:
                   constraints:
-                    nullable: false
+                    nullable: true
                   name: source_id
                   type: BIGINT
               - column:
                   constraints:
-                    nullable: false
+                    nullable: true
                   name: source_type
                   type: VARCHAR(255)
             tableName: processing_act_item_aud
@@ -1442,7 +1442,7 @@ databaseChangeLog:
                   type: SMALLINT
               - column:
                   constraints:
-                    nullable: false
+                    nullable: true
                   name: created_at
                   type: TIMESTAMP WITH TIME ZONE
                   defaultValueComputed: "current_timestamp"

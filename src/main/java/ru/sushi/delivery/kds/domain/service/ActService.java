@@ -10,7 +10,9 @@ import ru.sushi.delivery.kds.domain.controller.dto.InvoiceActDto;
 import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeItemDto;
 import ru.sushi.delivery.kds.domain.controller.dto.ProcessingActDto;
 import ru.sushi.delivery.kds.domain.controller.dto.request.GetInvoicesRequest;
+import ru.sushi.delivery.kds.domain.controller.dto.request.GetProcessingRequest;
 import ru.sushi.delivery.kds.domain.controller.dto.response.GetInvoicesResponse;
+import ru.sushi.delivery.kds.domain.controller.dto.response.ProcessingActInfoResponse;
 import ru.sushi.delivery.kds.domain.persist.entity.act.InvoiceAct;
 import ru.sushi.delivery.kds.domain.persist.entity.act.InvoiceActItem;
 import ru.sushi.delivery.kds.domain.persist.entity.act.ProcessingAct;
@@ -39,6 +41,7 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class ActService {
 
+    private final EmployeeService employeeService;
     private final InvoiceActRepository invoiceActRepository;
     private final InvoiceActItemRepository invoiceActItemRepository;
     private final IngredientItemRepository ingredientItemRepository;
@@ -66,6 +69,22 @@ public class ActService {
     }
 
     @Transactional
+    public List<ProcessingActInfoResponse> getAllProcessingActs(GetProcessingRequest request) {
+        final Sort.Order order = new Sort.Order(
+                Sort.Direction.fromString(request.getSortDirection()),
+                request.getFieldSort()
+        );
+        return this.processingActRepository.findAll(
+                        PageRequest.of(request.getPageNumber(), request.getPageSize(), Sort.by(order))
+                ).stream()
+                .map(act -> {
+                    String employeeName = this.employeeService.get(act.getEmployeeId()).getName();
+                    return ProcessingActInfoResponse.of(employeeName, act);
+                })
+                .toList();
+    }
+
+    @Transactional
     public InvoiceActDto getInvoice(long invoiceId) {
         return this.invoiceActRepository.findById(invoiceId)
                 .map(this::buildInvoiceActDto)
@@ -73,10 +92,24 @@ public class ActService {
     }
 
     @Transactional
+    public ProcessingActDto getProcessingAct(long processingActId) {
+        return this.processingActRepository.findById(processingActId)
+                .map(this::buildProcessingActDto)
+                .orElseThrow(() -> new NotFoundException("Act not found by id " + processingActId));
+    }
+
+    @Transactional
     public void deleteInvoiceAct(long invoiceId) {
         // todo delete ingredients/prepack items that connected
         this.invoiceActItemRepository.deleteByInvoiceActId(invoiceId);
         this.invoiceActRepository.deleteById(invoiceId);
+    }
+
+    @Transactional
+    public void deleteProcessingAct(long processingActId) {
+        // todo delete ingredients/prepack items that connected
+        this.processingSourceItemRepository.deleteByProcessingActId(processingActId);
+        this.processingActRepository.deleteById(processingActId);
     }
 
     @Transactional
@@ -175,6 +208,31 @@ public class ActService {
                 invoiceItem.getAmount(),
                 invoiceItem.getPrice(),
                 null
+        );
+    }
+
+
+    private ProcessingActDto buildProcessingActDto(ProcessingAct processingAct) {
+        return new ProcessingActDto(
+                processingAct.getId(),
+                processingAct.getEmployeeId(),
+                processingAct.getAmount(),
+                null,
+                processingAct.getName(),
+                processingAct.getProcessingSourceItems().stream().map(this::buildPrepackRecipeItemDto).toList()
+        );
+    }
+
+    private PrepackRecipeItemDto buildPrepackRecipeItemDto(ProcessingSourceItem sourceItem) {
+        return new PrepackRecipeItemDto(
+                sourceItem.getId(),
+                sourceItem.getSourceId(),
+                sourceItem.getSourceType().name(),
+                this.sourceService.getSourceItemName(sourceItem.getSourceId(), sourceItem.getSourceType()),
+                sourceItem.getInitAmount(),
+                sourceItem.getFinalAmount(),
+                sourceItem.getLossesAmount(),
+                sourceItem.getLossesPercentage()
         );
     }
 }

@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 @Getter
 @RequiredArgsConstructor
-public class GetInvoicesRequest {
+public class GetProcessingRequest {
 
     @PositiveOrZero
     private final int pageNumber = 0;

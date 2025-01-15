@@ -9,6 +9,8 @@ import ru.sushi.delivery.kds.domain.persist.entity.recipe.PrepackRecipe;
 @Getter
 @RequiredArgsConstructor
 public class PrepackRecipeItemDto {
+
+    private final Long id;
     private final Long sourceId;
     private final String sourceType;
     private final String name;
@@ -19,6 +21,7 @@ public class PrepackRecipeItemDto {
 
     public static PrepackRecipeItemDto of(PrepackRecipe prepackRecipe) {
         return PrepackRecipeItemDto.builder()
+                .id(prepackRecipe.getId())
                 .sourceId(prepackRecipe.getSourceId())
                 .sourceType(prepackRecipe.getSourceType().name())
                 .name(prepackRecipe.getPrepack().getName())

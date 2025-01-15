@@ -14,4 +14,7 @@ databaseChangeLog:
   - include:
       file: screen/master.yaml
       relativeToChangelogFile: true
+  - include:
+      file: employee/master.yaml
+      relativeToChangelogFile: true
 
