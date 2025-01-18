@@ -53,6 +53,7 @@ public class MenuItemRecipe extends Recipe {
                 .menuItem(menuItem)
                 .sourceId(sourceDto.getId())
                 .sourceType(SourceType.valueOf(sourceDto.getType()))
+                .stationId(menuItemRecipeDto.getStationId())
                 .initAmount(menuItemRecipeDto.getInitAmount())
                 .finalAmount(menuItemRecipeDto.getFinalAmount())
                 .lossesAmount(menuItemRecipeDto.getLossesAmount())

@@ -206,6 +206,7 @@ public class RecipeService {
         return menuItemRecipe.toBuilder()
                 .id(menuItemRecipe.getId())
                 .menuItem(menuItem)
+                .stationId(menuItemRecipeDto.getStationId())
                 .sourceId(sourceDto.getId())
                 .sourceType(SourceType.valueOf(sourceDto.getType()))
                 .initAmount(menuItemRecipeDto.getInitAmount())

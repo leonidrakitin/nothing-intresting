@@ -171,7 +171,7 @@ public class PrepackRecipeView extends VerticalLayout {
     private void initRecipeForm() {
         List<SourceDto> allSources = sourceService.getAllSources();
         sourceComboBox.setItems(allSources);
-        sourceComboBox.setItemLabelGenerator(SourceDto::getName);
+        sourceComboBox.setItemLabelGenerator(sourceDto -> sourceDto.getName() + " " + sourceDto.getType());
         sourceComboBox.setPlaceholder("Ингредиент или заготовка...");
         sourceComboBox.setClearButtonVisible(true);
 

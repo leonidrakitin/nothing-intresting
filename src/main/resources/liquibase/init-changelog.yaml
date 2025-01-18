@@ -696,23 +696,15 @@ databaseChangeLog:
         - createTable:
             columns:
               - column:
-                  constraints:
-                    nullable: false
                   name: final_amount
                   type: FLOAT8
               - column:
-                  constraints:
-                    nullable: false
                   name: init_amount
                   type: FLOAT8
               - column:
-                  constraints:
-                    nullable: false
                   name: losses_amount
                   type: FLOAT8
               - column:
-                  constraints:
-                    nullable: false
                   name: losses_percentage
                   type: FLOAT8
               - column:
@@ -723,8 +715,6 @@ databaseChangeLog:
                   name: rev
                   type: INTEGER
               - column:
-                  constraints:
-                    nullable: false
                   name: revtype
                   type: SMALLINT
               - column:
@@ -735,23 +725,15 @@ databaseChangeLog:
                   name: id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: menu_item_id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: source_id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: station_id
                   type: BIGINT
               - column:
-                  constraints:
-                    nullable: false
                   name: source_type
                   type: VARCHAR(255)
             tableName: recipe_menu_item_aud

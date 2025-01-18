@@ -14,8 +14,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         select o from Order o
         left join fetch o.orderItems oi
         where o.status != 'READY' and o.status != 'CANCELED'
-        group by o
-        order by max(oi.stationChangedAt) desc
+                order by (select max(oi2.stationChangedAt) from OrderItem oi2 where oi2.order = o) desc
     """)
     List<Order> findAllActive();
 }
