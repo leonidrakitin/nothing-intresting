@@ -24,7 +24,7 @@ public class WebSocketController {
     }
 
     @MessageMapping("/topic/screen.getAllOrdersWithItems")
-    @SendTo("/topic/screen.orders/3")
+    @SendTo("/topic/screen.orders/3") //todo wtf???
     public WSOrders getAllOrdersWithItems() {
         return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllOrdersWithItems());
     }

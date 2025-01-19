@@ -1913,6 +1913,15 @@ databaseChangeLog:
             constraintName: uq_flow_step_flow_id_step_order
             columnNames: flow_id, step_order
             tableName: flow_step
+
+  - changeSet:
+      id: 14365980934148-2
+      author: admin
+      changes:
+        - addUniqueConstraint:
+            constraintName: uq_menu_recipe_item__menu_item_i__si
+            columnNames: menu_item_id, source_id, station_id
+            tableName: recipe_menu_item
   - changeSet:
       id: 1731518093486-3
       author: admin
@@ -2076,7 +2085,7 @@ databaseChangeLog:
             columnName: id
             defaultValueComputed: "nextval('menu_item_recipe_id_generator'::regclass)"
   - changeSet:
-      id: 1736698435075-28
+      id: 1736698435175-28
       author: admin (generated)
       changes:
         - createSequence:
@@ -2113,6 +2122,19 @@ databaseChangeLog:
       id: 1736698435075-30
       author: admin (generated)
       changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: menu_item_id_seq_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: menu_item
+            columnName: id
+            defaultValueComputed: "nextval('menu_item_id_seq_generator'::regclass)"
         - createSequence:
             cacheSize: 1
             cycle: false

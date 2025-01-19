@@ -53,9 +53,15 @@ public class ViewService {
 
     public List<OrderItemDto> getScreenOrderItems(Long screenId) {
         Screen screen = this.screenService.getOrThrow(screenId);
-        return this.orderService.getAllItemsByStationId(screen.getStation().getId()).stream()
+        List<OrderItemDto> orderItemsList = this.orderService.getAllItemsByStationId(screen.getStation().getId()).stream()
             .map(this::buildOrderItemDto)
             .toList();
+
+        //todo move to service method, need separate it first
+        orderItemsList.forEach(orderItemData -> orderItemData.getIngredients()
+                .removeIf(ingredients -> !ingredients.getStationId().equals(screenId)));
+
+        return orderItemsList;
     }
 
     public void updateStatus(Long orderItemId) {
@@ -93,7 +99,7 @@ public class ViewService {
                 .id(item.getId())
                 .orderId(item.getOrder().getId())
                 .name(item.getMenuItem().getName())
-                .ingredients(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId()))
+                .ingredients(new ArrayList<>(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId())))
                 .status(item.getStatus())
                 .createdAt(item.getStatusUpdatedAt())
                 //todo remove

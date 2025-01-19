@@ -4,6 +4,7 @@ import com.vaadin.flow.router.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
+import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.product.IngredientItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.PrepackItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Product;
@@ -63,6 +64,17 @@ public class SourceService {
         return switch (sourceItem.getSourceType()) {
             case INGREDIENT -> ((IngredientItem) sourceItem).getIngredient().getName();
             case PREPACK -> ((PrepackItem) sourceItem).getPrepack().getName();
+        };
+    }
+
+    public Measurement getSourceItemMeasurementUnit(Long sourceId, SourceType sourceType) {
+        return switch (sourceType) {
+            case INGREDIENT -> this.ingredientRepository.findById(sourceId)
+                    .orElseThrow(NotFoundException::new)
+                    .getMeasurementUnit();
+            case PREPACK -> this.prepackRepository.findById(sourceId)
+                    .orElseThrow(NotFoundException::new)
+                    .getMeasurementUnit();
         };
     }
 

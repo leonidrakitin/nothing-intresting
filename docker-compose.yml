@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  db:
+  kds-db:
     image: postgres:14
     container_name: kds-db
     environment:
@@ -19,13 +19,13 @@ services:
       dockerfile: Dockerfile
     container_name: kds-app
     environment:
-      - SQL_URL=jdbc:postgresql://kds-db:5432/kds
+      - SQL_URL=jdbc:postgresql://localhost:5432/kds
       - SQL_USERNAME=root
       - SQL_PASSWORD=123456
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - kds-db
     networks:
       - kds-network
 

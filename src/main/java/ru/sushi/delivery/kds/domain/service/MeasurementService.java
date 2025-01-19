@@ -1,5 +1,6 @@
 package ru.sushi.delivery.kds.domain.service;
 
+import com.vaadin.flow.router.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
@@ -15,5 +16,10 @@ public class MeasurementService {
 
     public List<Measurement> getAll() {
         return measurementRepository.findAll();
+    }
+
+    public Measurement getById(Long id) {
+        return this.measurementRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Measurement not found"));
     }
 }

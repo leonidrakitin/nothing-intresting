@@ -19,6 +19,7 @@ import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.domain.controller.dto.MenuItemRecipeDto;
 import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
+import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.model.SourceType;
 
@@ -48,16 +49,22 @@ public class MenuItemRecipe extends Recipe {
      */
     private Long stationId;
 
-    public static MenuItemRecipe of(MenuItemRecipeDto menuItemRecipeDto, SourceDto sourceDto, MenuItem menuItem) {
+    public static MenuItemRecipe of(
+            MenuItemRecipeDto recipeData,
+            SourceDto sourceDto,
+            MenuItem menuItem,
+            Measurement measurement
+    ) {
         return MenuItemRecipe.builder()
                 .menuItem(menuItem)
                 .sourceId(sourceDto.getId())
                 .sourceType(SourceType.valueOf(sourceDto.getType()))
-                .stationId(menuItemRecipeDto.getStationId())
-                .initAmount(menuItemRecipeDto.getInitAmount())
-                .finalAmount(menuItemRecipeDto.getFinalAmount())
-                .lossesAmount(menuItemRecipeDto.getLossesAmount())
-                .lossesPercentage(menuItemRecipeDto.getLossesPercentage())
+                .stationId(recipeData.getStationId())
+                .initAmount(recipeData.getInitAmount())
+                .finalAmount(recipeData.getFinalAmount())
+                .lossesAmount(recipeData.getLossesAmount())
+                .lossesPercentage(recipeData.getLossesPercentage())
+                .measurement(measurement)
                 .build();
     }
 }

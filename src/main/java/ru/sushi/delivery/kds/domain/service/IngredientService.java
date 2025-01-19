@@ -4,12 +4,14 @@ import com.vaadin.flow.router.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.controller.dto.IngredientDto;
+import ru.sushi.delivery.kds.domain.controller.dto.MenuItemRecipeDto;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.repository.MeasurementRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.product.IngredientRepository;
 import ru.sushi.delivery.kds.dto.IngredientCompactDTO;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +25,7 @@ public class IngredientService {
     private final IngredientRepository ingredientRepository;
     private final MeasurementRepository measurementRepository;
     private final Map<Long, List<Ingredient>> ingredientCache = new ConcurrentHashMap<>();
+    private final RecipeService recipeService;
 
 //    @PostConstruct
 //    public void initializeCache() {
@@ -38,12 +41,9 @@ public class IngredientService {
 //    }
 
     public List<IngredientCompactDTO> getMenuItemIngredients(Long menuItemId) {
-        return this.ingredientCache.getOrDefault(menuItemId, List.of()).stream()
-                .map(ingredient -> IngredientCompactDTO.builder()
-                                .name(ingredient.getName())
-//                            .stationId(ingredient.getStationId()) //TODO from recipe
-                                .build()
-                )
+        return this.recipeService.getMenuRecipeByMenuId(menuItemId).stream()
+                .sorted(Comparator.comparingLong(MenuItemRecipeDto::getPriority))
+                .map(IngredientCompactDTO::of)
                 .toList();
     }
 
