@@ -2,10 +2,13 @@ package ru.sushi.delivery.kds.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.sushi.delivery.kds.domain.controller.dto.IngredientItemData;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.entity.product.IngredientItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.SourceItem;
 import ru.sushi.delivery.kds.domain.persist.repository.product.IngredientItemRepository;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,5 +27,11 @@ public class IngredientItemService {
                 .mapToDouble(Double::doubleValue)
                 .sum();
         return amount <= ingredient.getNotifyAfterAmount();
+    }
+
+    public List<IngredientItemData> getGetAll() {
+        return ingredientItemRepository.findAll().stream()
+                .map(IngredientItemData::of)
+                .toList();
     }
 }
