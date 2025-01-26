@@ -57,6 +57,7 @@ public class SourceService {
         return switch (sourceType) {
             case INGREDIENT -> this.ingredientItemRepository.findActiveByIngredientId(sourceId);
             case PREPACK -> this.prepackItemRepository.findActiveByPrepackId(sourceId);
+            default -> throw new IllegalStateException("Unexpected value: " + sourceType);
         };
     }
 
@@ -64,6 +65,7 @@ public class SourceService {
         return switch (sourceItem.getSourceType()) {
             case INGREDIENT -> ((IngredientItem) sourceItem).getIngredient().getName();
             case PREPACK -> ((PrepackItem) sourceItem).getPrepack().getName();
+            default -> throw new IllegalStateException("Unexpected value: " + sourceItem.getSourceType());
         };
     }
 
@@ -75,6 +77,7 @@ public class SourceService {
             case PREPACK -> this.prepackRepository.findById(sourceId)
                     .orElseThrow(NotFoundException::new)
                     .getMeasurementUnit();
+            default -> throw new IllegalStateException("Unexpected value: " + sourceType);
         };
     }
 
@@ -84,6 +87,7 @@ public class SourceService {
                     .orElseThrow(() -> new NotFoundException("Ingredient not found by id " + sourceId));
             case PREPACK -> this.prepackRepository.findById(sourceId).map(Product::getName)
                     .orElseThrow(() -> new NotFoundException("Prepack not found by " + sourceId));
+            default -> throw new IllegalStateException("Unexpected value: " + sourceType);
         };
     }
 }

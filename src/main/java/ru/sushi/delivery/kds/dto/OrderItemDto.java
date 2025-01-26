@@ -18,6 +18,7 @@ public class OrderItemDto {
     private final String name;
     private final List<IngredientCompactDTO> ingredients;
     private final Instant createdAt;
+    private final int timeToCook;
     //TODO Так делать плохо
     private OrderItemStationStatus status;
     private Station currentStation;

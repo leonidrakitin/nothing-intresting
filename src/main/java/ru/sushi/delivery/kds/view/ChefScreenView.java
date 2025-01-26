@@ -27,6 +27,7 @@ import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Route("screen")
@@ -145,12 +146,12 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         container.setWidthFull();
 
         // Заголовок: "Заказ #id: <имя>"
-        //TODO Переделать передачу номера заказа
-        //TODO Переделать обновление объектов раз в секунду
+        // TODO Переделать передачу номера заказа
+        // TODO Переделать обновление объектов раз в секунду
         Div title = new Div(new Text("Заказ #" + item.getOrderId() + ": " + item.getName()));
         Div details = new Div();
         for (var ingredient : item.getIngredients()) {
-            if (ingredient.getStationId() == stationId || ingredient.getStationId() == null) {
+            if (Objects.equals(ingredient.getStationId(), stationId) || ingredient.getStationId() == null) {
                 details.add(new Div(new Text("- " + ingredient.getName())));
             }
         }

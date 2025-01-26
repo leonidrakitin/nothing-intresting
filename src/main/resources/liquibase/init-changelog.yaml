@@ -1185,6 +1185,9 @@ databaseChangeLog:
                     nullable: false
                   name: name
                   type: VARCHAR(255)
+              - column:
+                  name: price
+                  type: BIGINT
             tableName: menu_item
   - changeSet:
       id: 1736598409360-38
@@ -1215,6 +1218,9 @@ databaseChangeLog:
               - column:
                   name: name
                   type: VARCHAR(255)
+              - column:
+                  name: price
+                  type: BIGINT
             TableName: menu_item_aud
   - changeSet:
       id: 1736598409360-39

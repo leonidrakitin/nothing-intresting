@@ -267,6 +267,7 @@ public class RecipeService {
             case PREPACK -> this.prepackItemService.checkIfAlmostEmpty(
                     ((PrepackItem) sourceItem).getPrepack()
             );
+            default -> throw new IllegalStateException("Unexpected value: " + sourceItem.getSourceType());
         };
     }
 }

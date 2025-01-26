@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum SourceType {
     INGREDIENT("Ингридиент"),
-    PREPACK("Полуфабрикат");
+    PREPACK("Полуфабрикат"),
+    MENU_ITEM("Блюдо");
 
     private final String value;
 }

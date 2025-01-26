@@ -41,6 +41,8 @@ public class MenuItem {
     @JoinColumn(name = "flow_id")
     private Flow flow;
 
+    private Double price;
+
     public static MenuItem of(MenuItemData menuItemData, Flow flow) {
         return MenuItem.builder()
                 .name(menuItemData.getName())

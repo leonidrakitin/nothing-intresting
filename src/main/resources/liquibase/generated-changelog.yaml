@@ -279,8 +279,6 @@ databaseChangeLog:
             name: status_update_at
             type: TIMESTAMP WITH TIME ZONE
         - column:
-            constraints:
-              nullable: false
             name: name
             type: VARCHAR(255)
         - column:

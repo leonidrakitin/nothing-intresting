@@ -34,5 +34,5 @@ spring:
           new_generator_mappings: false
           optimizer: none
   liquibase:
-    enabled: true
+    enabled: false
     change-log: classpath:/liquibase/db.changelog-master.yaml

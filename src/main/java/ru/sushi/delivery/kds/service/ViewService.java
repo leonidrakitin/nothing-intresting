@@ -53,9 +53,10 @@ public class ViewService {
 
     public List<OrderItemDto> getScreenOrderItems(Long screenId) {
         Screen screen = this.screenService.getOrThrow(screenId);
-        List<OrderItemDto> orderItemsList = this.orderService.getAllItemsByStationId(screen.getStation().getId()).stream()
-            .map(this::buildOrderItemDto)
-            .toList();
+        List<OrderItemDto> orderItemsList = this.orderService.getAllItemsByStationId(screen.getStation().getId())
+                .stream()
+                .map(this::buildOrderItemDto)
+                .toList();
 
         //todo move to service method, need separate it first
         orderItemsList.forEach(orderItemData -> orderItemData.getIngredients()
@@ -102,6 +103,7 @@ public class ViewService {
                 .ingredients(new ArrayList<>(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId())))
                 .status(item.getStatus())
                 .createdAt(item.getStatusUpdatedAt())
+                .timeToCook(180)
                 //todo remove
                 .currentStation(
                         this.flowCacheService.getStep(item.getMenuItem().getFlow().getId(), item.getCurrentFlowStep())

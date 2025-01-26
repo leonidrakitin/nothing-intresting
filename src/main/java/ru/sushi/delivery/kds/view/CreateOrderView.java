@@ -61,6 +61,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     // Поле для ввода «номера заказа»
     private final TextField orderNumberField = new TextField("Номер заказа");
 
+    // Поле для отображения общей суммы к оплате
+    private final H3 totalPay = new H3("К оплате: 0.0 рублей");
+
     @Autowired
     public CreateOrderView(ViewService viewService, CashListener cashListener) {
         setSizeFull();
@@ -113,20 +116,26 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 rollsGrid.setItems(menuMenuItems);
             } else {
                 rollsGrid.setItems(
-                    menuMenuItems.stream()
-                        .filter(item -> item.getName().toLowerCase().contains(searchValue))
-                        .collect(Collectors.toList())
+                        menuMenuItems.stream()
+                                .filter(item -> item.getName().toLowerCase().contains(searchValue))
+                                .collect(Collectors.toList())
                 );
             }
         });
 
         rollsGrid.setItems(menuMenuItems);
         rollsGrid.addColumn(MenuItem::getName).setHeader("Наименование");
+        rollsGrid.addColumn(MenuItem::getPrice).setHeader("Цена");
         rollsGrid.setWidthFull();
         rollsGrid.addItemClickListener(e -> {
             MenuItem clickedMenuItem = e.getItem();
             chosenMenuItems.add(clickedMenuItem);
-            Notification.show("Добавлен: " + clickedMenuItem.getName());
+            updateTotalPay();
+            Notification.show(String.format(
+                    "Добавлен: %s - %.1f рублей",
+                    clickedMenuItem.getName(),
+                    clickedMenuItem.getPrice()
+            ));
             chosenGrid.getDataProvider().refreshAll();
         });
 
@@ -146,9 +155,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 setsGrid.setItems(menuItemSets);
             } else {
                 setsGrid.setItems(
-                    menuItemSets.stream()
-                        .filter(s -> s.getName().toLowerCase().contains(searchValue))
-                        .collect(Collectors.toList())
+                        menuItemSets.stream()
+                                .filter(s -> s.getName().toLowerCase().contains(searchValue))
+                                .collect(Collectors.toList())
                 );
             }
         });
@@ -159,6 +168,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsGrid.addItemClickListener(e -> {
             ItemSet clickedSet = e.getItem();
             chosenMenuItems.addAll(clickedSet.getMenuItems());
+            updateTotalPay();
             Notification.show("Добавлен сет: " + clickedSet.getName());
             chosenGrid.getDataProvider().refreshAll();
         });
@@ -166,16 +176,16 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsTabLayout.add(setsSearchField, setsGrid);
 
         VerticalLayout leftLayout = new VerticalLayout(
-            tabsLeft,
-            tabsContentLeft
+                tabsLeft,
+                tabsContentLeft
         );
         leftLayout.setWidth("50%");
         leftLayout.setPadding(false);
         leftLayout.setSpacing(true);
         leftLayout.getStyle()
-            .set("border", "1px solid #ccc")
-            .set("border-radius", "8px")
-            .set("padding", "20px");
+                .set("border", "1px solid #ccc")
+                .set("border-radius", "8px")
+                .set("padding", "20px");
 
         // ----------------------------
         // ПРАВАЯ ЧАСТЬ (Корзина / Все заказы)
@@ -207,9 +217,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         rightLayout.setPadding(false);
         rightLayout.setSpacing(true);
         rightLayout.getStyle()
-            .set("border", "1px solid #ccc")
-            .set("border-radius", "8px")
-            .set("padding", "20px");
+                .set("border", "1px solid #ccc")
+                .set("border-radius", "8px")
+                .set("padding", "20px");
 
         // Добавляем левую и правую часть на главный лейаут
         add(leftLayout, rightLayout);
@@ -224,6 +234,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
         H3 chosenTitle = new H3("Корзина:");
         chosenGrid.addColumn(MenuItem::getName).setHeader("Наименование");
+        chosenGrid.addColumn(MenuItem::getPrice).setHeader("Цена");
         chosenGrid.setItems(chosenMenuItems);
 
         Button createOrderButton = new Button("Создать заказ");
@@ -236,34 +247,37 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 return;
             }
 
-            // Проверяем, заполнено ли поле «Номер заказа»
             String orderNumber = orderNumberField.getValue().trim();
             if (orderNumber.isEmpty()) {
                 Notification.show("Нельзя создать заказ без номера");
                 return;
             }
 
-            // Создаём заказ
             viewService.createOrder(orderNumber, chosenMenuItems);
             Notification.show("Заказ создан! Номер: " + orderNumber +
-                ", Позиции: " + chosenMenuItems.size());
+                    ", Позиции: " + chosenMenuItems.size());
 
-            // Очищаем корзину
             chosenMenuItems.clear();
+            updateTotalPay();
             chosenGrid.getDataProvider().refreshAll();
             orderNumberField.clear();
         });
 
         clearCartButton.addClickListener(e -> {
             chosenMenuItems.clear();
+            updateTotalPay();
             chosenGrid.getDataProvider().refreshAll();
             Notification.show("Корзина очищена");
         });
 
-        cartLayout.add(chosenTitle, chosenGrid, buttonBar);
+        cartLayout.add(chosenTitle, chosenGrid, totalPay, buttonBar);
         return cartLayout;
     }
 
+    private void updateTotalPay() {
+        double total = chosenMenuItems.stream().mapToDouble(MenuItem::getPrice).sum();
+        totalPay.setText("К оплате: " + total + " рублей");
+    }
 
     /**
      * Создаем лейаут "Все заказы" (Grid со всеми заказами).
@@ -274,19 +288,16 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
         ordersGrid.removeAllColumns();
 
-        // Колонка "ID"
         ordersGrid.addColumn(OrderFullDto::getName)
-            .setHeader("ID");
+                .setHeader("ID");
 
-        // Колонка "Кол-во позиций"
         ordersGrid.addColumn(dto -> {
             if (dto.getItems() == null) return 0;
             return dto.getItems().stream()
-                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
-                .count();
+                    .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+                    .count();
         }).setHeader("Кол-во позиций");
 
-        // Колонка "Статус"
         ordersGrid.addColumn(orderDto -> switch (orderDto.getStatus()) {
             case CREATED    -> "Создан";
             case COOKING    -> "Готовится";
@@ -296,7 +307,6 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             default           -> "";
         }).setHeader("Статус");
 
-        // Колонка с кнопками "Позиции" и "Отменить"
         ordersGrid.addComponentColumn(orderDto -> {
             HorizontalLayout layout = new HorizontalLayout();
 
@@ -307,7 +317,6 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
                 Button cancelBtn = new Button("Отменить");
                 cancelBtn.addClickListener(e -> {
-                    // Отмена заказа
                     viewService.cancelOrder(orderDto.getId());
                     Notification.show("Заказ " + orderDto.getName() + " отменён!");
                     refreshOrdersGrid();
@@ -321,21 +330,18 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         return ordersLayout;
     }
 
-
     /**
      * Обновляем таблицу «Все заказы».
      */
     private void refreshOrdersGrid() {
         List<OrderFullDto> allOrders = viewService.getAllOrdersWithItems();
 
-        // Убираем заказы со статусом CANCELED
         List<OrderFullDto> notCanceled = allOrders.stream()
-            .filter(dto -> !OrderStatus.CANCELED.equals(dto.getStatus()))
-            .collect(Collectors.toList());
+                .filter(dto -> !OrderStatus.CANCELED.equals(dto.getStatus()))
+                .collect(Collectors.toList());
 
         ordersGrid.setItems(notCanceled);
     }
-
 
     /**
      * Открываем диалог с позициями выбранного заказа.
@@ -345,38 +351,28 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         dialog.setWidth("600px");
         dialog.setHeaderTitle("Позиции заказа: " + orderDto.getName());
 
-        // Грид с позициями
         Grid<OrderItemDto> itemsGrid = new Grid<>(OrderItemDto.class, false);
         itemsGrid.addColumn(OrderItemDto::getName).setHeader("Наименование");
 
-        // Если заказ не READY, добавляем кнопки «Удалить» и «Добавить позицию»
         if (!OrderStatus.READY.name().equalsIgnoreCase(orderDto.getStatus().toString())) {
 
-            // Колонка «Удалить»
             itemsGrid.addComponentColumn(itemDto -> {
-                // Если статус = CANCELED, возвращаем пустой Layout (или Label "Отменено" вместо кнопки)
                 if ("CANCELED".equals(itemDto.getStatus().name())) {
-                    // Можно вернуть, например, Label
                     return new Span("Отменено");
                 }
 
-                // Иначе показываем кнопку "Удалить"
                 Button removeBtn = new Button("Удалить");
                 removeBtn.addClickListener(click -> {
                     viewService.cancelOrderItem(itemDto.getId());
                     Notification.show("Позиция удалена (ID=" + itemDto.getId() + ")");
-                    // Перезагружаем заказ
                     itemsGrid.setItems(this.viewService.getOrderItems(orderDto.getId()));
                 });
 
                 return removeBtn;
             }).setHeader("Действие");
 
-
-            // Добавляем кнопку "Добавить позицию" (внизу диалога)
             Button addItemBtn = new Button("Добавить позицию");
             addItemBtn.addClickListener(ev -> {
-                // Открываем дополнительный диалог с выбором из menuItems
                 Dialog addDialog = buildAddItemsDialog(orderDto.getId(), itemsGrid);
                 addDialog.open();
             });
@@ -407,18 +403,13 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         addDialog.setWidth("600px");
         addDialog.setHeaderTitle("Выберите позицию для добавления");
 
-        // ---------------------------
-        // Tabs: «Роллы» / «Сеты»
-        // ---------------------------
         Tab rollsTab = new Tab("Роллы");
         Tab setsTab = new Tab("Сеты");
         Tabs tabs = new Tabs(rollsTab, setsTab);
 
-        // Два layout-а
         VerticalLayout rollsLayout = new VerticalLayout();
         VerticalLayout setsLayout = new VerticalLayout();
 
-        // Изначально показываем только «Роллы»
         setsLayout.setVisible(false);
         tabs.addSelectedChangeListener(e -> {
             if (e.getSelectedTab() == rollsTab) {
@@ -430,9 +421,6 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             }
         });
 
-        // ---------------------------
-        // Поиск и Grid для «Роллов»
-        // ---------------------------
         TextField rollSearchField = new TextField("Поиск по роллам");
         rollSearchField.setPlaceholder("Введите название...");
         rollSearchField.setValueChangeMode(ValueChangeMode.EAGER);
@@ -441,40 +429,34 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         rollsGrid.setWidthFull();
         rollsGrid.addColumn(MenuItem::getName).setHeader("Наименование");
 
-        // Добавляем колонку с кнопкой «Добавить»
         rollsGrid.addComponentColumn(item -> {
             Button addButton = new Button("Добавить");
             addButton.addClickListener(click -> {
                 viewService.addItemToOrder(orderId, item);
                 Notification.show("Добавлено: " + item.getName());
 
-                // Обновляем основной грид позиций
                 itemsGrid.setItems(this.viewService.getOrderItems(orderId));
             });
             return addButton;
         }).setHeader("Действие");
 
-        rollsGrid.setItems(menuMenuItems); // Изначально все
+        rollsGrid.setItems(menuMenuItems);
 
-        // Фильтрация при вводе
         rollSearchField.addValueChangeListener(ev -> {
             String search = ev.getValue().toLowerCase().trim();
             if (search.isEmpty()) {
                 rollsGrid.setItems(menuMenuItems);
             } else {
                 rollsGrid.setItems(
-                    menuMenuItems.stream()
-                        .filter(item -> item.getName().toLowerCase().contains(search))
-                        .collect(Collectors.toList())
+                        menuMenuItems.stream()
+                                .filter(item -> item.getName().toLowerCase().contains(search))
+                                .collect(Collectors.toList())
                 );
             }
         });
 
         rollsLayout.add(rollSearchField, rollsGrid);
 
-        // ---------------------------
-        // Поиск и Grid для «Сетов»
-        // ---------------------------
         TextField setSearchField = new TextField("Поиск по сетам");
         setSearchField.setPlaceholder("Введите название...");
         setSearchField.setValueChangeMode(ValueChangeMode.EAGER);

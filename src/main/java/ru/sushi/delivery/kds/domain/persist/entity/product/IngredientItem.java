@@ -21,7 +21,9 @@ import ru.sushi.delivery.kds.domain.persist.entity.act.InvoiceActItem;
 import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
 import ru.sushi.delivery.kds.model.SourceType;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 
 @Audited
 @AuditOverride(forClass = SourceItem.class)
@@ -45,12 +47,14 @@ public class IngredientItem extends SourceItem {
     private Ingredient ingredient;
 
     public static IngredientItem of(Ingredient ingredient, InvoiceActItemDto itemActDto, InvoiceActItem itemAct) {
+        Duration expiration = Optional.ofNullable(ingredient.getExpirationDuration())
+                .orElse(Duration.ofDays(31));
         return IngredientItem.builder()
                 .invoiceActItem(itemAct)
                 .sourceType(SourceType.INGREDIENT)
                 .amount(itemActDto.getAmount())
                 .barcode(itemActDto.getBarcode())
-                .expirationDate(Instant.now().plus(ingredient.getExpirationDuration()))
+                .expirationDate(Instant.now().plus(expiration))
                 .ingredient(ingredient)
                 .build();
     }
