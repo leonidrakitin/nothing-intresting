@@ -1,5 +1,19 @@
 databaseChangeLog:
   - include:
-      file: generated-changelog.yaml
+      file: init-changelog.yaml
       relativeToChangelogFile: true
-
+  - include:
+      file: measurement/master.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: station/master.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: flow/master.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: screen/master.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: employee/master.yaml
+      relativeToChangelogFile: true

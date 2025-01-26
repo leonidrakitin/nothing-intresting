@@ -736,6 +736,12 @@ databaseChangeLog:
               - column:
                   name: source_type
                   type: VARCHAR(255)
+              - column:
+                  name: priority
+                  type: BIGINT
+              - column:
+                  name: measurement_unit_id
+                  type: BIGINT
             tableName: recipe_menu_item_aud
   - changeSet:
       id: 1736598409360-15
@@ -790,6 +796,16 @@ databaseChangeLog:
                     nullable: false
                   name: source_type
                   type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: priority
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: measurement_unit_id
+                  type: BIGINT
             tableName: recipe_menu_item
   - changeSet:
       id: 1736598409360-16
@@ -837,6 +853,12 @@ databaseChangeLog:
               - column:
                   name: source_type
                   type: VARCHAR(255)
+              - column:
+                  name: priority
+                  type: BIGINT
+              - column:
+                  name: measurement_unit_id
+                  type: BIGINT
             tableName: recipe_prepack_aud
   - changeSet:
       id: 1736598409360-17
@@ -886,6 +908,16 @@ databaseChangeLog:
                     nullable: false
                   name: source_type
                   type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: priority
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: measurement_unit_id
+                  type: BIGINT
             tableName: recipe_prepack
   - changeSet:
       id: 1736598409360-18
@@ -1187,7 +1219,7 @@ databaseChangeLog:
                   type: VARCHAR(255)
               - column:
                   name: price
-                  type: BIGINT
+                  type: double
             tableName: menu_item
   - changeSet:
       id: 1736598409360-38
@@ -1220,7 +1252,7 @@ databaseChangeLog:
                   type: VARCHAR(255)
               - column:
                   name: price
-                  type: BIGINT
+                  type: double
             TableName: menu_item_aud
   - changeSet:
       id: 1736598409360-39

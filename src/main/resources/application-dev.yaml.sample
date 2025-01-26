@@ -1,0 +1,16 @@
+server:
+  #  address: 192.168.0.15
+  #  address: 192.168.0.6
+  #  address: 192.168.0.30
+  port: 8000
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+#      ddl-auto: create-drop
+    properties:
+      hibernate:
+  liquibase:
+    enabled: true
+    change-log: classpath:/liquibase/db.changelog-master.yaml
