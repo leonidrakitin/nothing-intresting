@@ -9,7 +9,7 @@ services:
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DB=kds
     ports:
-      - "5435:5432"
+      - "5432:5432"
     networks:
       - kds-network
 
