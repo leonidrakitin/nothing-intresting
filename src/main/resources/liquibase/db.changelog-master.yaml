@@ -17,3 +17,9 @@ databaseChangeLog:
   - include:
       file: employee/master.yaml
       relativeToChangelogFile: true
+  - changeSet:
+      id: prod-backup
+      author: lrakitin
+      sqlFile:
+        path: backup/27.01.25.sql
+        relativeToChangelogFile: true
