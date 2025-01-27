@@ -508,6 +508,9 @@ databaseChangeLog:
               - column:
                   name: updated_by
                   type: VARCHAR(255)
+              - column:
+                  name: measurement_unit_id
+                  type: bigint
             tableName: prepack_item_aud
   - changeSet:
       id: 1736598409360-11
@@ -578,6 +581,9 @@ databaseChangeLog:
               - column:
                   name: updated_by
                   type: VARCHAR(255)
+              - column:
+                  name: measurement_unit_id
+                  type: bigint
             tableName: prepack_item
   - changeSet:
       id: 1736598409360-12

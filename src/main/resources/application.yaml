@@ -13,9 +13,9 @@ server:
       force: true
 spring:
   profiles:
-    active: prod
+    active: dev
   datasource:
-    url: ${SQL_URL:jdbc:postgresql://localhost:5435/kds}
+    url: ${SQL_URL:jdbc:postgresql://16.171.56.25:5435/kds}
     username: ${SQL_USERNAME:root}
     password: ${SQL_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
