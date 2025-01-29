@@ -114,14 +114,17 @@ public class RecipeService {
         Iterator<SourceItem> itemIterator = this.sourceService.getSourceActiveItems(sourceId, sourceType).iterator();
         while (spentAmount > 0) {
             if (!itemIterator.hasNext()) {
-                throw new IllegalArgumentException(String.format(
-                        "Unexpected behaviour spent amount was not write-off, needed %f, sourceId %d, sourceType %s",
+                log.error(
+                        "Unexpected behaviour spent amount was not write-off, needed {}, sourceId {}, sourceType {}",
                         spentAmount,
                         sourceId,
                         sourceType
-                ));
+                );
+                return;
             }
-            spentAmount = this.writeOffFinishedItem(itemIterator.next(), spentAmount, itemIterator.hasNext());
+            else {
+                spentAmount = this.writeOffFinishedItem(itemIterator.next(), spentAmount, itemIterator.hasNext());
+            }
         }
     }
 
@@ -146,11 +149,18 @@ public class RecipeService {
     public void savePrepackRecipe(PrepackRecipeData prepackRecipeData, SourceDto sourceDto, Long prepackId) {
         Prepack prepack = this.prepackService.get(prepackId);
 
+        Measurement measurement = Optional.ofNullable(prepackRecipeData.getMeasurementUnit())
+                .map(MeasurementUnitDto::getId)
+                .map(this.measurementService::getById)
+                .orElseGet(() -> this.sourceService.getSourceItemMeasurementUnit(
+                        sourceDto.getId(), SourceType.valueOf(sourceDto.getType())
+                ));
+
         PrepackRecipe prepackRecipe = Optional.ofNullable(prepackRecipeData.getId())
                 .map(this.prepackRecipeRepository::findById)
                 .flatMap(Function.identity())
-                .map(p -> setNewPrepackRecipeData(p, prepackRecipeData, sourceDto, prepack))
-                .orElseGet(() -> PrepackRecipe.of(prepackRecipeData, sourceDto, prepack));
+                .map(p -> setNewPrepackRecipeData(p, prepackRecipeData, sourceDto, prepack, measurement))
+                .orElseGet(() -> PrepackRecipe.of(prepackRecipeData, sourceDto, prepack, measurement));
 
         this.prepackRecipeRepository.save(prepackRecipe);
     }
@@ -159,12 +169,14 @@ public class RecipeService {
             PrepackRecipe prepackRecipe,
             PrepackRecipeData prepackRecipeData,
             SourceDto sourceDto,
-            Prepack prepack
+            Prepack prepack,
+            Measurement measurement
     ) {
         return prepackRecipe.toBuilder()
                 .id(prepackRecipeData.getId())
                 .prepack(prepack)
                 .sourceId(sourceDto.getId())
+                .measurement(measurement)
                 .sourceType(SourceType.valueOf(sourceDto.getType()))
                 .initAmount(prepackRecipeData.getInitAmount())
                 .finalAmount(prepackRecipeData.getFinalAmount())

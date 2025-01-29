@@ -19,6 +19,7 @@ import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeData;
 import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
+import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Prepack;
 import ru.sushi.delivery.kds.model.SourceType;
 
@@ -43,10 +44,13 @@ public class PrepackRecipe extends Recipe {
     @JoinColumn(name = "prepack_id")
     private Prepack prepack;
 
-    public static PrepackRecipe of(PrepackRecipeData recipeData, SourceDto sourceDto, Prepack prepack) {
+    public static PrepackRecipe of(
+            PrepackRecipeData recipeData, SourceDto sourceDto, Prepack prepack, Measurement measurement
+    ) {
         return PrepackRecipe.builder()
                 .prepack(prepack)
                 .sourceId(sourceDto.getId())
+                .measurement(measurement)
                 .sourceType(SourceType.valueOf(sourceDto.getType()))
                 .initAmount(recipeData.getInitAmount())
                 .finalAmount(recipeData.getFinalAmount())

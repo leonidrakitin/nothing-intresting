@@ -14,6 +14,7 @@ public class PrepackRecipeData {
 
     private Long id;
     private String sourceName;
+    private MeasurementUnitDto measurementUnit;
     private Double initAmount;
     private Double finalAmount;
     private Double lossesAmount;
@@ -23,6 +24,10 @@ public class PrepackRecipeData {
         return PrepackRecipeData.builder()
                 .id(prepackRecipe.getId())
                 .sourceName(sourceName)
+                .measurementUnit(new MeasurementUnitDto(
+                        prepackRecipe.getMeasurement().getId(),
+                        prepackRecipe.getMeasurement().getName()
+                ))
                 .initAmount(prepackRecipe.getInitAmount())
                 .finalAmount(prepackRecipe.getFinalAmount())
                 .lossesAmount(prepackRecipe.getLossesAmount())

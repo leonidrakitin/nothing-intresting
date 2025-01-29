@@ -1189,8 +1189,6 @@ databaseChangeLog:
                   name: created_by
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    nullable: false
                   name: vendor
                   type: VARCHAR(255)
               - column:
