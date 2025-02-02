@@ -18,4 +18,6 @@ public interface MenuItemRecipeRepository extends JpaRepository<MenuItemRecipe, 
     List<Recipe> findByMenuItemIds(List<Long> menuItemId);
 
     List<MenuItemRecipe> findByMenuItemId(Long id);
+
+    List<MenuItemRecipe> findAllBySourceId(Long sourceId);
 }

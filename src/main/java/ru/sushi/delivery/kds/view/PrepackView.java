@@ -15,8 +15,12 @@ import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.controller.dto.PrepackData;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
+import ru.sushi.delivery.kds.domain.persist.entity.recipe.Recipe;
 import ru.sushi.delivery.kds.domain.service.MeasurementService;
 import ru.sushi.delivery.kds.domain.service.PrepackService;
+import ru.sushi.delivery.kds.domain.service.RecipeService;
+import ru.sushi.delivery.kds.domain.service.SourceService;
+import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Duration;
 import java.util.List;
@@ -28,6 +32,8 @@ public class PrepackView extends VerticalLayout {
 
     private final PrepackService prepackService;
     private final MeasurementService measurementService;
+    private final SourceService sourceService;
+    private final RecipeService recipeService;
 
     private final Grid<PrepackData> prepackGrid = new Grid<>();
 
@@ -46,9 +52,11 @@ public class PrepackView extends VerticalLayout {
     private PrepackData currentEditingPrepack = null;
 
     @Autowired
-    public PrepackView(PrepackService prepackService, MeasurementService measurementService) {
+    public PrepackView(PrepackService prepackService, MeasurementService measurementService, SourceService sourceService, RecipeService recipeService) {
         this.prepackService = prepackService;
         this.measurementService = measurementService;
+        this.sourceService = sourceService;
+        this.recipeService = recipeService;
 
         setSizeFull();
 
@@ -251,9 +259,19 @@ public class PrepackView extends VerticalLayout {
             Notification.show("Не удалось удалить: отсутствует ID.");
             return;
         }
-        prepackService.deletePrepack(prepack);
-        Notification.show("ПФ удалён!");
-        updateGrid();
+
+        List<Recipe> recipes = recipeService.checkRecipeDependencies(prepack, SourceType.PREPACK);
+        if (recipes.isEmpty()) {
+            prepackService.deletePrepack(prepack);
+            Notification.show("ПФ удалён!");
+            updateGrid();
+        }
+        else {
+            for (Recipe recipe : recipes) {
+                String name = sourceService.getSourceItemName(recipe.getSourceId(), recipe.getSourceType());
+                Notification.show("Невозможно удалить пф содержится в " + name);
+            }
+        }
 
         // Если удалили тот ПФ, который редактировали — сбросим форму
         if (currentEditingPrepack != null && currentEditingPrepack.getId().equals(prepack.getId())) {

@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.sushi.delivery.kds.domain.controller.dto.AbstractProductData;
 import ru.sushi.delivery.kds.domain.controller.dto.MeasurementUnitDto;
 import ru.sushi.delivery.kds.domain.controller.dto.MenuItemRecipeDto;
 import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeData;
@@ -31,6 +32,8 @@ import java.util.ListIterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -243,6 +246,15 @@ public class RecipeService {
 
     public void deleteMenuItemRecipe(MenuItemRecipeDto menuItemRecipeDto) {
         this.menuItemRecipeRepository.deleteById(menuItemRecipeDto.getId());
+    }
+
+    public List<Recipe> checkRecipeDependencies(AbstractProductData productData, SourceType sourceType) {
+        List<MenuItemRecipe> menuItemRecipes = menuItemRecipeRepository.findAllBySourceId(productData.getId());
+        List<PrepackRecipe> prepackRecipes = prepackRecipeRepository.findAllBySourceId(productData.getId());
+
+        return Stream.concat(menuItemRecipes.stream(), prepackRecipes.stream())
+                .filter(recipe -> recipe.getSourceType() == sourceType)
+                .collect(Collectors.toList());
     }
 
     private void checkAndNotifyIfAlmostFinished(List<Recipe> menuItemRecipes) {

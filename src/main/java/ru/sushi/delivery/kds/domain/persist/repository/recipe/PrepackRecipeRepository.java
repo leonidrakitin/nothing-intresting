@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface PrepackRecipeRepository extends JpaRepository<PrepackRecipe, Long> {
     List<PrepackRecipe> findByPrepackId(Long prepackId);
+
+    List<PrepackRecipe> findAllBySourceId(Long sourceId);
 }
