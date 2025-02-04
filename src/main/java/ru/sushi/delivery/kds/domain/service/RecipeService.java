@@ -248,6 +248,7 @@ public class RecipeService {
         this.menuItemRecipeRepository.deleteById(menuItemRecipeDto.getId());
     }
 
+    //todo Можно сделать с wrapper
     public List<Recipe> checkRecipeDependencies(AbstractProductData productData, SourceType sourceType) {
         List<MenuItemRecipe> menuItemRecipes = menuItemRecipeRepository.findAllBySourceId(productData.getId());
         List<PrepackRecipe> prepackRecipes = prepackRecipeRepository.findAllBySourceId(productData.getId());
