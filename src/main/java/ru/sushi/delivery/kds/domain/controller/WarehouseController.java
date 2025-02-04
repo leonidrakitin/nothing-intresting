@@ -12,6 +12,7 @@ import ru.sushi.delivery.kds.domain.controller.dto.request.WriteOffRequest;
 import ru.sushi.delivery.kds.domain.service.IngredientItemService;
 import ru.sushi.delivery.kds.domain.service.PrepackItemService;
 import ru.sushi.delivery.kds.domain.service.WriteOffService;
+import ru.sushi.delivery.kds.dto.WriteOffItemDto;
 
 import java.util.List;
 
@@ -39,4 +40,8 @@ public class WarehouseController {
         writeOffService.writeOff(writeOffRequest);
     }
 
+    @GetMapping("/allWriteOff")
+    public List<WriteOffItemDto> getAllWriteOff() {
+        return writeOffService.getAll();
+    }
 }
