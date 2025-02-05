@@ -80,7 +80,8 @@ public class WriteOffService {
 
     public void writeOffSpoiledItem(SourceItem sourceItem, WriteOffRequest writeOffRequest, Long productId) {
         if (sourceItem.getExpirationDate().isAfter(Instant.now())) {
-            throw new IllegalArgumentException("Невозможно списать продукт");
+            log.error("Продукт с id {} не просрочен, списание невозможно", productId);
+            throw new IllegalArgumentException("Невозможно списать. Продукт еще не просрочен.");
         }
 
         Double newAmount = sourceItem.getAmount() - writeOffRequest.getWriteOffAmount();
@@ -98,9 +99,11 @@ public class WriteOffService {
                 writeOffRequest.getEmployeeName(),
                 writeOffRequest.getDiscontinuedReason()
         );
-
         writeOffItemRepository.save(writeOffItem);
-        updateSourceItemAmount(sourceItem, newAmount, isCompleted);
+
+        if (isCompleted) {
+            sourceService.updateSourceItemAmount(sourceItem);
+        }
     }
 
     public void writeOffItemWithOtherReason(SourceItem sourceItem, WriteOffRequest writeOffRequest, Long productId) {
@@ -111,7 +114,6 @@ public class WriteOffService {
 
         String comment = createComment(sourceItem, writeOffRequest, writeOffRequest.getCustomReasonComment());
 
-
         WriteOffItem writeOffItem = WriteOffItem.of(
                 productId,
                 sourceItem,
@@ -121,21 +123,10 @@ public class WriteOffService {
                 writeOffRequest.getEmployeeName(),
                 writeOffRequest.getDiscontinuedReason()
         );
-
         writeOffItemRepository.save(writeOffItem);
-        updateSourceItemAmount(sourceItem, newAmount, isCompleted);
-    }
 
-    private void updateSourceItemAmount(SourceItem sourceItem, Double newAmount, boolean isCompleted) {
         if (isCompleted) {
-            if (sourceItem instanceof IngredientItem ingredientItem) {
-                ingredientItem.setAmount(newAmount);
-                ingredientItemRepository.save(ingredientItem);
-            }
-            else if (sourceItem instanceof PrepackItem prepackItem) {
-                prepackItem.setAmount(newAmount);
-                prepackItemRepository.save(prepackItem);
-            }
+            sourceService.updateSourceItemAmount(sourceItem);
         }
     }
 
