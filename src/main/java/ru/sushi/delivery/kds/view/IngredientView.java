@@ -297,10 +297,10 @@ public class IngredientView extends VerticalLayout {
         }
 
 
-        List<Recipe> recipes = recipeService.checkRecipeDependencies(ingredient, SourceType.PREPACK);
+        List<Recipe> recipes = recipeService.checkRecipeDependencies(ingredient, SourceType.INGREDIENT);
         if (recipes.isEmpty()) {
-            ingredientService.delete(ingredient);
-            Notification.show("Ингредиент удалён!");
+            this.ingredientService.delete(ingredient);
+            Notification.show("Строка удалена!");
             updateGrid();
         }
         else {

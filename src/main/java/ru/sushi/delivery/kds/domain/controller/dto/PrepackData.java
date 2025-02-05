@@ -1,6 +1,5 @@
 package ru.sushi.delivery.kds.domain.controller.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -8,7 +7,6 @@ import ru.sushi.delivery.kds.domain.persist.entity.product.Prepack;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @SuperBuilder
 public class PrepackData extends AbstractProductData {
 

@@ -32,7 +32,6 @@ import java.util.ListIterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -250,12 +249,17 @@ public class RecipeService {
 
     //todo Можно сделать с wrapper
     public List<Recipe> checkRecipeDependencies(AbstractProductData productData, SourceType sourceType) {
-        List<MenuItemRecipe> menuItemRecipes = menuItemRecipeRepository.findAllBySourceId(productData.getId());
-        List<PrepackRecipe> prepackRecipes = prepackRecipeRepository.findAllBySourceId(productData.getId());
+        List<MenuItemRecipe> menuItemRecipes = menuItemRecipeRepository.findAllBySourceIdAndSourceType(
+                productData.getId(),
+                sourceType
+        );
 
-        return Stream.concat(menuItemRecipes.stream(), prepackRecipes.stream())
-                .filter(recipe -> recipe.getSourceType() == sourceType)
-                .collect(Collectors.toList());
+        List<PrepackRecipe> prepackRecipes = prepackRecipeRepository.findAllBySourceIdAndSourceType(
+                productData.getId(),
+                sourceType
+        );
+
+        return Stream.concat(menuItemRecipes.stream(), prepackRecipes.stream()).toList();
     }
 
     private void checkAndNotifyIfAlmostFinished(List<Recipe> menuItemRecipes) {

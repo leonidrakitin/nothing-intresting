@@ -263,7 +263,7 @@ public class PrepackView extends VerticalLayout {
         List<Recipe> recipes = recipeService.checkRecipeDependencies(prepack, SourceType.PREPACK);
         if (recipes.isEmpty()) {
             prepackService.deletePrepack(prepack);
-            Notification.show("ПФ удалён!");
+            Notification.show("Строка удалёна!");
             updateGrid();
         }
         else {
