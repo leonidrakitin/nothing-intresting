@@ -90,4 +90,13 @@ public class SourceService {
             default -> throw new IllegalStateException("Unexpected value: " + sourceType);
         };
     }
+
+    public void updateSourceItemAmount(SourceItem sourceItem) {
+        if (sourceItem instanceof IngredientItem ingredientItem) {
+            ingredientItemRepository.save(ingredientItem);
+        }
+        else if (sourceItem instanceof PrepackItem prepackItem) {
+            prepackItemRepository.save(prepackItem);
+        }
+    }
 }
