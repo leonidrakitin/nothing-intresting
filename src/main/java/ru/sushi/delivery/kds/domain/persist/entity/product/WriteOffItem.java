@@ -16,11 +16,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.envers.Audited;
 import ru.sushi.delivery.kds.model.DiscontinuedReason;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
 
+@Audited
 @Entity
 @Table(name = "write_off_item")
 @Getter

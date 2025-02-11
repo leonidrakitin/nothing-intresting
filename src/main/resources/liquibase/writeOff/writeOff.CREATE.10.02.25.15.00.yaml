@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: writeOff.CREATE.10.02.25.15.00
+      author: losev
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_write_off_item
+              - column:
+                  name: source_type
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: source_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: DOUBLE PRECISION
+                  constraints:
+                    nullable: false
+              - column:
+                  name: iscompleted
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+              - column:
+                  name: discontinued_comment
+                  type: VARCHAR(255)
+              - column:
+                  name: discontinued_reason
+                  type: VARCHAR(255)
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+            tableName: write_off_item
+  - changeSet:
+      id: writeOff.CREATE.10.02.25.15.00
+      author: Moose
+      changes:
+        - createSequence:
+            sequenceName: write_off_id_generator
+            startValue: 1
+            incrementBy: 1

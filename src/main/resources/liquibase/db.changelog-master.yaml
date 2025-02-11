@@ -23,3 +23,6 @@ databaseChangeLog:
       sqlFile:
         path: backup/27.01.25.sql
         relativeToChangelogFile: true
+  - include:
+      file: writeOff/master.yaml
+      relativeToChangelogFile: true
