@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.MenuItemRecipe;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.Recipe;
+import ru.sushi.delivery.kds.model.SourceType;
 
 import java.util.List;
 
@@ -18,4 +19,6 @@ public interface MenuItemRecipeRepository extends JpaRepository<MenuItemRecipe, 
     List<Recipe> findByMenuItemIds(List<Long> menuItemId);
 
     List<MenuItemRecipe> findByMenuItemId(Long id);
+
+    List<MenuItemRecipe> findAllBySourceIdAndSourceType(Long sourceId, SourceType sourceType);
 }

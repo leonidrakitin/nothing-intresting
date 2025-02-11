@@ -1,30 +1,18 @@
 package ru.sushi.delivery.kds.domain.controller.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Ingredient;
 
-import java.time.Duration;
-
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class IngredientDto {
-
-    private Long id;
-
-    private String name;
+@SuperBuilder
+public class IngredientDto extends AbstractProductData {
 
     private Long pieceInGrams;
-
-    private String measurementUnitName;
-
-    private Duration expirationDuration;
-
-    private Double notifyAfterAmount;
 
     public static IngredientDto of(Ingredient ingredient) {
         return IngredientDto.builder()
