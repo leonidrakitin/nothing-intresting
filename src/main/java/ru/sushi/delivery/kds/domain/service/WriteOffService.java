@@ -30,12 +30,8 @@ public class WriteOffService {
     private final IngredientItemRepository ingredientItemRepository;
     private final PrepackItemRepository prepackItemRepository;
 
-    public List<WriteOffItemDto> getAll() {
-        return writeOffItemRepository.findAll().stream().map(
-                writeOffItem -> {
-                    String name = sourceService.getSourceItemName(writeOffItem.getProductId(), writeOffItem.getSourceType());
-                    return WriteOffItemDto.of(writeOffItem, name);
-                }).toList();
+    public Page<WriteOffItemDto> getAll(PageRequest pageRequest) {
+        return writeOffItemRepository.findAllWithName(pageRequest).map(WriteOffItemDto::of);
     }
 
     public void writeOff(WriteOffRequest writeOffRequest) {
@@ -91,7 +87,6 @@ public class WriteOffService {
         String comment = createComment(sourceItem, writeOffRequest, "'продукт испорчен'");
 
         WriteOffItem writeOffItem = WriteOffItem.of(
-                productId,
                 sourceItem,
                 writeOffRequest.getWriteOffAmount(),
                 isCompleted,
@@ -115,7 +110,6 @@ public class WriteOffService {
         String comment = createComment(sourceItem, writeOffRequest, writeOffRequest.getCustomReasonComment());
 
         WriteOffItem writeOffItem = WriteOffItem.of(
-                productId,
                 sourceItem,
                 writeOffRequest.getWriteOffAmount(),
                 isCompleted,

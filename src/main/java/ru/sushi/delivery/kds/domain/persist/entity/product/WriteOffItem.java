@@ -44,9 +44,6 @@ public class WriteOffItem {
     @Column(name = "source_id", nullable = false)
     private Long sourceId;
 
-    @Column(name = "productId", nullable = false)
-    private Long productId;
-
     @Column(name = "amount", nullable = false)
     private Double amount;
 
@@ -68,7 +65,6 @@ public class WriteOffItem {
     private Instant createdAt = Instant.now();
 
     public static WriteOffItem of(
-            Long productId,
             SourceItem sourceItem,
             Double amount,
             Boolean isCompleted,
@@ -79,7 +75,6 @@ public class WriteOffItem {
         return WriteOffItem.builder()
                 .sourceId(sourceItem.getId())
                 .sourceType(sourceItem.getSourceType())
-                .productId(productId)
                 .amount(amount)
                 .isCompleted(isCompleted)
                 .discontinuedComment(comment)

@@ -23,11 +23,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: product_id
-                  type: BIGINT
-                  constraints:
-                    nullable: false
-              - column:
                   name: amount
                   type: DOUBLE PRECISION
                   constraints:
