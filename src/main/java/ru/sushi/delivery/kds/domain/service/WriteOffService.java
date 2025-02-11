@@ -2,6 +2,8 @@ package ru.sushi.delivery.kds.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.controller.dto.request.WriteOffRequest;
 import ru.sushi.delivery.kds.domain.persist.entity.product.IngredientItem;
@@ -9,14 +11,11 @@ import ru.sushi.delivery.kds.domain.persist.entity.product.PrepackItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.SourceItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.WriteOffItem;
 import ru.sushi.delivery.kds.domain.persist.repository.WriteOffItemRepository;
-import ru.sushi.delivery.kds.domain.persist.repository.product.IngredientItemRepository;
-import ru.sushi.delivery.kds.domain.persist.repository.product.PrepackItemRepository;
 import ru.sushi.delivery.kds.dto.WriteOffItemDto;
 import ru.sushi.delivery.kds.model.DiscontinuedReason;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -25,10 +24,8 @@ public class WriteOffService {
 
     private final IngredientItemService ingredientItemService;
     private final PrepackItemService prepackItemService;
-    private final SourceService sourceService;
+    private final SourceItemService sourceItemService;
     private final WriteOffItemRepository writeOffItemRepository;
-    private final IngredientItemRepository ingredientItemRepository;
-    private final PrepackItemRepository prepackItemRepository;
 
     public Page<WriteOffItemDto> getAll(PageRequest pageRequest) {
         return writeOffItemRepository.findAllWithName(pageRequest).map(WriteOffItemDto::of);
@@ -97,7 +94,7 @@ public class WriteOffService {
         writeOffItemRepository.save(writeOffItem);
 
         if (isCompleted) {
-            sourceService.updateSourceItemAmount(sourceItem);
+            sourceItemService.updateSourceItemAmount(sourceItem);
         }
     }
 
@@ -120,7 +117,7 @@ public class WriteOffService {
         writeOffItemRepository.save(writeOffItem);
 
         if (isCompleted) {
-            sourceService.updateSourceItemAmount(sourceItem);
+            sourceItemService.updateSourceItemAmount(sourceItem);
         }
     }
 
@@ -128,7 +125,7 @@ public class WriteOffService {
         return String.format(
                 "%s '%s' был списан сотрудником %s по причине '%s'",
                 sourceItem.getSourceType().getValue(),
-                sourceService.getSourceItemName(sourceItem),
+                sourceItemService.getSourceItemName(sourceItem),
                 writeOffRequest.getEmployeeName(),
                 reason
         );
