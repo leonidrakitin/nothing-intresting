@@ -202,7 +202,7 @@ public class ActService {
     private InvoiceActItemDto buildInvoiceActItemDto(InvoiceActItem invoiceItem) {
         return new InvoiceActItemDto(
                 invoiceItem.getId(),
-                this.sourceService.getSourceItemName(invoiceItem.getSourceId(), invoiceItem.getSourceType()),
+                this.sourceService.getSourceName(invoiceItem.getSourceId(), invoiceItem.getSourceType()),
                 invoiceItem.getSourceId(),
                 invoiceItem.getSourceType().name(),
                 invoiceItem.getAmount(),
@@ -228,7 +228,7 @@ public class ActService {
                 sourceItem.getId(),
                 sourceItem.getSourceId(),
                 sourceItem.getSourceType().name(),
-                this.sourceService.getSourceItemName(sourceItem.getSourceId(), sourceItem.getSourceType()),
+                this.sourceService.getSourceName(sourceItem.getSourceId(), sourceItem.getSourceType()),
                 sourceItem.getInitAmount(),
                 sourceItem.getFinalAmount(),
                 sourceItem.getLossesAmount(),
