@@ -84,7 +84,6 @@ public class OrderService {
                 .toList();
 
         firstList = new ArrayList<>(firstList); // Чтобы можно было изменять список
-
         List<OrderItem> secondList = orderItems.stream()
                 .filter(oi -> oi.getStatus() != OrderItemStationStatus.STARTED)
                 .sorted(Comparator
