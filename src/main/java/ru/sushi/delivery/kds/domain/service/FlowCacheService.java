@@ -20,7 +20,7 @@ public class FlowCacheService {
     public final static int DONE_STEP_ORDER = 0;
 
     private final FlowStepRepository flowStepRepository;
-    private final Map<Long, Map<Integer, FlowStep>> flowCache = new ConcurrentHashMap<>();
+    private final Map<Long, Map<Integer, FlowStep>> flowCache = new ConcurrentHashMap<>(); //todo guava cache!
 
     @PostConstruct
     public void initializeCache() {
