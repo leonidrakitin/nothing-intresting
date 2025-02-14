@@ -69,7 +69,7 @@ public class ViewService {
         orderItemsList.forEach(orderItemData -> orderItemData.getIngredients()
                 .removeIf(ingredients -> !ingredients.getStationId().equals(screenId)));
 
-        return orderItemsList;
+        return orderItemsList.reversed();
     }
 
     public void updateStatus(Long orderItemId) {
