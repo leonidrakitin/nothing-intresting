@@ -3,12 +3,14 @@ package ru.sushi.delivery.kds.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.service.FlowCacheService;
 import ru.sushi.delivery.kds.domain.service.IngredientService;
+import ru.sushi.delivery.kds.domain.service.ItemComboService;
 import ru.sushi.delivery.kds.domain.service.MenuItemService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
 import ru.sushi.delivery.kds.domain.service.ScreenService;
@@ -30,6 +32,7 @@ public class ViewService {
     private final MenuItemService menuItemService;
     private final IngredientService ingredientService;
     private final FlowCacheService flowCacheService; //todo remove
+    private final ItemComboService itemComboService;
 
     public void createOrder(String name, List<MenuItem> menuItems) {
         this.orderService.createOrder(name, menuItems);
@@ -37,6 +40,10 @@ public class ViewService {
 
     public List<MenuItem> getAllMenuItems() {
         return this.menuItemService.getAllMenuItems();
+    }
+
+    public List<ItemCombo> getAllCombos() {
+        return this.itemComboService.findAll();
     }
 
     public List<KitchenDisplayInfoDto> getAvailableDisplaysData() {

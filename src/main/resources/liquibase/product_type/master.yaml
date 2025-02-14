@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: product_type.14.02.25.03.50.yaml
+      relativeToChangelogFile: true

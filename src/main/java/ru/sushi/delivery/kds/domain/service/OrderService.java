@@ -16,6 +16,7 @@ import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.ScreenRepository;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
+import ru.sushi.delivery.kds.dto.PackageDto;
 import ru.sushi.delivery.kds.model.FlowStepType;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
@@ -44,6 +45,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final RecipeService recipeService;
     private final ScreenRepository screenRepository; //todo to service
+    private final ProductPackageService productPackageService;
     private final WSMessageSender wsMessageSender;
 
     public void calculateOrderBalance(Order order) {
@@ -55,8 +57,7 @@ public class OrderService {
     }
 
     public void createOrder(String name, List<MenuItem> menuItems) {
-        Order order = orderRepository.save(Order.of(name));
-
+        Order order = this.orderRepository.save(Order.of(name));
         List<OrderItem> orderItems = new ArrayList<>();
         Set<FlowStep> flowSteps = new HashSet<>();
         for (MenuItem menuItem : menuItems) {
@@ -67,17 +68,10 @@ public class OrderService {
                 orderItem.getCurrentFlowStep()
             ));
         }
-        orderItemRepository.saveAll(orderItems);
-        flowSteps.forEach(flowStep -> {
-            this.orderChangesListener.broadcast(
-                    flowStep.getStation().getId(),
-                    BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
-            );
-
-            Screen screen = this.screenRepository.findByStationId(flowStep.getStation().getId());
-            this.wsMessageSender.sendNotification(screen.getId(), "Новый заказ!");
-        });
-        this.wsMessageSender.sendRefreshAll();
+        this.orderItemRepository.saveAll(orderItems);
+        List<PackageDto> packageDtos = this.productPackageService.calculatePackages(order);
+        //todo notification somehow
+        notificateAllScreens(flowSteps);
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
@@ -293,5 +287,18 @@ public class OrderService {
             case 3 -> OrderStatus.READY;
             default -> throw new IllegalStateException("Unexpected value: " + priority);
         };
+    }
+
+    private void notificateAllScreens(Set<FlowStep> flowSteps) {
+        flowSteps.forEach(flowStep -> {
+            this.orderChangesListener.broadcast(
+                    flowStep.getStation().getId(),
+                    BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Новый заказ")
+            );
+
+            Screen screen = this.screenRepository.findByStationId(flowStep.getStation().getId());
+            this.wsMessageSender.sendNotification(screen.getId(), "Новый заказ!");
+        });
+        this.wsMessageSender.sendRefreshAll();
     }
 }

@@ -17,7 +17,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.persist.entity.ItemSet;
+import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
@@ -46,11 +46,11 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
     // Grids слева
     private final Grid<MenuItem> rollsGrid = new Grid<>(MenuItem.class, false);
-    private final Grid<ItemSet> setsGrid = new Grid<>(ItemSet.class, false);
+    private final Grid<ItemCombo> setsGrid = new Grid<>(ItemCombo.class, false);
 
     // Списки из BusinessLogic (исходный список)
     private final List<MenuItem> menuMenuItems;
-    private final List<ItemSet> menuItemSets;
+    private final List<ItemCombo> menuItemCombos;
 
     // Таблица «Корзины» (справа, первая вкладка)
     private final Grid<MenuItem> chosenGrid = new Grid<>(MenuItem.class, false);
@@ -77,7 +77,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
         // Загружаем списки из бизнес-логики
         this.menuMenuItems = viewService.getAllMenuItems(); // Роллы
-        this.menuItemSets = List.of();                  // Сеты (пример, для иллюстрации)
+        this.menuItemCombos = viewService.getAllCombos();                  // Сеты (пример, для иллюстрации)
 
         // ----------------------------
         // ЛЕВАЯ ЧАСТЬ
@@ -152,21 +152,21 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsSearchField.addValueChangeListener(e -> {
             String searchValue = e.getValue().trim().toLowerCase();
             if (searchValue.isEmpty()) {
-                setsGrid.setItems(menuItemSets);
+                setsGrid.setItems(menuItemCombos);
             } else {
                 setsGrid.setItems(
-                        menuItemSets.stream()
+                        menuItemCombos.stream()
                                 .filter(s -> s.getName().toLowerCase().contains(searchValue))
                                 .collect(Collectors.toList())
                 );
             }
         });
 
-        setsGrid.setItems(menuItemSets);
-        setsGrid.addColumn(ItemSet::getName).setHeader("Наименование");
+        setsGrid.setItems(menuItemCombos);
+        setsGrid.addColumn(ItemCombo::getName).setHeader("Наименование");
         setsGrid.setWidthFull();
         setsGrid.addItemClickListener(e -> {
-            ItemSet clickedSet = e.getItem();
+            ItemCombo clickedSet = e.getItem();
             chosenMenuItems.addAll(clickedSet.getMenuItems());
             updateTotalPay();
             Notification.show("Добавлен сет: " + clickedSet.getName());
@@ -461,9 +461,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setSearchField.setPlaceholder("Введите название...");
         setSearchField.setValueChangeMode(ValueChangeMode.EAGER);
 
-        Grid<ItemSet> setsGrid = new Grid<>(ItemSet.class, false);
+        Grid<ItemCombo> setsGrid = new Grid<>(ItemCombo.class, false);
         setsGrid.setWidthFull();
-        setsGrid.addColumn(ItemSet::getName).setHeader("Наименование");
+        setsGrid.addColumn(ItemCombo::getName).setHeader("Наименование");
 
         // Добавляем колонку с кнопкой «Добавить»
         setsGrid.addComponentColumn(set -> {
@@ -480,16 +480,16 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             return addButton;
         }).setHeader("Действие");
 
-        setsGrid.setItems(menuItemSets);
+        setsGrid.setItems(menuItemCombos);
 
         // Фильтрация при вводе
         setSearchField.addValueChangeListener(ev -> {
             String search = ev.getValue().toLowerCase().trim();
             if (search.isEmpty()) {
-                setsGrid.setItems(menuItemSets);
+                setsGrid.setItems(menuItemCombos);
             } else {
                 setsGrid.setItems(
-                    menuItemSets.stream()
+                    menuItemCombos.stream()
                         .filter(set -> set.getName().toLowerCase().contains(search))
                         .collect(Collectors.toList())
                 );
