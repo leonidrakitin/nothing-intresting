@@ -76,19 +76,25 @@ public class OrderService {
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
-        return this.orderItemRepository.findAllItemsByStationId(stationId)
-                .stream()
-                .sorted(
-                        Comparator.comparing((OrderItem oi) -> oi.getStatus() != OrderItemStationStatus.STARTED) // STARTED вперед
-                                .thenComparing(oi -> oi.getStatus() == OrderItemStationStatus.STARTED
-                                        ? oi.getStatusUpdatedAt()
-                                        : null,
-                                        Comparator.nullsLast(Comparator.naturalOrder())
-                                ) // statusUpdatedAt для STARTED
-                                .thenComparing(oi -> oi.getOrder().getCreatedAt()) // createdAt
-                                .thenComparing(oi -> oi.getMenuItem().getProductType().getId()) // productType.id
+        List<OrderItem> orderItems = this.orderItemRepository.findAllItemsByStationId(stationId);
+
+        List<OrderItem> firstList = orderItems.stream()
+                .filter(oi -> oi.getStatus() == OrderItemStationStatus.STARTED)
+                .sorted(Comparator.comparing(oi -> oi.getOrder().getStatusUpdateAt()))
+                .toList();
+
+        firstList = new ArrayList<>(firstList); // Чтобы можно было изменять список
+
+        List<OrderItem> secondList = orderItems.stream()
+                .filter(oi -> oi.getStatus() != OrderItemStationStatus.STARTED)
+                .sorted(Comparator
+                        .comparing((OrderItem oi) -> oi.getOrder().getCreatedAt()) // Сначала по createdAt
+                        .thenComparing(oi -> oi.getMenuItem().getProductType().getId()) // Потом по productType.id
                 )
                 .toList();
+
+        firstList.addAll(secondList);
+        return firstList;
     }
 
     @Transactional
