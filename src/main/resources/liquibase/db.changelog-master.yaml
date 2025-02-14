@@ -32,3 +32,12 @@ databaseChangeLog:
   - include:
       file: menu_item/master.yaml
       relativeToChangelogFile: true
+  - include:
+      file: combo_item/master.yaml
+      relativeToChangelogFile: true
+  - changeSet:
+      id: prod-backup
+      author: lrakitin
+      sqlFile:
+        path: backup/14.02.25.sql
+        relativeToChangelogFile: true

@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: combo_item.CREATE.14.02.25.03.55.yaml
+      relativeToChangelogFile: true
