@@ -93,7 +93,7 @@ public class OrderService {
                 .toList();
 
         firstList.addAll(secondList);
-        return firstList.reversed();
+        return firstList;
     }
 
     @Transactional
