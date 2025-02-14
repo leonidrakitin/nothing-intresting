@@ -28,6 +28,7 @@ import ru.sushi.delivery.kds.websocket.WSMessageSender;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -75,7 +76,19 @@ public class OrderService {
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
-        return this.orderItemRepository.findAllItemsByStationId(stationId);
+        return this.orderItemRepository.findAllItemsByStationId(stationId)
+                .stream()
+                .sorted(
+                        Comparator.comparing((OrderItem oi) -> oi.getStatus() != OrderItemStationStatus.STARTED) // STARTED вперед
+                                .thenComparing(oi -> oi.getStatus() == OrderItemStationStatus.STARTED
+                                        ? oi.getStatusUpdatedAt()
+                                        : null,
+                                        Comparator.nullsLast(Comparator.naturalOrder())
+                                ) // statusUpdatedAt для STARTED
+                                .thenComparing(oi -> oi.getOrder().getCreatedAt()) // createdAt
+                                .thenComparing(oi -> oi.getMenuItem().getProductType().getId()) // productType.id
+                )
+                .toList();
     }
 
     @Transactional
