@@ -94,7 +94,7 @@ public class OrderService {
                 .toList();
 
         firstList.addAll(secondList);
-        return firstList;
+        return firstList.reversed();
     }
 
     @Transactional
