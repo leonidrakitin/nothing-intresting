@@ -53,6 +53,7 @@ dependencies {
 	implementation 'org.hibernate.orm:hibernate-envers'
 	implementation 'org.liquibase:liquibase-core'
 
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 

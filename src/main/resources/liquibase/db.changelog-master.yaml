@@ -23,3 +23,12 @@ databaseChangeLog:
       sqlFile:
         path: backup/27.01.25.sql
         relativeToChangelogFile: true
+  - include:
+      file: product_type/master.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: package/master.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: menu_item/master.yaml
+      relativeToChangelogFile: true

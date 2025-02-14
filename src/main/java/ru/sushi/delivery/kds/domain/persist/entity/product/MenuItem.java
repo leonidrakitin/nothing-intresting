@@ -38,6 +38,11 @@ public class MenuItem {
 
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
+    @JoinColumn(name = "product_type_id")
+    private ProductType productType;
+
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    @ManyToOne
     @JoinColumn(name = "flow_id")
     private Flow flow;
 
