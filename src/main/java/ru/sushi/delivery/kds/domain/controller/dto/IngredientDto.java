@@ -2,10 +2,12 @@ package ru.sushi.delivery.kds.domain.controller.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Ingredient;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
