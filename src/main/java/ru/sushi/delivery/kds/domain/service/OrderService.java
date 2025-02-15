@@ -217,6 +217,7 @@ public class OrderService {
                 .map(orderItem -> OrderItemDto.builder()
                         .id(orderItem.getId())
                         .orderId(order.getId())
+                        .orderName(order.getName())
                         .name(orderItem.getMenuItem().getName())
                         .ingredients(this.ingredientService.getMenuItemIngredients(orderItem.getMenuItem().getId()))
                         .status(orderItem.getStatus())
