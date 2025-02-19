@@ -105,6 +105,7 @@ public class ViewService {
     private OrderItemDto buildOrderItemDto(OrderItem item) {
         return OrderItemDto.builder()
                 .id(item.getId())
+                .orderName(item.getOrder().getName())
                 .orderId(item.getOrder().getId())
                 .name(item.getMenuItem().getName())
                 .ingredients(new ArrayList<>(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId())))
@@ -121,6 +122,7 @@ public class ViewService {
                         this.flowCacheService.getStep(item.getMenuItem().getFlow().getId(), item.getCurrentFlowStep())
                                 .getStepType()
                 )
+                .extra(item.getMenuItem().getProductType().isExtra())
                 .build();
     }
 }

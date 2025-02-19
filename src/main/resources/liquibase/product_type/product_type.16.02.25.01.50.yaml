@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: product_type.CREATE.16.02.25.1.31.01
+      author: rakitin
+      changes:
+        - addColumn:
+            tableName: product_type
+            columns:
+              - column:
+                  name: extra
+                  type: boolean
+        - addColumn:
+            tableName: product_type_aud
+            columns:
+              - column:
+                  name: extra
+                  type: boolean

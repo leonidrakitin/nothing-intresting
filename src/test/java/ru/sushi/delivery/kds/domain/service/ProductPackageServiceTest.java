@@ -11,10 +11,13 @@ import ru.sushi.delivery.kds.domain.persist.entity.ProductPackage;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.persist.entity.product.ProductType;
 import ru.sushi.delivery.kds.domain.persist.repository.ProductPackageRepository;
+import ru.sushi.delivery.kds.dto.PackageDto;
 
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -96,9 +99,9 @@ class ProductPackageServiceTest {
         ));
 
         when(productPackageRepository.findAll()).thenReturn(List.of(package1, package2, package3, package4, package5));
-        var result = productPackageService.packItems(order);
+        var result = productPackageService.calculatePackages(order);
         assertFalse(result.isEmpty());
         assertEquals(1, result.size()); //три разные коробки, package5 x2, и package3 x1
-        assertEquals(10, result.stream().map(PackageDTO::getPackage).map(ProductPackage::getMenuItem).mapToDouble(MenuItem::getPrice).sum());
+        assertEquals(10, result.stream().map(PackageDto::getProductPackage).map(ProductPackage::getMenuItem).mapToDouble(MenuItem::getPrice).sum());
     }
 }

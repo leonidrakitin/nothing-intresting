@@ -224,6 +224,7 @@ public class OrderService {
                         .currentStation(this.getStationFromOrderItem(orderItem))
                         .flowStepType(this.getStepTypeFromOrderItem(orderItem))
                         .createdAt(orderItem.getStatusUpdatedAt())
+                        .extra(orderItem.getMenuItem().getProductType().isExtra())
                         .build()
                 )
                 .toList();

@@ -24,4 +24,5 @@ public class OrderItemDto {
     private OrderItemStationStatus status;
     private Station currentStation;
     private FlowStepType flowStepType;
+    private boolean extra;
 }

@@ -41,6 +41,8 @@ public class ProductType {
 
     private Integer priority;
 
+    private boolean extra;
+
     private Integer length;
 
     private Integer width;
@@ -53,6 +55,7 @@ public class ProductType {
             joinColumns = @JoinColumn(name = "product_type_id"),
             inverseJoinColumns = @JoinColumn(name = "neighbor_product_type_id")
     )
+    @Builder.Default
     private Set<ProductType> allowedNeighbors = new HashSet<>();
 
     public static ProductType of(MenuItemData menuItemData, Flow flow) {
