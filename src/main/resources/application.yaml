@@ -3,6 +3,12 @@ application:
   name: 'kds-system'
 vaadin:
   launch-browser: true
+  productionMode: true
+  servlet:
+    productionMode: true
+  frontend:
+  hotdeploy: false
+  compatibilityMode: false
 server:
   port: 8000
   servlet:
