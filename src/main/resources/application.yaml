@@ -7,8 +7,8 @@ vaadin:
   servlet:
     productionMode: true
   frontend:
-  hotdeploy: false
-  compatibilityMode: false
+    hotdeploy: false
+    compatibilityMode: false
 server:
   port: 8000
   servlet:
