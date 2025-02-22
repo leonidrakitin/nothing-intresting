@@ -30,6 +30,5 @@ jobs:
             cd kds-app
             git pull
             ./gradlew clean build -x test
-            docker rm -f kds-app || true
-            docker-compose build kds-app
+            docker-compose up --detach --build kds-app
           EOF

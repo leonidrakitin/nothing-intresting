@@ -9,8 +9,6 @@ services:
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DB=kds
     network_mode: host
-    volumes:
-      - 68b29f52973c62bb06248ce27dda782db401ced709b4370e6828d874618cac20:/var/lib/postgresql/data
 
   kds-app:
     build:
@@ -27,7 +25,3 @@ services:
     depends_on:
       - kds-db
     network_mode: host
-
-volumes:
-  68b29f52973c62bb06248ce27dda782db401ced709b4370e6828d874618cac20:
-    external: true
