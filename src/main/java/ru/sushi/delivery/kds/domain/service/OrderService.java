@@ -28,7 +28,6 @@ import ru.sushi.delivery.kds.websocket.WSMessageSender;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,15 +75,8 @@ public class OrderService {
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
-        List<OrderItem> orderItems = this.orderItemRepository.findAllItemsByStationId(stationId);
 
-        return orderItems.stream()
-                .sorted(Comparator
-                        .comparing((OrderItem oi) -> oi.getOrder().getCreatedAt())
-                        .thenComparing((OrderItem oi) -> oi.getMenuItem().getProductType().getPriority())
-                        .thenComparing(OrderItem::getId)
-                )
-                .toList();
+        return this.orderItemRepository.findAllItemsByStationId(stationId);
     }
 
     @Transactional
