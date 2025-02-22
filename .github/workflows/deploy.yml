@@ -1,0 +1,35 @@
+name: Gradle Deployment
+
+on:
+  push:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: deploy
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH and Deploy
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/kds_rsa
+          chmod 600 ~/.ssh/kds_rsa
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/kds_rsa admin@$SERVER_IP << 'EOF'
+            export SQL_URL="$SQL_URL"
+            export SQL_USERNAME="$SQL_USERNAME"
+            export SQL_PASSWORD="$SQL_PASSWORD"
+            cd kds-app
+            git pull
+            ./gradlew clean build
+            docker rm -f kds-app || true
+            docker-compose build kds-app
+          EOF
