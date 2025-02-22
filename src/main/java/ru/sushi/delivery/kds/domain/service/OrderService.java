@@ -78,22 +78,13 @@ public class OrderService {
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
         List<OrderItem> orderItems = this.orderItemRepository.findAllItemsByStationId(stationId);
 
-        List<OrderItem> firstList = orderItems.stream()
-                .filter(oi -> oi.getStatus() == OrderItemStationStatus.STARTED)
-                .sorted(Comparator.comparing(oi -> oi.getOrder().getStatusUpdateAt()))
-                .toList();
-
-        firstList = new ArrayList<>(firstList); // Чтобы можно было изменять список
-        List<OrderItem> secondList = orderItems.stream()
-                .filter(oi -> oi.getStatus() != OrderItemStationStatus.STARTED)
+        return orderItems.stream()
                 .sorted(Comparator
-                        .comparing((OrderItem oi) -> oi.getOrder().getCreatedAt()) // Сначала по createdAt
-                        .thenComparing(oi -> oi.getMenuItem().getProductType().getId()) // Потом по productType.id
+                        .comparing((OrderItem oi) -> oi.getOrder().getCreatedAt())
+                        .thenComparing((OrderItem oi) -> oi.getMenuItem().getProductType().getPriority())
+                        .thenComparing(OrderItem::getId)
                 )
                 .toList();
-
-        firstList.addAll(secondList);
-        return firstList;
     }
 
     @Transactional
