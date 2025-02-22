@@ -52,6 +52,7 @@ public class InvoiceAct extends Act {
                 .employeeId(invoiceData.getEmployeeId())
                 .name(invoiceData.getName())
                 .vendor(invoiceData.getVendor())
+                .date(invoiceData.getDate().atStartOfDay())
                 .build();
     }
 }
