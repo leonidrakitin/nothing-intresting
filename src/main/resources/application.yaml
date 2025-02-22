@@ -12,14 +12,11 @@ vaadin:
 server:
   port: 8000
   servlet:
-#    context-path: /api/v1
     encoding:
       charset: UTF-8
       enabled: true
       force: true
 spring:
-  profiles:
-    active: dev
   datasource:
     url: ${SQL_URL:jdbc:postgresql://localhost:5432/kds}
     username: ${SQL_USERNAME:root}
