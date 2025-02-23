@@ -18,6 +18,7 @@ import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,8 +35,13 @@ public class ViewService {
     private final FlowCacheService flowCacheService; //todo remove
     private final ItemComboService itemComboService;
 
-    public void createOrder(String name, List<MenuItem> menuItems) {
-        this.orderService.createOrder(name, menuItems);
+    public void createOrder(
+            String name,
+            List<MenuItem> menuItems,
+            Instant shouldBeFinishedAt,
+            Instant kitchenShouldGetOrderAt
+    ) {
+        this.orderService.createOrder(name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt);
     }
 
     public List<MenuItem> getAllMenuItems() {
@@ -76,14 +82,22 @@ public class ViewService {
         this.orderService.updateOrderItem(orderItemId);
     }
 
+    public void updateKitchenShouldGetOrderAt(Long orderId, Instant newInstant) {
+        this.orderService.updateKitchenShouldGetOrderAt(orderId, newInstant);
+    }
+
     public List<OrderFullDto> getAllOrdersWithItems() {
         return this.orderService.getAllActiveOrdersWithItems();
     }
 
+    public List<OrderFullDto> getAllKitchenOrdersWithItems() {
+        return this.orderService.getAllKitchenOrdersWithItems();
+    }
+
     public List<OrderItemDto> getOrderItems(Long orderId) {
         return this.orderService.getOrderItems(orderId).stream()
-            .map(this::buildOrderItemDto)
-            .toList();
+                .map(this::buildOrderItemDto)
+                .toList();
     }
 
     public void updateAllOrderItemsToDone(Long orderId) {
@@ -98,7 +112,7 @@ public class ViewService {
         this.orderService.createOrderItem(orderId, menuItem);
     }
 
-    public void cancelOrder(Long orderId){
+    public void cancelOrder(Long orderId) {
         this.orderService.cancelOrder(orderId);
     }
 

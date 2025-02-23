@@ -50,14 +50,25 @@ public class Order {
     @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
 
+    private Instant shouldBeFinishedAt;
+
+    private Instant kitchenShouldGetOrderAt;
+
+    @Builder.Default
+    private Instant kitchenGotOrderAt = null;
+
     @Builder.Default
     private Instant statusUpdateAt = Instant.now();
 
     @Builder.Default
     private Instant createdAt = Instant.now();
 
-    public static Order of(String name) {
-        return Order.builder().name(name).build();
+    public static Order of(String name, Instant shouldBeFinishedAt, Instant kitchenShouldGetOrderAt) {
+        return Order.builder()
+                .name(name)
+                .shouldBeFinishedAt(shouldBeFinishedAt)
+                .kitchenShouldGetOrderAt(kitchenShouldGetOrderAt)
+                .build();
     }
 
     public static Order of(Long id) {
