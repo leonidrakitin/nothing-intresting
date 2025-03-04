@@ -45,9 +45,10 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     private final List<MenuItem> chosenMenuItems = new ArrayList<>();
     private final ViewService viewService;
     private final CashListener cashListener;
-    private final DateTimePicker kitchenStartPicker = new DateTimePicker("Время начала приготовления");
+    private Instant selectedKitchenStart = null;
+    private final Span kitchenStartDisplay = new Span("Время начала приготовления: Сейчас");
+    private final Button changeKitchenStartButton = new Button("изменить");
     private final DateTimePicker finishPicker = new DateTimePicker("Время готовности");
-
     // Два контейнера под содержимое вкладок (Роллы / Сеты)
     private final VerticalLayout rollsTabLayout = new VerticalLayout();
     private final VerticalLayout setsTabLayout = new VerticalLayout();
@@ -253,8 +254,12 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         chosenGrid.addColumn(MenuItem::getPrice).setHeader("Цена");
         chosenGrid.setItems(chosenMenuItems);
 
-        // Устанавливаем значения по умолчанию для полей времени
-        kitchenStartPicker.setValue(LocalDateTime.now());
+        // Создаем layout для времени начала приготовления
+        HorizontalLayout kitchenStartLayout = new HorizontalLayout(kitchenStartDisplay, changeKitchenStartButton);
+        kitchenStartLayout.setAlignItems(Alignment.CENTER);
+        changeKitchenStartButton.addClickListener(e -> openKitchenStartDialog());
+
+        // Устанавливаем значение по умолчанию для времени готовности
         finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
 
         Button createOrderButton = new Button("Создать заказ");
@@ -273,19 +278,20 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 return;
             }
 
-            LocalDateTime kitchenStart = kitchenStartPicker.getValue();
             LocalDateTime finishTime = finishPicker.getValue();
-
-            if (kitchenStart == null || finishTime == null) {
-                Notification.show("Пожалуйста, укажите время начала приготовления и время готовности");
+            if (finishTime == null) {
+                Notification.show("Пожалуйста, укажите время готовности");
                 return;
             }
 
-            // Преобразуем LocalDateTime в Instant с использованием системной зоны
-            Instant kitchenShouldGetOrderAt = kitchenStart.atZone(ZoneId.systemDefault()).toInstant();
+            // Определяем время начала приготовления
+            Instant kitchenShouldGetOrderAt = (selectedKitchenStart != null)
+                    ? selectedKitchenStart
+                    : Instant.now();
+
             Instant shouldBeFinishedAt = finishTime.atZone(ZoneId.systemDefault()).toInstant();
 
-            // Проверяем, что время готовности не раньше времени начала приготовления
+            // Проверяем, что время готовности не раньше времени начала
             if (shouldBeFinishedAt.isBefore(kitchenShouldGetOrderAt)) {
                 Notification.show("Время готовности не может быть раньше времени начала приготовления");
                 return;
@@ -300,8 +306,10 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             updateTotalTime();
             chosenGrid.getDataProvider().refreshAll();
             orderNumberField.clear();
-            // Сбрасываем значения полей времени на значения по умолчанию
-            kitchenStartPicker.setValue(LocalDateTime.now());
+
+            // Сбрасываем состояние на "сейчас"
+            selectedKitchenStart = null;
+            kitchenStartDisplay.setText("Время начала приготовления: Сейчас");
             finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
         });
 
@@ -311,9 +319,12 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             updateTotalTime();
             chosenGrid.getDataProvider().refreshAll();
             Notification.show("Корзина очищена");
+
+            selectedKitchenStart = null;
+            kitchenStartDisplay.setText("Время начала приготовления: Сейчас");
         });
 
-        cartLayout.add(chosenTitle, chosenGrid, kitchenStartPicker, finishPicker, totalPay, totalTime, buttonBar);
+        cartLayout.add(chosenTitle, chosenGrid, kitchenStartLayout, finishPicker, totalPay, totalTime, buttonBar);
         return cartLayout;
     }
 
@@ -647,22 +658,43 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 })
                 .sum();
 
-        String formattedTime;
-        if (totalMinutes >= 60) {
-            int hours = totalMinutes / 60;
-            int minutes = totalMinutes % 60;
-            formattedTime = String.format("%d ч : %02d мин", hours, minutes);
-        }
-        else {
-            formattedTime = String.format("%d мин", totalMinutes);
-        }
+        String formattedTime = (totalMinutes >= 60)
+                ? String.format("%d ч : %02d мин", totalMinutes / 60, totalMinutes % 60)
+                : String.format("%d мин", totalMinutes);
 
         totalTime.setText("Общее время приготовления: " + formattedTime);
 
-        if (kitchenStartPicker.getValue() != null && totalMinutes > 0) {
-            finishPicker.setValue(
-                    kitchenStartPicker.getValue().plusMinutes(totalMinutes)
-            );
+        if (totalMinutes > 0) {
+            Instant startTime = (selectedKitchenStart != null) ? selectedKitchenStart : Instant.now();
+            finishPicker.setValue(startTime.atZone(ZoneId.systemDefault()).toLocalDateTime().plusMinutes(totalMinutes));
         }
+    }
+
+    private void openKitchenStartDialog() {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Выберите время начала приготовления");
+
+        DateTimePicker picker = new DateTimePicker();
+        picker.setValue(selectedKitchenStart != null
+                ? selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime()
+                : LocalDateTime.now());
+
+        Button saveBtn = new Button("Сохранить", ev -> {
+            LocalDateTime selectedTime = picker.getValue();
+            if (selectedTime != null) {
+                selectedKitchenStart = selectedTime.atZone(ZoneId.systemDefault()).toInstant();
+                kitchenStartDisplay.setText("Время начала приготовления: " + selectedTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+                dialog.close();
+            }
+            else {
+                Notification.show("Пожалуйста, выберите время");
+            }
+        });
+
+        Button cancelBtn = new Button("Отмена", ev -> dialog.close());
+
+        dialog.add(picker);
+        dialog.getFooter().add(saveBtn, cancelBtn);
+        dialog.open();
     }
 }

@@ -65,19 +65,8 @@ public class OrderService {
     ) {
         Order order = this.orderRepository.save(Order.of(name, shouldBeFinishedAt, kitchenShouldGetOrderAt));
         List<OrderItem> orderItems = new ArrayList<>();
-        Set<FlowStep> flowSteps = new HashSet<>();
-        for (MenuItem menuItem : menuItems) {
-            OrderItem orderItem = OrderItem.of(order, menuItem);
-            orderItems.add(orderItem);
-            flowSteps.add(this.flowCacheService.getStep(
-                    orderItem.getMenuItem().getFlow().getId(),
-                    orderItem.getCurrentFlowStep()
-            ));
-        }
         this.orderItemRepository.saveAll(orderItems);
         List<PackageDto> packageDtos = this.productPackageService.calculatePackages(order);
-        //todo notification somehow
-        notificateAllScreens(flowSteps);
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
@@ -250,6 +239,7 @@ public class OrderService {
                         .build()
                 )
                 .ifPresent(orderItemRepository::save);
+        this.wsMessageSender.sendRefreshAll();
     }
 
     public void createOrderItem(Long orderId, MenuItem menuItem) {
@@ -279,6 +269,7 @@ public class OrderService {
                                 .build())
                         .toList()
         );
+        this.wsMessageSender.sendRefreshAll();
     }
 
     public List<OrderItem> getOrderItems(Long orderId) {
@@ -293,18 +284,22 @@ public class OrderService {
     }
 
     @Transactional
-    public void checkAndUpdateKitchenGotOrderAt() {
+    public void checkAndUpdateKitchenGotOrderAt(Instant now) {
         orderRepository.findAllNotStarted()
                 .stream()
+                .filter(order -> order.getKitchenShouldGetOrderAt().isBefore(now))
                 .forEach(order -> {
-                            if (order.getKitchenShouldGetOrderAt().isBefore(Instant.now())) {
-                                order.setKitchenGotOrderAt(Instant.now());
-                                this.wsMessageSender.sendRefreshAll();
-                                orderRepository.save(order);
-                            }
-                        }
-                );
-
+                    order.setKitchenGotOrderAt(now);
+                    Set<FlowStep> flowSteps = new HashSet<>();
+                    for (OrderItem orderItem : order.getOrderItems()) {
+                        FlowStep step = this.flowCacheService.getStep(
+                                orderItem.getMenuItem().getFlow().getId(),
+                                orderItem.getCurrentFlowStep()
+                        );
+                        flowSteps.add(step);
+                    }
+                    notificateAllScreens(flowSteps);
+                });
     }
 
     private int definePriorityByOrderStatus(OrderStatus orderStatus) {
