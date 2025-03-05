@@ -16,6 +16,17 @@ server:
       charset: UTF-8
       enabled: true
       force: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+  health:
+    db:
+      enabled: true
 spring:
   datasource:
     url: ${SQL_URL:jdbc:postgresql://localhost:5432/kds}
@@ -34,6 +45,8 @@ spring:
         id:
           new_generator_mappings: false
           optimizer: none
+  vaadin:
+    servlet-mapping: /vaadin/*
   liquibase:
     enabled: true
     change-log: classpath:/liquibase/db.changelog-master.yaml
