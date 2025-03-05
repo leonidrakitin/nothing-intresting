@@ -34,14 +34,21 @@ jobs:
             # Удаляем старый образ (если нужно)
             docker image rm kds-app_kds-app:latest || true
             # Собираем новый образ
-            docker-compose build kds-app
+            docker run -d \
+            --name kds-app-new \
+            --network kds-network \
+            -p 8001:8000 \
+            -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
+            -e SQL_USERNAME=root \
+            -e SQL_PASSWORD=123456 \
+            kds-app_kds-app:latest
 
             docker-compose run -d --name kds-app-new -p 8001:8000 kds-app
             # Ждём 10 секунд для запуска приложения
-            sleep 60
-            
+            sleep 40
+
             # Проверяем health check нового контейнера
-            if curl -s http://localhost:8001/actuator/health | grep -q '"status":"UP"'; then
+            if curl -v http://localhost:8001/actuator/health | grep -q '"status":"UP"'; then
               echo "New container is healthy, proceeding with deployment"
             
               # Останавливаем и удаляем старый контейнер
