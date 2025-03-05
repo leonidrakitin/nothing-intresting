@@ -33,17 +33,17 @@ jobs:
 
             # Удаляем старый образ (если нужно)
             docker image rm kds-app_kds-app:latest || true
+
             # Собираем новый образ
             docker run -d \
-            --name kds-app-new \
-            --network kds-network \
-            -p 8001:8000 \
-            -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
-            -e SQL_USERNAME="$SQL_USERNAME" \
-            -e SQL_PASSWORD="$SQL_PASSWORD" \
-            kds-app_kds-app:latest
+              --name kds-app-new \
+              --network kds-network \
+              -p 8001:8000 \
+              -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
+              -e SQL_USERNAME="$SQL_USERNAME" \
+              -e SQL_PASSWORD="$SQL_PASSWORD" \
+              kds-app_kds-app:latest
 
-            docker-compose run -d --name kds-app-new -p 8001:8000 kds-app
             # Ждём 10 секунд для запуска приложения
             sleep 40
 
@@ -61,13 +61,13 @@ jobs:
               echo "Previous container was removed"
 
               docker run -d \
-              --name kds-app \
-              --network kds-network \
-              -p 8000:8000 \
-              -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
-              -e SQL_USERNAME="$SQL_USERNAME" \
-              -e SQL_PASSWORD="$SQL_PASSWORD" \
-              kds-app_kds-app:latest
+                --name kds-app \
+                --network kds-network \
+                -p 8000:8000 \
+                -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
+                -e SQL_USERNAME="$SQL_USERNAME" \
+                -e SQL_PASSWORD="$SQL_PASSWORD" \
+                kds-app_kds-app:latest
               
               echo "Deployment successful"
             else
