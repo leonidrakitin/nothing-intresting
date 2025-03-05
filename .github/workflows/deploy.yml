@@ -30,9 +30,15 @@ jobs:
             cd kds-app
             git pull
             ./gradlew clean build -x test
+            echo "Successfully built app"
 
             # Удаляем старый образ (если нужно)
             docker image rm kds-app_kds-app:latest || true
+            echo "Removed old image"
+
+            # Собираем новый образ
+            docker-compose build kds-app
+            echo "Build new image"
 
             # Собираем новый образ
             docker run -d \
@@ -44,6 +50,7 @@ jobs:
               -e SQL_PASSWORD="$SQL_PASSWORD" \
               kds-app_kds-app:latest
 
+            echo "Running test container"
             # Ждём 10 секунд для запуска приложения
             sleep 40
 
