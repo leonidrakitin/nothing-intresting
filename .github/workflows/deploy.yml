@@ -39,8 +39,8 @@ jobs:
             --network kds-network \
             -p 8001:8000 \
             -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
-            -e SQL_USERNAME=root \
-            -e SQL_PASSWORD=123456 \
+            -e SQL_USERNAME="$SQL_USERNAME" \
+            -e SQL_PASSWORD="$SQL_PASSWORD" \
             kds-app_kds-app:latest
 
             docker-compose run -d --name kds-app-new -p 8001:8000 kds-app
@@ -50,28 +50,31 @@ jobs:
             # Проверяем health check нового контейнера
             if curl -v http://localhost:8001/actuator/health | grep -q '"status":"UP"'; then
               echo "New container is healthy, proceeding with deployment"
+
+              # Перезапускаем новый контейнер с правильным именем и портом
+              docker stop kds-app-new
+              echo "Test container was removed"
             
               # Останавливаем и удаляем старый контейнер
               docker stop kds-app || true
               docker rm kds-app || true
-            
-              # Перезапускаем новый контейнер с правильным именем и портом
-              docker stop kds-app-new
+              echo "Previous container was removed"
+
               docker run -d \
               --name kds-app \
               --network kds-network \
               -p 8000:8000 \
               -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
-              -e SQL_USERNAME=root \
-              -e SQL_PASSWORD=123456 \
+              -e SQL_USERNAME="$SQL_USERNAME" \
+              -e SQL_PASSWORD="$SQL_PASSWORD" \
               kds-app_kds-app:latest
               
               echo "Deployment successful"
-              else
+            else
               echo "New container failed health check, rolling back"
               docker logs kds-app-new
               docker stop kds-app-new || true
               docker rm kds-app-new || true
               exit 1
-              fi          
+            fi          
           EOF
