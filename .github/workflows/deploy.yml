@@ -30,5 +30,41 @@ jobs:
             cd kds-app
             git pull
             ./gradlew clean build -x test
-            docker-compose up --detach --build kds-app
+
+            # Удаляем старый образ (если нужно)
+            docker image rm kds-app_kds-app:latest || true
+            # Собираем новый образ
+            docker-compose build kds-app
+
+            docker-compose run -d --name kds-app-new -p 8001:8000 kds-app
+            # Ждём 10 секунд для запуска приложения
+            sleep 60
+            
+            # Проверяем health check нового контейнера
+            if curl -s http://localhost:8001/actuator/health | grep -q '"status":"UP"'; then
+              echo "New container is healthy, proceeding with deployment"
+            
+              # Останавливаем и удаляем старый контейнер
+              docker stop kds-app || true
+              docker rm kds-app || true
+            
+              # Перезапускаем новый контейнер с правильным именем и портом
+              docker stop kds-app-new
+              docker run -d \
+              --name kds-app \
+              --network kds-network \
+              -p 8000:8000 \
+              -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
+              -e SQL_USERNAME=root \
+              -e SQL_PASSWORD=123456 \
+              kds-app_kds-app:latest
+              
+              echo "Deployment successful"
+              else
+              echo "New container failed health check, rolling back"
+              docker logs kds-app-new
+              docker stop kds-app-new || true
+              docker rm kds-app-new || true
+              exit 1
+              fi          
           EOF
