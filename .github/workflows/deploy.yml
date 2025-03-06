@@ -46,8 +46,8 @@ jobs:
               --network kds-network \
               -p 8001:8000 \
               -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
-              -e SQL_USERNAME="$SQL_USERNAME" \
-              -e SQL_PASSWORD="$SQL_PASSWORD" \
+              -e SQL_USERNAME=$SQL_USERNAME \
+              -e SQL_PASSWORD=$SQL_PASSWORD \
               kds-app_kds-app:latest
 
             echo "Running test container"
@@ -72,8 +72,8 @@ jobs:
                 --network kds-network \
                 -p 8000:8000 \
                 -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
-                -e SQL_USERNAME="$SQL_USERNAME" \
-                -e SQL_PASSWORD="$SQL_PASSWORD" \
+                -e SQL_USERNAME=$SQL_USERNAME \
+                -e SQL_PASSWORD=$SQL_PASSWORD \
                 kds-app_kds-app:latest
               
               echo "Deployment successful"
