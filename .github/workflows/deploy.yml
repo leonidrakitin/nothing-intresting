@@ -19,6 +19,9 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
+          SQL_URL: ${{ secrets.SQL_URL }}
+          SQL_USERNAME: ${{ secrets.SQL_USERNAME }}
+          SQL_PASSWORD: ${{ secrets.SQL_PASSWORD }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/kds_rsa
@@ -50,8 +53,8 @@ jobs:
               --network kds-network \
               -p 8000:8000 \
               -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
-              -e SQL_USERNAME=$SQL_USERNAME \
-              -e SQL_PASSWORD=$SQL_PASSWORD \
+              -e SQL_USERNAME="$SQL_USERNAME" \
+              -e SQL_PASSWORD="$SQL_PASSWORD" \
               kds-app_kds-app:latest
         
             echo "Deployment successful"
