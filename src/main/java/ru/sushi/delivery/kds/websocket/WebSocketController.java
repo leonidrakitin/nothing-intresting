@@ -29,7 +29,7 @@ public class WebSocketController {
     @MessageMapping("/topic/screen.getAllOrdersWithItems")
     @SendTo("/topic/screen.orders/3") //todo wtf???
     public WSOrders getAllOrdersWithItems() {
-        return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllOrdersWithItems());
+        return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllKitchenOrdersWithItems());
     }
 
 
@@ -49,7 +49,7 @@ public class WebSocketController {
         @DestinationVariable("orderId") Long orderId
     ) {
         viewService.updateAllOrderItemsToDone(orderId);
-        return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllOrdersWithItems());
+        return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllKitchenOrdersWithItems());
     }
 
     @MessageMapping("/topic/screen/{screenId}/update.order.done/{orderItemId}")
@@ -58,6 +58,6 @@ public class WebSocketController {
         @DestinationVariable("orderItemId") Long orderItemId
     ) {
         viewService.updateStatus(orderItemId);
-        return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllOrdersWithItems());
+        return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllKitchenOrdersWithItems());
     }
 }

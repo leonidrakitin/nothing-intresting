@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: orders.NEW_FIELDS.04.03.25.04.16
+      author: losevdmitriy
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: should_be_finished_at
+                  type: TIMESTAMPTZ
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: kitchen_should_get_order_at
+                  type: TIMESTAMPTZ
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: kitchen_got_order_at
+                  type: TIMESTAMPTZ
+
+  - changeSet:
+      id: orders_aud.NEW_FIELDS.04.03.25.04.16
+      author: losevdmitriy
+      changes:
+        - addColumn:
+            tableName: orders_aud
+            columns:
+              - column:
+                  name: should_be_finished_at
+                  type: TIMESTAMPTZ
+        - addColumn:
+            tableName: orders_aud
+            columns:
+              - column:
+                  name: kitchen_should_get_order_at
+                  type: TIMESTAMPTZ
+        - addColumn:
+            tableName: orders_aud
+            columns:
+              - column:
+                  name: kitchen_got_order_at
+                  type: TIMESTAMPTZ
