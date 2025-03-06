@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 
-import java.sql.Time;
+import java.time.Duration;
 
 @Data
 @Builder
@@ -20,7 +20,7 @@ public class MenuItemData {
 
     private String name;
 
-    private Time timeToCook;
+    private Duration timeToCook;
 
     public static MenuItemData of(MenuItem menuItem) {
         return MenuItemData.builder()

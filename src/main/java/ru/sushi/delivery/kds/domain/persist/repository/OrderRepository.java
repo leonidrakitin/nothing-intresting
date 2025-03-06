@@ -11,11 +11,11 @@ import java.util.List;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("""
-        select o from Order o
-        left join fetch o.orderItems oi
-        where o.status != 'READY' and o.status != 'CANCELED'
-                order by (select max(oi2.stationChangedAt) from OrderItem oi2 where oi2.order = o) desc
-    """)
+                select o from Order o
+                left join fetch o.orderItems oi
+                where o.status != 'READY' and o.status != 'CANCELED'
+                        order by o.kitchenShouldGetOrderAt asc, (select max(oi2.stationChangedAt) from OrderItem oi2 where oi2.order = o) desc
+            """)
     List<Order> findAllActive();
 
     @Query("""

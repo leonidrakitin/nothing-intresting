@@ -653,8 +653,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                     if (item.getTimeToCook() == null) {
                         return 0;
                     }
-                    return item.getTimeToCook().toLocalTime().getHour() * 60
-                            + item.getTimeToCook().toLocalTime().getMinute();
+                    return Math.toIntExact(item.getTimeToCook().toHours() * 60
+                            + item.getTimeToCook().toMinutes());
                 })
                 .sum();
 

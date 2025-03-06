@@ -54,8 +54,7 @@ public class Order {
 
     private Instant kitchenShouldGetOrderAt;
 
-    @Builder.Default
-    private Instant kitchenGotOrderAt = null;
+    private Instant kitchenGotOrderAt;
 
     @Builder.Default
     private Instant statusUpdateAt = Instant.now();

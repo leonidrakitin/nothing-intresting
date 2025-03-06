@@ -278,9 +278,11 @@ public class OrderService {
 
     @Transactional
     public void updateKitchenShouldGetOrderAt(Long orderId, Instant newInstant) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
-        orderRepository.save(order.toBuilder().kitchenShouldGetOrderAt(newInstant).build());
+        this.orderRepository.save(
+                this.orderRepository.findById(orderId)
+                        .map(order -> order.toBuilder().kitchenShouldGetOrderAt(newInstant).build())
+                        .orElseThrow(() -> new NotFoundException("Not found order " + orderId))
+        );
     }
 
     @Transactional
