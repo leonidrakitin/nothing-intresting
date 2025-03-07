@@ -29,14 +29,14 @@ import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
 import ru.sushi.delivery.kds.service.listeners.BroadcastListener;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Route("create")
 public class CreateOrderView extends HorizontalLayout implements BroadcastListener {
 
-    private final List<MenuItem> chosenMenuItems = new ArrayList<>();
+    private final HashMap<MenuItem, Long> chosenMenuItems = new HashMap<>();
     private final ViewService viewService;
     private final CashListener cashListener;
 
@@ -144,7 +144,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         rollsGrid.setWidthFull();
         rollsGrid.addItemClickListener(e -> {
             MenuItem clickedMenuItem = e.getItem();
-            chosenMenuItems.add(clickedMenuItem);
+            chosenMenuItems.compute(clickedMenuItem, (item, counter) -> counter == null ? 0 : counter + 1);
             updateTotalPay();
             Notification.show(String.format(
                     "Добавлен: %s - %.1f рублей",
@@ -183,7 +183,10 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsGrid.setWidthFull();
         setsGrid.addItemClickListener(e -> {
             ItemCombo clickedSet = e.getItem();
-            chosenMenuItems.addAll(clickedSet.getMenuItems());
+            clickedSet.getMenuItems().forEach(item ->
+                    chosenMenuItems.compute()
+            );
+            chosenMenuItems.addAll();
             updateTotalPay();
             Notification.show("Добавлен сет: " + clickedSet.getName());
             chosenGrid.getDataProvider().refreshAll();

@@ -1,14 +1,14 @@
 application:
   version: '0.0.1'
   name: 'kds-system'
-vaadin:
-  launch-browser: true
-  productionMode: true
-  servlet:
-    productionMode: true
-  frontend:
-    hotdeploy: false
-    compatibilityMode: false
+#vaadin:
+#  launch-browser: true
+#  productionMode: true
+#  servlet:
+#    productionMode: false
+#  frontend:
+#    hotdeploy: false
+#    compatibilityMode: false
 server:
   port: 8000
   servlet:
@@ -29,7 +29,7 @@ management:
       enabled: true
 spring:
   datasource:
-    url: ${SQL_URL:jdbc:postgresql://localhost:5432/kds}
+    url: ${SQL_URL:jdbc:postgresql://localhost:5432/postgres}
     username: ${SQL_USERNAME:root}
     password: ${SQL_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
