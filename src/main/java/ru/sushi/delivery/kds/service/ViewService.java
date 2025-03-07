@@ -46,6 +46,10 @@ public class ViewService {
         return this.itemComboService.findAll();
     }
 
+    public List<MenuItem> getAllExtras() {
+        return this.menuItemService.getAllExtras();
+    }
+
     public List<KitchenDisplayInfoDto> getAvailableDisplaysData() {
         List<KitchenDisplayInfoDto> kitchenDisplayData = new ArrayList<>();
         for (Screen screen : this.screenService.getAll()) {
