@@ -43,6 +43,7 @@ public class RecipeService {
     private final MenuItemRecipeRepository menuItemRecipeRepository;
     private final PrepackRecipeRepository prepackRecipeRepository;
     private final PrepackItemService prepackItemService;
+    private final SourceItemService sourceItemService;
     private final SourceService sourceService;
     private final PrepackService prepackService;
     private final MenuItemService menuItemService;
@@ -51,38 +52,10 @@ public class RecipeService {
     public List<PrepackRecipeItemDto> getPrepackRecipe(Long prepackId) {
         return this.prepackRecipeRepository.findByPrepackId(prepackId).stream()
                 .map(recipe -> PrepackRecipeItemDto.of(
-                        this.sourceService.getSourceItemName(recipe.getSourceId(), recipe.getSourceType()),
+                        this.sourceService.getSourceName(recipe.getSourceId(), recipe.getSourceType()),
                         recipe
                 ))
                 .toList();
-    }
-
-    public void writeOffSpoiledItem(String employeeName, SourceItem sourceItem) {
-        if (sourceItem.getExpirationDate().isAfter(Instant.now())) {
-            throw new IllegalArgumentException("Невозможно списать продукт");
-        }
-        sourceItem.setDiscontinuedAt(Instant.now());
-        sourceItem.setDiscontinuedReason(DiscontinuedReason.SPOILED);
-        sourceItem.setDiscontinuedComment(String.format(
-                "%s '%s' был списан сотрудником %s по причине 'продукт испорчен'",
-                sourceItem.getSourceType().getValue(),
-                this.sourceService.getSourceItemName(sourceItem),
-                employeeName
-        ));
-        log.info(sourceItem.getDiscontinuedComment());
-    }
-
-    public void writeOffItemWithOtherReason(String employeeName, String reason, SourceItem sourceItem) {
-        sourceItem.setDiscontinuedAt(Instant.now());
-        sourceItem.setDiscontinuedReason(DiscontinuedReason.SPOILED);
-        sourceItem.setDiscontinuedComment(String.format(
-                "%s '%s' был списан сотрудником %s по причине %s",
-                sourceItem.getSourceType().getValue(),
-                this.sourceService.getSourceItemName(sourceItem),
-                employeeName,
-                reason
-        ));
-        log.info(sourceItem.getDiscontinuedComment());
     }
 
     public double writeOffFinishedItem(SourceItem item, double spentAmount, boolean last) {
@@ -95,14 +68,14 @@ public class RecipeService {
                 item.setDiscontinuedComment(String.format(
                         "%s '%s' автоматически был списан системой",
                         item.getSourceType().getValue(),
-                        this.sourceService.getSourceItemName(item)
+                        this.sourceItemService.getSourceItemName(item)
                 ));
             }
             else {
                 item.setDiscontinuedComment(String.format(
                         "%s '%s' автоматически был списан в минус системой",
                         item.getSourceType().getValue(),
-                        this.sourceService.getSourceItemName(item)
+                        this.sourceItemService.getSourceItemName(item)
                 ));
                 item.setDiscontinuedComment("Закончился при приготовлении  (авто)");
             }
@@ -113,7 +86,7 @@ public class RecipeService {
 
     @Transactional
     public void writeOffSourceItems(double spentAmount, Long sourceId, SourceType sourceType) {
-        Iterator<SourceItem> itemIterator = this.sourceService.getSourceActiveItems(sourceId, sourceType).iterator();
+        Iterator<SourceItem> itemIterator = this.sourceItemService.getSourceActiveItems(sourceId, sourceType).iterator();
         while (spentAmount > 0) {
             if (!itemIterator.hasNext()) {
                 log.error(
@@ -141,7 +114,7 @@ public class RecipeService {
         List<PrepackRecipe> prepackRecipes = this.prepackRecipeRepository.findByPrepackId(prepackId);
         return prepackRecipes.stream().map(prepackRecipe -> PrepackRecipeData.of(
                         prepackRecipe,
-                        this.sourceService.getSourceItemName(
+                this.sourceService.getSourceName(
                                 prepackRecipe.getSourceId(),
                                 prepackRecipe.getSourceType())
                 )
@@ -154,7 +127,7 @@ public class RecipeService {
         Measurement measurement = Optional.ofNullable(prepackRecipeData.getMeasurementUnit())
                 .map(MeasurementUnitDto::getId)
                 .map(this.measurementService::getById)
-                .orElseGet(() -> this.sourceService.getSourceItemMeasurementUnit(
+                .orElseGet(() -> this.sourceService.getSourceMeasurementUnit(
                         sourceDto.getId(), SourceType.valueOf(sourceDto.getType())
                 ));
 
@@ -195,7 +168,7 @@ public class RecipeService {
         List<MenuItemRecipe> menuItemRecipes = this.menuItemRecipeRepository.findByMenuItemId(menuId);
         return menuItemRecipes.stream().map(menuItemRecipe -> MenuItemRecipeDto.of(
                                 menuItemRecipe,
-                                this.sourceService.getSourceItemName(
+                        this.sourceService.getSourceName(
                                         menuItemRecipe.getSourceId(),
                                         menuItemRecipe.getSourceType())
                         )
@@ -209,7 +182,7 @@ public class RecipeService {
         Measurement measurement = Optional.ofNullable(menuItemRecipeDto.getMeasurementUnit())
                 .map(MeasurementUnitDto::getId)
                 .map(this.measurementService::getById)
-                .orElseGet(() -> this.sourceService.getSourceItemMeasurementUnit(
+                .orElseGet(() -> this.sourceService.getSourceMeasurementUnit(
                         sourceDto.getId(), SourceType.valueOf(sourceDto.getType())
                 ));
 
@@ -271,7 +244,7 @@ public class RecipeService {
                 this.prepackRecipeRepository.findByPrepackId(recipe.getSourceId())
                         .forEach(recipeIterator::add);
             }
-            SourceItem sourceItem = this.sourceService.getSourceActiveItems(recipe.getSourceId(), recipe.getSourceType())
+            SourceItem sourceItem = this.sourceItemService.getSourceActiveItems(recipe.getSourceId(), recipe.getSourceType())
                     .getFirst();
             if (checkedSourceItems.contains(sourceItem)) {
                 continue;
