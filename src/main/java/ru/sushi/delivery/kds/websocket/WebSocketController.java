@@ -20,7 +20,10 @@ public class WebSocketController {
     @MessageMapping("/topic/screen.getAllOrders/{screenId}")
     @SendTo("/topic/screen.orders/{screenId}")
     public WSOrderItems getAllOrders(@DestinationVariable("screenId") Long screenId) {
-        return new WSOrderItems(WSMessageType.GET_ALL_ORDER_ITEMS, viewService.getScreenOrderItems(screenId));
+            return new WSOrderItems(
+                    WSMessageType.GET_ALL_ORDER_ITEMS,
+                    viewService.getScreenOrderItems(screenId)
+            );
     }
 
     @MessageMapping("/topic/screen.getAllOrdersWithItems")

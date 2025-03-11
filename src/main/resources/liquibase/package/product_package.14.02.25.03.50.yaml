@@ -1,0 +1,88 @@
+databaseChangeLog:
+  - changeSet:
+      id: product_package.CREATE.02.01.24.23.50
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: product_package
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: menu_item_id
+                  type: BIGINT
+              - column:
+                  name: length
+                  type: INTEGER
+              - column:
+                  name: width
+                  type: INTEGER
+              - column:
+                  name: height
+                  type: INTEGER
+        - addForeignKeyConstraint:
+            baseTableName: product_package
+            baseColumnNames: menu_item_id
+            referencedTableName: menu_item
+            referencedColumnNames: id
+            constraintName: fk_product_package_menu_item
+  - changeSet:
+      id: product_package_aud.CREATE.02.01.24.23.50
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: product_package_aud
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: menu_item_id
+                  type: BIGINT
+              - column:
+                  name: length
+                  type: INTEGER
+              - column:
+                  name: width
+                  type: INTEGER
+              - column:
+                  name: height
+                  type: INTEGER
+              - column:
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+  - changeSet:
+      id: product_package.INSERT.02.01.24.23.20.03
+      author: rakitin
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: product_package_id_seq_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: product_package
+            columnName: id
+            defaultValueComputed: "nextval('product_package_id_seq_generator'::regclass)"

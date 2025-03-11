@@ -1,0 +1,87 @@
+databaseChangeLog:
+  - changeSet:
+      id: item_combo.CREATE.02.01.24.23.59
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: item_combo
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+  - changeSet:
+      id: item_combo_aud.CREATE.02.01.24.23.59
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: item_combo_aud
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+  - changeSet:
+      id: item_combo_compound.CREATE.02.01.24.23.59
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: item_combo_compound
+            columns:
+              - column:
+                  name: item_combo_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: menu_item_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: item_combo_compound
+            baseColumnNames: item_combo_id
+            referencedTableName: item_combo
+            referencedColumnNames: id
+            constraintName: fk_item_combo_compound_item_combo
+        - addForeignKeyConstraint:
+            baseTableName: item_combo_compound
+            baseColumnNames: menu_item_id
+            referencedTableName: menu_item
+            referencedColumnNames: id
+            constraintName: fk_item_combo_compound_menu_item
+  - changeSet:
+      id: item_combo_compound.SEQ_GEN.02.01.24.23.20.03
+      author: rakitin
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: item_combo_id_seq_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: item_combo
+            columnName: id
+            defaultValueComputed: "nextval('item_combo_id_seq_generator'::regclass)"

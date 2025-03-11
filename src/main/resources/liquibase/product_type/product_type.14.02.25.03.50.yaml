@@ -1,0 +1,230 @@
+databaseChangeLog:
+  - changeSet:
+      id: product_type.CREATE.02.01.24.23.10.01
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: product_type
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: priority
+                  type: INTEGER
+              - column:
+                  name: length
+                  type: INTEGER
+              - column:
+                  name: width
+                  type: INTEGER
+              - column:
+                  name: height
+                  type: INTEGER
+  - changeSet:
+      id: product_type_aud.CREATE.02.01.24.23.10.01
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: product_type_aud
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: priority
+                  type: INTEGER
+              - column:
+                  name: length
+                  type: INTEGER
+              - column:
+                  name: width
+                  type: INTEGER
+              - column:
+                  name: height
+                  type: INTEGER
+              - column:
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+  - changeSet:
+      id: product_type.INSERT.02.01.24.23.20.03
+      author: rakitin
+      changes:
+        - createSequence:
+            cacheSize: 1
+            cycle: false
+            dataType: bigint
+            incrementBy: 1
+            maxValue: 9223372036854775807
+            minValue: 1
+            sequenceName: product_type_id_seq_generator
+            startValue: 1
+        - addDefaultValue:
+            tableName: product_type
+            columnName: id
+            defaultValueComputed: "nextval('product_type_id_seq_generator'::regclass)"
+  - changeSet:
+      id: product_type_neighbors.CREATE.02.01.24.23.15
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: product_type_neighbors
+            columns:
+              - column:
+                  name: product_type_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: neighbor_product_type_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: product_type_neighbors
+            baseColumnNames: product_type_id
+            referencedTableName: product_type
+            referencedColumnNames: id
+            constraintName: fk_product_type_neighbors_product_type
+        - addForeignKeyConstraint:
+            baseTableName: product_type_neighbors
+            baseColumnNames: neighbor_product_type_id
+            referencedTableName: product_type
+            referencedColumnNames: id
+            constraintName: fk_product_type_neighbors_neighbor_product_type
+  - changeSet:
+      id: product_type_neighbors_aud.CREATE.02.01.24.23.15
+      author: rakitin
+      changes:
+        - createTable:
+            tableName: product_type_neighbors_aud
+            columns:
+              - column:
+                  name: product_type_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: neighbor_product_type_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rev
+                  type: INTEGER
+              - column:
+                  constraints:
+                    nullable: false
+                  name: revtype
+                  type: SMALLINT
+  - changeSet:
+      id: product_type.INSERT.02.01.24.23.20.02
+      author: rakitin
+      changes:
+        - insert:
+            tableName: product_type
+            columns:
+              - column:
+                  name: name
+                  value: "Запеченные"
+              - column:
+                  name: priority
+                  valueNumeric: 1
+              - column:
+                  name: length
+                  valueNumeric: 0
+              - column:
+                  name: width
+                  valueNumeric: 0
+              - column:
+                  name: height
+                  valueNumeric: 0
+        - insert:
+            tableName: product_type
+            columns:
+              - column:
+                  name: name
+                  value: "Закуски"
+              - column:
+                  name: priority
+                  valueNumeric: 10
+              - column:
+                  name: length
+                  valueNumeric: 0
+              - column:
+                  name: width
+                  valueNumeric: 0
+              - column:
+                  name: height
+                  valueNumeric: 0
+        - insert:
+            tableName: product_type
+            columns:
+              - column:
+                  name: name
+                  value: "Холодные поливаются"
+              - column:
+                  name: priority
+                  valueNumeric: 20
+              - column:
+                  name: length
+                  valueNumeric: 0
+              - column:
+                  name: width
+                  valueNumeric: 0
+              - column:
+                  name: height
+                  valueNumeric: 0
+        - insert:
+            tableName: product_type
+            columns:
+              - column:
+                  name: name
+                  value: "Холодные"
+              - column:
+                  name: priority
+                  valueNumeric: 30
+              - column:
+                  name: length
+                  valueNumeric: 0
+              - column:
+                  name: width
+                  valueNumeric: 0
+              - column:
+                  name: height
+                  valueNumeric: 0
+        - insert:
+            tableName: product_type
+            columns:
+              - column:
+                  name: name
+                  value: "Маки"
+              - column:
+                  name: priority
+                  valueNumeric: 40
+              - column:
+                  name: length
+                  valueNumeric: 0
+              - column:
+                  name: width
+                  valueNumeric: 0
+              - column:
+                  name: height
+                  valueNumeric: 0

@@ -15,8 +15,12 @@ import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.controller.dto.IngredientDto;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
+import ru.sushi.delivery.kds.domain.persist.entity.recipe.Recipe;
 import ru.sushi.delivery.kds.domain.service.IngredientService;
 import ru.sushi.delivery.kds.domain.service.MeasurementService;
+import ru.sushi.delivery.kds.domain.service.RecipeService;
+import ru.sushi.delivery.kds.domain.service.SourceService;
+import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Duration;
 import java.util.List;
@@ -28,6 +32,8 @@ public class IngredientView extends VerticalLayout {
 
     private final IngredientService ingredientService;
     private final MeasurementService measurementService;
+    private final RecipeService recipeService;
+    private final SourceService sourceService;
 
     private final Grid<IngredientDto> ingredientGrid = new Grid<>();
     private final ComboBox<Measurement> measurementUnitField = new ComboBox<>("Единица измерения");
@@ -47,9 +53,11 @@ public class IngredientView extends VerticalLayout {
     private IngredientDto currentEditingIngredient = null;
 
     @Autowired
-    public IngredientView(IngredientService ingredientService, MeasurementService measurementService) {
+    public IngredientView(IngredientService ingredientService, MeasurementService measurementService, RecipeService recipeService, SourceService sourceService) {
         this.ingredientService = ingredientService;
         this.measurementService = measurementService;
+        this.recipeService = recipeService;
+        this.sourceService = sourceService;
 
         setSizeFull();
 
@@ -288,9 +296,19 @@ public class IngredientView extends VerticalLayout {
             return;
         }
 
-        ingredientService.delete(ingredient);
-        Notification.show("Ингредиент удалён!");
-        updateGrid();
+
+        List<Recipe> recipes = recipeService.checkRecipeDependencies(ingredient, SourceType.INGREDIENT);
+        if (recipes.isEmpty()) {
+            this.ingredientService.delete(ingredient);
+            Notification.show("Строка удалена!");
+            updateGrid();
+        }
+        else {
+            for (Recipe recipe : recipes) {
+                String name = sourceService.getSourceItemName(recipe.getSourceId(), recipe.getSourceType());
+                Notification.show("Невозможно удалить ингредиент содержится в " + name);
+            }
+        }
 
         // Если удалили тот ингредиент, который редактировали — сбросим форму
         if (currentEditingIngredient != null && currentEditingIngredient.getId().equals(ingredient.getId())) {

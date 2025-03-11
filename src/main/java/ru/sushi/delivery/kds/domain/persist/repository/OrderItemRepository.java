@@ -13,11 +13,11 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     List<OrderItem> findByOrderId(Long orderId);
 
     @Query("""
-            select o from OrderItem o
-            left join MenuItem mi on mi.id = o.menuItem.id
-            left join FlowStep step on step.flow.id = mi.flow.id and step.stepOrder = o.currentFlowStep
-            where step.station.id = :stationId
-            order by o.stationChangedAt
+        select oi from OrderItem oi
+        left join MenuItem mi on mi.id = oi.menuItem.id
+        left join FlowStep step on step.flow.id = mi.flow.id and step.stepOrder = oi.currentFlowStep
+        where step.station.id = :stationId
+        order by oi.order.createdAt, oi.menuItem.productType.priority, oi.id
     """)
     List<OrderItem> findAllItemsByStationId(Long stationId);
 

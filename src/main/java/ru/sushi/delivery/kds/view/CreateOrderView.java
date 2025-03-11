@@ -17,7 +17,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.persist.entity.ItemSet;
+import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
@@ -43,14 +43,17 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     // Два контейнера под содержимое вкладок (Роллы / Сеты)
     private final VerticalLayout rollsTabLayout = new VerticalLayout();
     private final VerticalLayout setsTabLayout = new VerticalLayout();
+    private final VerticalLayout extrasTabLayout = new VerticalLayout();
 
     // Grids слева
     private final Grid<MenuItem> rollsGrid = new Grid<>(MenuItem.class, false);
-    private final Grid<ItemSet> setsGrid = new Grid<>(ItemSet.class, false);
+    private final Grid<ItemCombo> setsGrid = new Grid<>(ItemCombo.class, false);
+    private final Grid<MenuItem> extrasGrid = new Grid<>(MenuItem.class, false);
 
     // Списки из BusinessLogic (исходный список)
     private final List<MenuItem> menuMenuItems;
-    private final List<ItemSet> menuItemSets;
+    private final List<ItemCombo> menuItemCombos;
+    private final List<MenuItem> menuExtras;
 
     // Таблица «Корзины» (справа, первая вкладка)
     private final Grid<MenuItem> chosenGrid = new Grid<>(MenuItem.class, false);
@@ -77,7 +80,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
         // Загружаем списки из бизнес-логики
         this.menuMenuItems = viewService.getAllMenuItems(); // Роллы
-        this.menuItemSets = List.of();                  // Сеты (пример, для иллюстрации)
+        this.menuItemCombos = viewService.getAllCombos(); // Сеты
+        this.menuExtras = viewService.getAllExtras();
 
         // ----------------------------
         // ЛЕВАЯ ЧАСТЬ
@@ -85,20 +89,30 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
         Tab tabRolls = new Tab("Роллы");
         Tab tabSets = new Tab("Сеты");
-        Tabs tabsLeft = new Tabs(tabRolls, tabSets);
+        Tab tabExtras = new Tab("Допы");
+        Tabs tabsLeft = new Tabs(tabRolls, tabSets, tabExtras);
         tabsLeft.setWidthFull();
 
-        Div tabsContentLeft = new Div(rollsTabLayout, setsTabLayout);
+        Div tabsContentLeft = new Div(rollsTabLayout, setsTabLayout, extrasTabLayout);
         tabsContentLeft.setWidthFull();
         setsTabLayout.setVisible(false);
+        extrasTabLayout.setVisible(false);
 
         tabsLeft.addSelectedChangeListener(event -> {
             if (event.getSelectedTab().equals(tabRolls)) {
                 rollsTabLayout.setVisible(true);
                 setsTabLayout.setVisible(false);
-            } else {
+                extrasTabLayout.setVisible(false);
+            }
+            else if (event.getSelectedTab().equals(tabSets)) {
                 rollsTabLayout.setVisible(false);
                 setsTabLayout.setVisible(true);
+                extrasTabLayout.setVisible(false);
+            }
+            else {
+                rollsTabLayout.setVisible(false);
+                setsTabLayout.setVisible(false);
+                extrasTabLayout.setVisible(true);
             }
         });
 
@@ -114,7 +128,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             String searchValue = e.getValue().trim().toLowerCase();
             if (searchValue.isEmpty()) {
                 rollsGrid.setItems(menuMenuItems);
-            } else {
+            }
+            else {
                 rollsGrid.setItems(
                         menuMenuItems.stream()
                                 .filter(item -> item.getName().toLowerCase().contains(searchValue))
@@ -152,21 +167,22 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsSearchField.addValueChangeListener(e -> {
             String searchValue = e.getValue().trim().toLowerCase();
             if (searchValue.isEmpty()) {
-                setsGrid.setItems(menuItemSets);
-            } else {
+                setsGrid.setItems(menuItemCombos);
+            }
+            else {
                 setsGrid.setItems(
-                        menuItemSets.stream()
+                        menuItemCombos.stream()
                                 .filter(s -> s.getName().toLowerCase().contains(searchValue))
                                 .collect(Collectors.toList())
                 );
             }
         });
 
-        setsGrid.setItems(menuItemSets);
-        setsGrid.addColumn(ItemSet::getName).setHeader("Наименование");
+        setsGrid.setItems(menuItemCombos);
+        setsGrid.addColumn(ItemCombo::getName).setHeader("Наименование");
         setsGrid.setWidthFull();
         setsGrid.addItemClickListener(e -> {
-            ItemSet clickedSet = e.getItem();
+            ItemCombo clickedSet = e.getItem();
             chosenMenuItems.addAll(clickedSet.getMenuItems());
             updateTotalPay();
             Notification.show("Добавлен сет: " + clickedSet.getName());
@@ -174,6 +190,46 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         });
 
         setsTabLayout.add(setsSearchField, setsGrid);
+
+        // --- Вкладка "Допы" --- (новая вкладка для допов)
+        extrasTabLayout.setPadding(false);
+        extrasTabLayout.setSpacing(true);
+
+        TextField extrasSearchField = new TextField("Поиск по допам");
+        extrasSearchField.setPlaceholder("Введите название...");
+        extrasSearchField.setWidthFull();
+        extrasSearchField.setValueChangeMode(ValueChangeMode.EAGER);
+        extrasSearchField.addValueChangeListener(e -> {
+            String searchValue = e.getValue().trim().toLowerCase();
+            if (searchValue.isEmpty()) {
+                extrasGrid.setItems(menuExtras);
+            }
+            else {
+                extrasGrid.setItems(
+                        menuExtras.stream()
+                                .filter(item -> item.getName().toLowerCase().contains(searchValue))
+                                .collect(Collectors.toList())
+                );
+            }
+        });
+
+        extrasGrid.setItems(menuExtras);
+        extrasGrid.addColumn(MenuItem::getName).setHeader("Наименование");
+        extrasGrid.addColumn(MenuItem::getPrice).setHeader("Цена");
+        extrasGrid.setWidthFull();
+        extrasGrid.addItemClickListener(e -> {
+            MenuItem clickedMenuItem = e.getItem();
+            chosenMenuItems.add(clickedMenuItem);
+            updateTotalPay();
+            Notification.show(String.format(
+                    "Добавлен дополнительный товар: %s - %.1f рублей",
+                    clickedMenuItem.getName(),
+                    clickedMenuItem.getPrice()
+            ));
+            chosenGrid.getDataProvider().refreshAll();
+        });
+
+        extrasTabLayout.add(extrasSearchField, extrasGrid);
 
         VerticalLayout leftLayout = new VerticalLayout(
                 tabsLeft,
@@ -205,7 +261,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             if (event.getSelectedTab().equals(cartTab)) {
                 cartLayout.setVisible(true);
                 allOrdersLayout.setVisible(false);
-            } else {
+            }
+            else {
                 cartLayout.setVisible(false);
                 allOrdersLayout.setVisible(true);
                 refreshOrdersGrid();
@@ -292,19 +349,21 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 .setHeader("ID");
 
         ordersGrid.addColumn(dto -> {
-            if (dto.getItems() == null) return 0;
+            if (dto.getItems() == null) {
+                return 0;
+            }
             return dto.getItems().stream()
                     .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
                     .count();
         }).setHeader("Кол-во позиций");
 
         ordersGrid.addColumn(orderDto -> switch (orderDto.getStatus()) {
-            case CREATED    -> "Создан";
-            case COOKING    -> "Готовится";
+            case CREATED -> "Создан";
+            case COOKING -> "Готовится";
             case COLLECTING -> "Сборка";
-            case READY      -> "Выполнен";
-            case CANCELED   -> "Отменён";
-            default           -> "";
+            case READY -> "Выполнен";
+            case CANCELED -> "Отменён";
+            default -> "";
         }).setHeader("Статус");
 
         ordersGrid.addComponentColumn(orderDto -> {
@@ -394,8 +453,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
      * Строим диалог «Добавить позицию» — показываем список доступных роллов (menuItems),
      * при клике добавляем в заказ, обновляем грид в родительском диалоге.
      *
-     * @param orderId  строковый «ID заказа»
+     * @param orderId строковый «ID заказа»
      * @param itemsGrid грид, который нужно обновить после добавления
+     *
      * @return Dialog
      */
     private Dialog buildAddItemsDialog(Long orderId, Grid<OrderItemDto> itemsGrid) {
@@ -415,7 +475,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             if (e.getSelectedTab() == rollsTab) {
                 rollsLayout.setVisible(true);
                 setsLayout.setVisible(false);
-            } else {
+            }
+            else {
                 rollsLayout.setVisible(false);
                 setsLayout.setVisible(true);
             }
@@ -446,7 +507,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             String search = ev.getValue().toLowerCase().trim();
             if (search.isEmpty()) {
                 rollsGrid.setItems(menuMenuItems);
-            } else {
+            }
+            else {
                 rollsGrid.setItems(
                         menuMenuItems.stream()
                                 .filter(item -> item.getName().toLowerCase().contains(search))
@@ -461,9 +523,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setSearchField.setPlaceholder("Введите название...");
         setSearchField.setValueChangeMode(ValueChangeMode.EAGER);
 
-        Grid<ItemSet> setsGrid = new Grid<>(ItemSet.class, false);
+        Grid<ItemCombo> setsGrid = new Grid<>(ItemCombo.class, false);
         setsGrid.setWidthFull();
-        setsGrid.addColumn(ItemSet::getName).setHeader("Наименование");
+        setsGrid.addColumn(ItemCombo::getName).setHeader("Наименование");
 
         // Добавляем колонку с кнопкой «Добавить»
         setsGrid.addComponentColumn(set -> {
@@ -480,18 +542,19 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             return addButton;
         }).setHeader("Действие");
 
-        setsGrid.setItems(menuItemSets);
+        setsGrid.setItems(menuItemCombos);
 
         // Фильтрация при вводе
         setSearchField.addValueChangeListener(ev -> {
             String search = ev.getValue().toLowerCase().trim();
             if (search.isEmpty()) {
-                setsGrid.setItems(menuItemSets);
-            } else {
+                setsGrid.setItems(menuItemCombos);
+            }
+            else {
                 setsGrid.setItems(
-                    menuItemSets.stream()
-                        .filter(set -> set.getName().toLowerCase().contains(search))
-                        .collect(Collectors.toList())
+                        menuItemCombos.stream()
+                                .filter(set -> set.getName().toLowerCase().contains(search))
+                                .collect(Collectors.toList())
                 );
             }
         });

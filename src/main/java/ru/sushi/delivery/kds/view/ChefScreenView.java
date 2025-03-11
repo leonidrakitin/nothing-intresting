@@ -171,9 +171,10 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
             timer.add("Время ожидания: ");
         }
 
-        if (seconds > SECONDS_WAITING_WARNING && item.getStatus() == OrderItemStationStatus.ADDED) {
-            container.getStyle().set("background-color", COLOR_WAITING_WARNING);
-        } else if (seconds > SECONDS_COOKING_WARNING && item.getStatus() == OrderItemStationStatus.STARTED) {
+//        if (seconds > SECONDS_WAITING_WARNING && item.getStatus() == OrderItemStationStatus.ADDED) {
+//            container.getStyle().set("background-color", COLOR_WAITING_WARNING);
+//        } else
+        if (seconds > SECONDS_COOKING_WARNING && item.getStatus() == OrderItemStationStatus.STARTED) {
             container.getStyle().set("background-color", COLOR_COOKING_WARNING);
         }
 

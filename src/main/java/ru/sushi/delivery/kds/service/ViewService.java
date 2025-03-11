@@ -3,12 +3,14 @@ package ru.sushi.delivery.kds.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.service.FlowCacheService;
 import ru.sushi.delivery.kds.domain.service.IngredientService;
+import ru.sushi.delivery.kds.domain.service.ItemComboService;
 import ru.sushi.delivery.kds.domain.service.MenuItemService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
 import ru.sushi.delivery.kds.domain.service.ScreenService;
@@ -30,6 +32,7 @@ public class ViewService {
     private final MenuItemService menuItemService;
     private final IngredientService ingredientService;
     private final FlowCacheService flowCacheService; //todo remove
+    private final ItemComboService itemComboService;
 
     public void createOrder(String name, List<MenuItem> menuItems) {
         this.orderService.createOrder(name, menuItems);
@@ -37,6 +40,14 @@ public class ViewService {
 
     public List<MenuItem> getAllMenuItems() {
         return this.menuItemService.getAllMenuItems();
+    }
+
+    public List<ItemCombo> getAllCombos() {
+        return this.itemComboService.findAll();
+    }
+
+    public List<MenuItem> getAllExtras() {
+        return this.menuItemService.getAllExtras();
     }
 
     public List<KitchenDisplayInfoDto> getAvailableDisplaysData() {
@@ -98,6 +109,7 @@ public class ViewService {
     private OrderItemDto buildOrderItemDto(OrderItem item) {
         return OrderItemDto.builder()
                 .id(item.getId())
+                .orderName(item.getOrder().getName())
                 .orderId(item.getOrder().getId())
                 .name(item.getMenuItem().getName())
                 .ingredients(new ArrayList<>(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId())))
@@ -114,6 +126,7 @@ public class ViewService {
                         this.flowCacheService.getStep(item.getMenuItem().getFlow().getId(), item.getCurrentFlowStep())
                                 .getStepType()
                 )
+                .extra(item.getMenuItem().getProductType().isExtra())
                 .build();
     }
 }

@@ -15,6 +15,7 @@ public class OrderItemDto {
 
     private final Long id;
     private final Long orderId;
+    private final String orderName;
     private final String name;
     private final List<IngredientCompactDTO> ingredients;
     private final Instant createdAt;
@@ -23,4 +24,5 @@ public class OrderItemDto {
     private OrderItemStationStatus status;
     private Station currentStation;
     private FlowStepType flowStepType;
+    private boolean extra;
 }

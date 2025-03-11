@@ -8,8 +8,6 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DB=kds
-    ports:
-      - "5432:5432"
     networks:
       - kds-network
 
@@ -17,6 +15,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: kds-app_kds-app:latest
     container_name: kds-app
     environment:
       - SQL_URL=jdbc:postgresql://kds-db:5432/kds
@@ -31,4 +30,4 @@ services:
 
 networks:
   kds-network:
-    name: kds-network
+    driver: bridge
