@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
-import ru.sushi.delivery.kds.domain.service.SourceService;
+import ru.sushi.delivery.kds.domain.service.SourceItemService;
 
 import java.util.List;
 
@@ -14,15 +14,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SourceController {
 
-    private final SourceService sourceService;
+    private final SourceItemService sourceItemService;
 
     @GetMapping("/all")
     public List<SourceDto> getAllSources() {
-        return this.sourceService.getAllSources();
+        return this.sourceItemService.getAllSources();
     }
 
     @GetMapping("/prepacks")
     public List<SourceDto> getAllPrepacks() {
-        return this.sourceService.getAllPrepacks();
+        return this.sourceItemService.getAllPrepacks();
     }
 }
