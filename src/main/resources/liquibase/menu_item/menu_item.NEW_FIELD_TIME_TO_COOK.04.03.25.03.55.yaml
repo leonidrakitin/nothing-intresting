@@ -8,7 +8,7 @@ databaseChangeLog:
             columns:
               - column:
                   name: time_to_cook
-                  type: BIGINT
+                  type: numeric(21)
 
   - changeSet:
       id: menu_item_aud.NEW_FIELD_TIME_TO_COOK.04.03.25.03.55
@@ -19,4 +19,4 @@ databaseChangeLog:
             columns:
               - column:
                   name: time_to_cook
-                  type: BIGINT
+                  type: numeric(21)

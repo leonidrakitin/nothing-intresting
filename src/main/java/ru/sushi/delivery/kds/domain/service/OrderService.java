@@ -65,6 +65,15 @@ public class OrderService {
     ) {
         Order order = this.orderRepository.save(Order.of(name, shouldBeFinishedAt, kitchenShouldGetOrderAt));
         List<OrderItem> orderItems = new ArrayList<>();
+        Set<FlowStep> flowSteps = new HashSet<>();
+        for (MenuItem menuItem : menuItems) {
+            OrderItem orderItem = OrderItem.of(order, menuItem);
+            orderItems.add(orderItem);
+            flowSteps.add(this.flowCacheService.getStep(
+                    orderItem.getMenuItem().getFlow().getId(),
+                    orderItem.getCurrentFlowStep()
+            ));
+        }
         this.orderItemRepository.saveAll(orderItems);
         List<PackageDto> packageDtos = this.productPackageService.calculatePackages(order);
     }
