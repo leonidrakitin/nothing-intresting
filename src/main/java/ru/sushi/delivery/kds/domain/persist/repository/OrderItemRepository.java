@@ -17,7 +17,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
         left join MenuItem mi on mi.id = oi.menuItem.id
         left join FlowStep step on step.flow.id = mi.flow.id and step.stepOrder = oi.currentFlowStep
                 where step.station.id = :stationId and oi.order.kitchenGotOrderAt != null 
-        order by oi.order.createdAt, oi.menuItem.productType.priority, oi.id
+            order by oi.order.kitchenShouldGetOrderAt, oi.menuItem.productType.priority, oi.id
     """)
     List<OrderItem> findAllItemsByStationId(Long stationId);
 

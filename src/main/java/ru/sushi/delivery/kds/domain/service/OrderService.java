@@ -296,12 +296,12 @@ public class OrderService {
 
     @Transactional
     public void checkAndUpdateKitchenGotOrderAt(Instant now) {
+        Set<FlowStep> flowSteps = new HashSet<>();
         orderRepository.findAllNotStarted()
                 .stream()
                 .filter(order -> order.getKitchenShouldGetOrderAt().isBefore(now))
                 .forEach(order -> {
                     order.setKitchenGotOrderAt(now);
-                    Set<FlowStep> flowSteps = new HashSet<>();
                     for (OrderItem orderItem : order.getOrderItems()) {
                         FlowStep step = this.flowCacheService.getStep(
                                 orderItem.getMenuItem().getFlow().getId(),
@@ -309,8 +309,8 @@ public class OrderService {
                         );
                         flowSteps.add(step);
                     }
-                    notificateAllScreens(flowSteps);
                 });
+        notificateAllScreens(flowSteps);
     }
 
     private int definePriorityByOrderStatus(OrderStatus orderStatus) {
