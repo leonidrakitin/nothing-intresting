@@ -8,7 +8,8 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DB=kds
-    network_mode: host
+    networks:
+      - kds-network
 
   kds-app:
     build:
@@ -17,11 +18,16 @@ services:
     image: kds-app_kds-app:latest
     container_name: kds-app
     environment:
-      - SQL_URL=jdbc:postgresql://localhost:5432/kds
+      - SQL_URL=jdbc:postgresql://kds-db:5432/kds
       - SQL_USERNAME=root
       - SQL_PASSWORD=123456
     ports:
       - "8000:8000"
     depends_on:
       - kds-db
-    network_mode: host
+    networks:
+      - kds-network
+
+networks:
+  kds-network:
+    driver: bridge

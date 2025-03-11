@@ -24,6 +24,10 @@ public class MenuItemService {
         return menuItemRepository.findAll();
     }
 
+    public List<MenuItem> getAllExtras() {
+        return menuItemRepository.findAllExtras();
+    }
+
     public List<MenuItemData> getAllMenuItemsDTO() {
         return menuItemRepository.findAll().stream().map(MenuItemData::of).toList();
     }
