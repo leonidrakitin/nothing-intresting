@@ -3,11 +3,13 @@ package ru.sushi.delivery.kds.view;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -29,6 +31,10 @@ import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
 import ru.sushi.delivery.kds.service.listeners.BroadcastListener;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +45,10 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     private final List<MenuItem> chosenMenuItems = new ArrayList<>();
     private final ViewService viewService;
     private final CashListener cashListener;
-
+    private Instant selectedKitchenStart = null;
+    private final Span kitchenStartDisplay = new Span("Время начала приготовления: Сейчас");
+    private final Button changeKitchenStartButton = new Button("изменить");
+    private final DateTimePicker finishPicker = new DateTimePicker("Время готовности");
     // Два контейнера под содержимое вкладок (Роллы / Сеты)
     private final VerticalLayout rollsTabLayout = new VerticalLayout();
     private final VerticalLayout setsTabLayout = new VerticalLayout();
@@ -66,6 +75,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
     // Поле для отображения общей суммы к оплате
     private final H3 totalPay = new H3("К оплате: 0.0 рублей");
+
+    private final H3 totalTime = new H3("Общее время приготовления: 0 минут");
 
     @Autowired
     public CreateOrderView(ViewService viewService, CashListener cashListener) {
@@ -146,6 +157,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             MenuItem clickedMenuItem = e.getItem();
             chosenMenuItems.add(clickedMenuItem);
             updateTotalPay();
+            updateTotalTime();
             Notification.show(String.format(
                     "Добавлен: %s - %.1f рублей",
                     clickedMenuItem.getName(),
@@ -185,6 +197,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             ItemCombo clickedSet = e.getItem();
             chosenMenuItems.addAll(clickedSet.getMenuItems());
             updateTotalPay();
+            updateTotalTime();
             Notification.show("Добавлен сет: " + clickedSet.getName());
             chosenGrid.getDataProvider().refreshAll();
         });
@@ -294,6 +307,14 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         chosenGrid.addColumn(MenuItem::getPrice).setHeader("Цена");
         chosenGrid.setItems(chosenMenuItems);
 
+        // Создаем layout для времени начала приготовления
+        HorizontalLayout kitchenStartLayout = new HorizontalLayout(kitchenStartDisplay, changeKitchenStartButton);
+        kitchenStartLayout.setAlignItems(Alignment.CENTER);
+        changeKitchenStartButton.addClickListener(e -> openKitchenStartDialog());
+
+        // Устанавливаем значение по умолчанию для времени готовности
+        finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
+
         Button createOrderButton = new Button("Создать заказ");
         Button clearCartButton = new Button("Очистить корзину");
         HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, clearCartButton);
@@ -310,24 +331,53 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 return;
             }
 
-            viewService.createOrder(orderNumber, chosenMenuItems);
+            LocalDateTime finishTime = finishPicker.getValue();
+            if (finishTime == null) {
+                Notification.show("Пожалуйста, укажите время готовности");
+                return;
+            }
+
+            // Определяем время начала приготовления
+            Instant kitchenShouldGetOrderAt = (selectedKitchenStart != null)
+                    ? selectedKitchenStart
+                    : Instant.now();
+
+            Instant shouldBeFinishedAt = finishTime.atZone(ZoneId.systemDefault()).toInstant();
+
+            // Проверяем, что время готовности не раньше времени начала
+            if (shouldBeFinishedAt.isBefore(kitchenShouldGetOrderAt)) {
+                Notification.show("Время готовности не может быть раньше времени начала приготовления");
+                return;
+            }
+
+            viewService.createOrder(orderNumber, chosenMenuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt);
             Notification.show("Заказ создан! Номер: " + orderNumber +
                     ", Позиции: " + chosenMenuItems.size());
 
             chosenMenuItems.clear();
             updateTotalPay();
+            updateTotalTime();
             chosenGrid.getDataProvider().refreshAll();
             orderNumberField.clear();
+
+            // Сбрасываем состояние на "сейчас"
+            selectedKitchenStart = null;
+            kitchenStartDisplay.setText("Время начала приготовления: Сейчас");
+            finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
         });
 
         clearCartButton.addClickListener(e -> {
             chosenMenuItems.clear();
             updateTotalPay();
+            updateTotalTime();
             chosenGrid.getDataProvider().refreshAll();
             Notification.show("Корзина очищена");
+
+            selectedKitchenStart = null;
+            kitchenStartDisplay.setText("Время начала приготовления: Сейчас");
         });
 
-        cartLayout.add(chosenTitle, chosenGrid, totalPay, buttonBar);
+        cartLayout.add(chosenTitle, chosenGrid, kitchenStartLayout, finishPicker, totalPay, totalTime, buttonBar);
         return cartLayout;
     }
 
@@ -346,47 +396,97 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         ordersGrid.removeAllColumns();
 
         ordersGrid.addColumn(OrderFullDto::getName)
-                .setHeader("ID");
+                .setHeader("ID")
+                .setAutoWidth(true);
 
         ordersGrid.addColumn(dto -> {
-            if (dto.getItems() == null) {
-                return 0;
-            }
-            return dto.getItems().stream()
-                    .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
-                    .count();
-        }).setHeader("Кол-во позиций");
+                    if (dto.getItems() == null) {
+                        return 0;
+                    }
+                    return dto.getItems().stream()
+                            .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+                            .count();
+                }).setHeader("Кол-во")
+                .setAutoWidth(true);
 
         ordersGrid.addColumn(orderDto -> switch (orderDto.getStatus()) {
-            case CREATED -> "Создан";
-            case COOKING -> "Готовится";
-            case COLLECTING -> "Сборка";
-            case READY -> "Выполнен";
-            case CANCELED -> "Отменён";
-            default -> "";
-        }).setHeader("Статус");
+                    case CREATED -> "Создан";
+                    case COOKING -> "Готовится";
+                    case COLLECTING -> "Сборка";
+                    case READY -> "Выполнен";
+                    case CANCELED -> "Отменён";
+                    default -> "";
+                }).setHeader("Статус")
+                .setAutoWidth(true);
+
+        ordersGrid.addColumn(order -> order.getKitchenShouldGetOrderAt()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalTime()
+                        .format(DateTimeFormatter.ofPattern("HH:mm")))
+                .setHeader("Начало")
+                .setAutoWidth(true);
+
+        ordersGrid.addColumn(order -> order.getShouldBeFinishedAt()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalTime()
+                        .format(DateTimeFormatter.ofPattern("HH:mm")))
+                .setHeader("Готов к")
+                .setAutoWidth(true);
 
         ordersGrid.addComponentColumn(orderDto -> {
-            HorizontalLayout layout = new HorizontalLayout();
+                    HorizontalLayout layout = new HorizontalLayout();
 
-            Button detailsBtn = new Button("Позиции");
-            detailsBtn.addClickListener(e -> openOrderItemsDialog(orderDto));
-            layout.add(detailsBtn);
+                    Button detailsBtn = new Button(VaadinIcon.LIST_OL.create());
+                    detailsBtn.addClickListener(e -> openOrderItemsDialog(orderDto));
+                    layout.add(detailsBtn);
 
-            if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
-                Button cancelBtn = new Button("Отменить");
-                cancelBtn.addClickListener(e -> {
-                    viewService.cancelOrder(orderDto.getId());
-                    Notification.show("Заказ " + orderDto.getName() + " отменён!");
-                    refreshOrdersGrid();
-                });
-                layout.add(cancelBtn);
-            }
-            return layout;
-        }).setHeader("Действие");
+                    if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
+                        Button editBtn = new Button(VaadinIcon.CLOCK.create());
+                        editBtn.addClickListener(e -> openEditDialog(orderDto));
+                        layout.add(editBtn);
+
+                        Button cancelBtn = new Button(VaadinIcon.CLOSE.create());
+                        cancelBtn.addClickListener(e -> {
+                            viewService.cancelOrder(orderDto.getId());
+                            Notification.show("Заказ " + orderDto.getName() + " отменён!");
+                            refreshOrdersGrid();
+                        });
+                        layout.add(cancelBtn);
+                    }
+                    return layout;
+                }).setHeader("Действие")
+                .setAutoWidth(true);
 
         ordersLayout.add(new H3("Список всех заказов:"), ordersGrid);
         return ordersLayout;
+    }
+
+    private void openEditDialog(OrderFullDto orderDto) {
+        Dialog editDialog = new Dialog();
+        editDialog.setHeaderTitle("Редактировать время начала приготовления");
+
+        DateTimePicker picker = new DateTimePicker("Время начала приготовления");
+        picker.setValue(orderDto.getKitchenShouldGetOrderAt().atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+        Button saveBtn = new Button("Сохранить", ev -> {
+            LocalDateTime newTime = picker.getValue();
+            if (newTime != null) {
+                Instant newInstant = newTime.atZone(ZoneId.systemDefault()).toInstant();
+                viewService.updateKitchenShouldGetOrderAt(orderDto.getId(), newInstant);
+                Notification.show("Время начала приготовления обновлено");
+                editDialog.close();
+                refreshOrdersGrid();
+            }
+            else {
+                Notification.show("Пожалуйста, укажите время");
+            }
+        });
+
+        Button cancelBtn = new Button("Отмена", ev -> editDialog.close());
+
+        editDialog.add(picker);
+        editDialog.getFooter().add(saveBtn, cancelBtn);
+        editDialog.open();
     }
 
     /**
@@ -598,5 +698,56 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         if (message.getType() == BroadcastMessageType.NOTIFICATION) {
             Notification.show(message.getContent());
         }
+    }
+
+    private void updateTotalTime() {
+        int totalMinutes = chosenMenuItems.stream()
+                .mapToInt(item -> {
+                    if (item.getTimeToCook() == null) {
+                        return 0;
+                    }
+                    return Math.toIntExact(item.getTimeToCook().toHours() * 60
+                            + item.getTimeToCook().toMinutes());
+                })
+                .sum();
+
+        String formattedTime = (totalMinutes >= 60)
+                ? String.format("%d ч : %02d мин", totalMinutes / 60, totalMinutes % 60)
+                : String.format("%d мин", totalMinutes);
+
+        totalTime.setText("Общее время приготовления: " + formattedTime);
+
+        if (totalMinutes > 0) {
+            Instant startTime = (selectedKitchenStart != null) ? selectedKitchenStart : Instant.now();
+            finishPicker.setValue(startTime.atZone(ZoneId.systemDefault()).toLocalDateTime().plusMinutes(totalMinutes));
+        }
+    }
+
+    private void openKitchenStartDialog() {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Выберите время начала приготовления");
+
+        DateTimePicker picker = new DateTimePicker();
+        picker.setValue(selectedKitchenStart != null
+                ? selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime()
+                : LocalDateTime.now());
+
+        Button saveBtn = new Button("Сохранить", ev -> {
+            LocalDateTime selectedTime = picker.getValue();
+            if (selectedTime != null) {
+                selectedKitchenStart = selectedTime.atZone(ZoneId.systemDefault()).toInstant();
+                kitchenStartDisplay.setText("Время начала приготовления: " + selectedTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+                dialog.close();
+            }
+            else {
+                Notification.show("Пожалуйста, выберите время");
+            }
+        });
+
+        Button cancelBtn = new Button("Отмена", ev -> dialog.close());
+
+        dialog.add(picker);
+        dialog.getFooter().add(saveBtn, cancelBtn);
+        dialog.open();
     }
 }

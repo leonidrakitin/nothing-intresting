@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: menu_item.NEW_FIELD_TIME_TO_COOK.04.03.25.03.55
+      author: losevdmitriy
+      changes:
+        - addColumn:
+            tableName: menu_item
+            columns:
+              - column:
+                  name: time_to_cook
+                  type: numeric(21)
+
+  - changeSet:
+      id: menu_item_aud.NEW_FIELD_TIME_TO_COOK.04.03.25.03.55
+      author: losevdmitriy
+      changes:
+        - addColumn:
+            tableName: menu_item_aud
+            columns:
+              - column:
+                  name: time_to_cook
+                  type: numeric(21)

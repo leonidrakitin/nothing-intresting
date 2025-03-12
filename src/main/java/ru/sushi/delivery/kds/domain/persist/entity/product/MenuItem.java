@@ -19,6 +19,8 @@ import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.domain.controller.dto.MenuItemData;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 
+import java.time.Duration;
+
 @Audited
 @Entity
 @Table(name = "menu_item")
@@ -48,10 +50,13 @@ public class MenuItem {
 
     private Double price;
 
+    private Duration timeToCook;
+
     public static MenuItem of(MenuItemData menuItemData, Flow flow) {
         return MenuItem.builder()
                 .name(menuItemData.getName())
                 .flow(flow)
+                .timeToCook(menuItemData.getTimeToCook())
                 .build();
     }
 }

@@ -32,3 +32,6 @@ databaseChangeLog:
   - include:
       file: writeOff/master.yaml
       relativeToChangelogFile: true
+  - include:
+      file: orders/master.yaml
+      relativeToChangelogFile: true

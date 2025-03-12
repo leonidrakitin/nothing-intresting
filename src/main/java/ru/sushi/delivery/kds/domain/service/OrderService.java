@@ -28,6 +28,7 @@ import ru.sushi.delivery.kds.websocket.WSMessageSender;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,22 +57,25 @@ public class OrderService {
         this.recipeService.calculateMenuItemsBalance(orderMenuItemIds);
     }
 
-    public void createOrder(String name, List<MenuItem> menuItems) {
-        Order order = this.orderRepository.save(Order.of(name));
+    public void createOrder(
+            String name,
+            List<MenuItem> menuItems,
+            Instant shouldBeFinishedAt,
+            Instant kitchenShouldGetOrderAt
+    ) {
+        Order order = this.orderRepository.save(Order.of(name, shouldBeFinishedAt, kitchenShouldGetOrderAt));
         List<OrderItem> orderItems = new ArrayList<>();
         Set<FlowStep> flowSteps = new HashSet<>();
         for (MenuItem menuItem : menuItems) {
             OrderItem orderItem = OrderItem.of(order, menuItem);
             orderItems.add(orderItem);
             flowSteps.add(this.flowCacheService.getStep(
-                orderItem.getMenuItem().getFlow().getId(),
-                orderItem.getCurrentFlowStep()
+                    orderItem.getMenuItem().getFlow().getId(),
+                    orderItem.getCurrentFlowStep()
             ));
         }
         this.orderItemRepository.saveAll(orderItems);
         List<PackageDto> packageDtos = this.productPackageService.calculatePackages(order);
-        //todo notification somehow
-        notificateAllScreens(flowSteps);
     }
 
     public List<OrderItem> getAllItemsByStationId(Long stationId) {
@@ -114,30 +118,30 @@ public class OrderService {
     @Transactional
     public void updateOrderItem(Long orderItemId) {
         OrderItem orderItem = this.orderItemRepository.findById(orderItemId)
-            .orElseThrow(() -> new IllegalArgumentException("Order item not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Order item not found"));
         orderItem = switch (orderItem.getStatus()) {
             case ADDED -> orderItem.toBuilder()
-                .status(OrderItemStationStatus.STARTED)
-                .statusUpdatedAt(Instant.now())
-                .build();
+                    .status(OrderItemStationStatus.STARTED)
+                    .statusUpdatedAt(Instant.now())
+                    .build();
             case STARTED -> orderItem.toBuilder()
-                .status(OrderItemStationStatus.COMPLETED)
-                .statusUpdatedAt(Instant.now())
-                .build();
+                    .status(OrderItemStationStatus.COMPLETED)
+                    .statusUpdatedAt(Instant.now())
+                    .build();
             case COMPLETED -> orderItem;
 
             case CANCELED -> orderItem;
         };
         if (orderItem.getStatus() == OrderItemStationStatus.COMPLETED) {
             FlowStep nextFlowStep = this.flowCacheService.getNextStep(
-                orderItem.getMenuItem().getFlow().getId(),
-                orderItem.getCurrentFlowStep()
+                    orderItem.getMenuItem().getFlow().getId(),
+                    orderItem.getCurrentFlowStep()
             );
             orderItem = orderItem.toBuilder()
-                .status(OrderItemStationStatus.ADDED)
-                .currentFlowStep(nextFlowStep.getStepOrder())
-                .stationChangedAt(Instant.now())
-                .build();
+                    .status(OrderItemStationStatus.ADDED)
+                    .currentFlowStep(nextFlowStep.getStepOrder())
+                    .stationChangedAt(Instant.now())
+                    .build();
 
             if (nextFlowStep.getStepType() != FlowStepType.FINAL_STEP) {
                 this.orderChangesListener.broadcast(
@@ -147,8 +151,8 @@ public class OrderService {
             }
             else {
                 this.cashListener.broadcast(BroadcastMessage.of(
-                    BroadcastMessageType.NOTIFICATION,
-                    orderItem.getOrder().getId() + " заказ обновлен"
+                        BroadcastMessageType.NOTIFICATION,
+                        orderItem.getOrder().getId() + " заказ обновлен"
                 ));
             }
         }
@@ -183,14 +187,21 @@ public class OrderService {
 
         if (newOrderStatus != order.getStatus()) {
             orderRepository.save(order.toBuilder()
-                .status(newOrderStatus)
-                .build()
+                    .status(newOrderStatus)
+                    .build()
             );
         }
     }
 
     public List<OrderFullDto> getAllActiveOrdersWithItems() {
         return orderRepository.findAllActive().stream()
+                .map(order -> OrderFullDto.of(order, this.getOrderItemData(order)))
+                .sorted(Comparator.comparing(OrderFullDto::getKitchenShouldGetOrderAt))
+                .toList();
+    }
+
+    public List<OrderFullDto> getAllKitchenOrdersWithItems() {
+        return orderRepository.findAllActiveKitchen().stream()
                 .map(order -> OrderFullDto.of(order, this.getOrderItemData(order)))
                 .toList();
     }
@@ -237,6 +248,7 @@ public class OrderService {
                         .build()
                 )
                 .ifPresent(orderItemRepository::save);
+        this.wsMessageSender.sendRefreshAll();
     }
 
     public void createOrderItem(Long orderId, MenuItem menuItem) {
@@ -266,10 +278,39 @@ public class OrderService {
                                 .build())
                         .toList()
         );
+        this.wsMessageSender.sendRefreshAll();
     }
 
-    public List<OrderItem> getOrderItems(Long orderId){
+    public List<OrderItem> getOrderItems(Long orderId) {
         return orderItemRepository.findByOrderId(orderId);
+    }
+
+    @Transactional
+    public void updateKitchenShouldGetOrderAt(Long orderId, Instant newInstant) {
+        this.orderRepository.save(
+                this.orderRepository.findById(orderId)
+                        .map(order -> order.toBuilder().kitchenShouldGetOrderAt(newInstant).build())
+                        .orElseThrow(() -> new NotFoundException("Not found order " + orderId))
+        );
+    }
+
+    @Transactional
+    public void checkAndUpdateKitchenGotOrderAt(Instant now) {
+        Set<FlowStep> flowSteps = new HashSet<>();
+        orderRepository.findAllNotStarted()
+                .stream()
+                .filter(order -> order.getKitchenShouldGetOrderAt().isBefore(now))
+                .forEach(order -> {
+                    order.setKitchenGotOrderAt(now);
+                    for (OrderItem orderItem : order.getOrderItems()) {
+                        FlowStep step = this.flowCacheService.getStep(
+                                orderItem.getMenuItem().getFlow().getId(),
+                                orderItem.getCurrentFlowStep()
+                        );
+                        flowSteps.add(step);
+                    }
+                });
+        notificateAllScreens(flowSteps);
     }
 
     private int definePriorityByOrderStatus(OrderStatus orderStatus) {
