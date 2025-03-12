@@ -268,7 +268,7 @@ public class PrepackView extends VerticalLayout {
         }
         else {
             for (Recipe recipe : recipes) {
-                String name = sourceService.getSourceItemName(recipe.getSourceId(), recipe.getSourceType());
+                String name = sourceService.getSourceName(recipe.getSourceId(), recipe.getSourceType());
                 Notification.show("Невозможно удалить пф содержится в " + name);
             }
         }
