@@ -21,6 +21,7 @@ public class OrderFullDto {
     private List<OrderItemDto> items;
     private Instant shouldBeFinishedAt;
     private Instant kitchenShouldGetOrderAt;
+    private Instant kitchenGotOrderAt;
 
     public static OrderFullDto of(Order order, List<OrderItemDto> orderItems) {
         return OrderFullDto.builder()
@@ -30,6 +31,7 @@ public class OrderFullDto {
                 .items(orderItems)
                 .shouldBeFinishedAt(order.getShouldBeFinishedAt())
                 .kitchenShouldGetOrderAt(order.getKitchenShouldGetOrderAt())
+                .kitchenGotOrderAt(order.getKitchenGotOrderAt())
                 .build();
     }
 }

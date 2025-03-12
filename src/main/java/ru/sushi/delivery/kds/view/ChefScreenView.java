@@ -16,6 +16,7 @@ import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.UIScope;
 import org.springframework.beans.factory.annotation.Autowired;
+import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.service.ViewService;
@@ -122,17 +123,19 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
             col.removeAll();
         }
 
-        List<OrderItemDto> orders = this.viewService.getScreenOrderItems(this.screenId);
+        List<OrderFullDto> orders = this.viewService.getScreenOrderItems(this.screenId);
         if (orders == null || orders.isEmpty()) {
             columns[0].add("Заказов нет");
             return;
         }
 
         int index = 0;
-        for (OrderItemDto order : orders) {
-            VerticalLayout col = columns[index % GRID_SIZE];
-            index++;
-            col.add(buildOrderComponent(order));
+        for (OrderFullDto order : orders) {
+            for (OrderItemDto itemDto : order.getItems()) {
+                VerticalLayout col = columns[index % GRID_SIZE];
+                index++;
+                col.add(buildOrderComponent(itemDto));
+            }
         }
     }
 
@@ -158,7 +161,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
 
         title.getStyle().set("font-weight", "bold");
         // Время готовки: текущее время - время создания
-        long seconds = Duration.between(item.getCreatedAt(), Instant.now()).toSeconds();
+        long seconds = Duration.between(item.getStatusUpdatedAt(), Instant.now()).toSeconds();
         Div timer = new Div();
         timer.getStyle().set("font-size", "0.9em");
         timer.getStyle().set("font-weight", "normal");

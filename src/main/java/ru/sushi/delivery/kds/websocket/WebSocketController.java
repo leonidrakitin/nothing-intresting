@@ -7,7 +7,6 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import ru.sushi.delivery.kds.model.WSMessageType;
 import ru.sushi.delivery.kds.service.ViewService;
-import ru.sushi.delivery.kds.websocket.dto.WSOrderItems;
 import ru.sushi.delivery.kds.websocket.dto.WSOrders;
 
 @RequiredArgsConstructor
@@ -19,15 +18,12 @@ public class WebSocketController {
 
     @MessageMapping("/topic/screen.getAllOrders/{screenId}")
     @SendTo("/topic/screen.orders/{screenId}")
-    public WSOrderItems getAllOrders(@DestinationVariable("screenId") Long screenId) {
-            return new WSOrderItems(
-                    WSMessageType.GET_ALL_ORDER_ITEMS,
-                    viewService.getScreenOrderItems(screenId)
-            );
+    public WSOrders getAllStationOrders(@DestinationVariable("screenId") Long screenId) {
+        return new WSOrders(WSMessageType.GET_ALL_ORDER_ITEMS, viewService.getScreenOrderItems(screenId));
     }
 
     @MessageMapping("/topic/screen.getAllOrdersWithItems")
-    @SendTo("/topic/screen.orders/3") //todo wtf???
+    @SendTo("/topic/screen.orders/3") //todo ???
     public WSOrders getAllOrdersWithItems() {
         return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllKitchenOrdersWithItems());
     }
@@ -35,12 +31,12 @@ public class WebSocketController {
 
     @MessageMapping("/topic/screen/{screenId}/update.orderItem/{orderItemId}")
     @SendTo("/topic/screen.orders/{screenId}")
-    public WSOrderItems updateOrder(
+    public WSOrders updateOrder(
         @DestinationVariable("screenId") Long screenId,
         @DestinationVariable("orderItemId") Long orderItemId
     ) {
         viewService.updateStatus(orderItemId);
-        return new WSOrderItems(WSMessageType.GET_ALL_ORDER_ITEMS, viewService.getScreenOrderItems(screenId));
+        return new WSOrders(WSMessageType.GET_ALL_ORDER_ITEMS, viewService.getScreenOrderItems(screenId));
     }
 
     @MessageMapping("/topic/screen/{screenId}/update.allOrder.done/{orderId}")

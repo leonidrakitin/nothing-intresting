@@ -27,11 +27,7 @@ import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 import ru.sushi.delivery.kds.websocket.WSMessageSender;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Log4j2
 @Service
@@ -78,9 +74,23 @@ public class OrderService {
         List<PackageDto> packageDtos = this.productPackageService.calculatePackages(order);
     }
 
-    public List<OrderItem> getAllItemsByStationId(Long stationId) {
-
-        return this.orderItemRepository.findAllItemsByStationId(stationId);
+    public List<OrderFullDto> getAllItemsByStationId(Screen screen) {
+        Long screenId = screen.getId();
+        return orderRepository.findAllByStationId(screen.getStation().getId())
+                .stream()
+                //todo remove this shit
+                .map(order -> OrderFullDto.of(order, this.getOrderFullItemData(order).stream()
+                        .map(orderItemDto -> orderItemDto.toBuilder()
+                                .ingredients(
+                                        orderItemDto.getIngredients().stream()
+                                                .filter(ingredient -> ingredient.getStationId().equals(screenId))
+                                                .toList()
+                                )
+                                .build()
+                        )
+                        .toList()
+                ))
+                .toList();
     }
 
     @Transactional
@@ -195,19 +205,41 @@ public class OrderService {
 
     public List<OrderFullDto> getAllActiveOrdersWithItems() {
         return orderRepository.findAllActive().stream()
-                .map(order -> OrderFullDto.of(order, this.getOrderItemData(order)))
-                .sorted(Comparator.comparing(OrderFullDto::getKitchenShouldGetOrderAt))
+                .map(order -> OrderFullDto.of(order, this.getOrderFullItemData(order)))
                 .toList();
     }
 
     public List<OrderFullDto> getAllKitchenOrdersWithItems() {
         return orderRepository.findAllActiveKitchen().stream()
-                .map(order -> OrderFullDto.of(order, this.getOrderItemData(order)))
+                .map(order -> OrderFullDto.of(order, this.getOrderShortItemData(order)))
                 .toList();
     }
 
-    private List<OrderItemDto> getOrderItemData(Order order) {
-        return order.getOrderItems().stream()
+    private List<OrderItemDto> getOrderShortItemData(Order order) {
+        return order.getOrderItems()
+                .stream()
+                .sorted(Comparator.<OrderItem>comparingInt(item -> item.getMenuItem().getProductType().getPriority())
+                        .thenComparingLong(OrderItem::getId))
+                .map(orderItem -> OrderItemDto.builder()
+                        .id(orderItem.getId())
+                        .orderId(order.getId())
+                        .orderName(order.getName())
+                        .name(orderItem.getMenuItem().getName())
+                        .status(orderItem.getStatus())
+                        .currentStation(this.getStationFromOrderItem(orderItem))
+                        .flowStepType(this.getStepTypeFromOrderItem(orderItem))
+                        .statusUpdatedAt(orderItem.getStatusUpdatedAt())
+                        .extra(orderItem.getMenuItem().getProductType().isExtra())
+                        .build()
+                )
+                .toList();
+    }
+
+    private List<OrderItemDto> getOrderFullItemData(Order order) {
+        return order.getOrderItems()
+                .stream()
+                .sorted(Comparator.<OrderItem>comparingInt(item -> item.getMenuItem().getProductType().getPriority())
+                        .thenComparingLong(OrderItem::getId))
                 .map(orderItem -> OrderItemDto.builder()
                         .id(orderItem.getId())
                         .orderId(order.getId())
@@ -217,7 +249,7 @@ public class OrderService {
                         .status(orderItem.getStatus())
                         .currentStation(this.getStationFromOrderItem(orderItem))
                         .flowStepType(this.getStepTypeFromOrderItem(orderItem))
-                        .createdAt(orderItem.getStatusUpdatedAt())
+                        .statusUpdatedAt(orderItem.getStatusUpdatedAt())
                         .extra(orderItem.getMenuItem().getProductType().isExtra())
                         .build()
                 )
@@ -299,7 +331,10 @@ public class OrderService {
         Set<FlowStep> flowSteps = new HashSet<>();
         orderRepository.findAllNotStarted()
                 .stream()
-                .filter(order -> order.getKitchenShouldGetOrderAt().isBefore(now))
+                .filter(order ->
+                        order.getKitchenShouldGetOrderAt() == null
+                        || order.getKitchenShouldGetOrderAt().isBefore(now)
+                )
                 .forEach(order -> {
                     order.setKitchenGotOrderAt(now);
                     for (OrderItem orderItem : order.getOrderItems()) {

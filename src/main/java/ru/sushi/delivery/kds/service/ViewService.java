@@ -8,12 +8,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
-import ru.sushi.delivery.kds.domain.service.FlowCacheService;
-import ru.sushi.delivery.kds.domain.service.IngredientService;
-import ru.sushi.delivery.kds.domain.service.ItemComboService;
-import ru.sushi.delivery.kds.domain.service.MenuItemService;
-import ru.sushi.delivery.kds.domain.service.OrderService;
-import ru.sushi.delivery.kds.domain.service.ScreenService;
+import ru.sushi.delivery.kds.domain.service.*;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
@@ -68,18 +63,9 @@ public class ViewService {
         return this.screenService.get(screenId).map(Screen::getStation).map(Station::getId);
     }
 
-    public List<OrderItemDto> getScreenOrderItems(Long screenId) {
+    public List<OrderFullDto> getScreenOrderItems(Long screenId) {
         Screen screen = this.screenService.getOrThrow(screenId);
-        List<OrderItemDto> orderItemsList = this.orderService.getAllItemsByStationId(screen.getStation().getId())
-                .stream()
-                .map(this::buildOrderItemDto)
-                .toList();
-
-        //todo move to service method, need separate it first
-        orderItemsList.forEach(orderItemData -> orderItemData.getIngredients()
-                .removeIf(ingredients -> !ingredients.getStationId().equals(screenId)));
-
-        return orderItemsList;
+        return this.orderService.getAllItemsByStationId(screen);
     }
 
     public void updateStatus(Long orderItemId) {
@@ -128,7 +114,7 @@ public class ViewService {
                 .name(item.getMenuItem().getName())
                 .ingredients(new ArrayList<>(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId())))
                 .status(item.getStatus())
-                .createdAt(item.getStatusUpdatedAt())
+                .statusUpdatedAt(item.getStatusUpdatedAt())
                 .timeToCook(180)
                 //todo remove
                 .currentStation(

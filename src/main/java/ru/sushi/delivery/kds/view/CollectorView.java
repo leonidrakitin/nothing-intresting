@@ -224,7 +224,7 @@ public class CollectorView extends VerticalLayout implements BroadcastListener {
         Div stationStatusDiv = new Div(new Text("Статус: " + item.getStatus().getName()));
 
         // Время (секунды с момента createdAt)
-        long seconds = Duration.between(item.getCreatedAt(), Instant.now()).toSeconds();
+        long seconds = Duration.between(item.getStatusUpdatedAt(), Instant.now()).toSeconds();
         Div timeDiv = new Div(new Text("В этом статусе: " + seconds + " сек"));
         timeDiv.getStyle().set("font-size", "0.9em");
         timeDiv.getStyle().set("color", "#777");
