@@ -17,7 +17,7 @@ import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.service.MenuItemService;
 import ru.sushi.delivery.kds.domain.service.RecipeService;
-import ru.sushi.delivery.kds.domain.service.SourceService;
+import ru.sushi.delivery.kds.domain.service.SourceItemService;
 import ru.sushi.delivery.kds.domain.service.StationService;
 
 import java.util.Collections;
@@ -29,7 +29,7 @@ public class MenuItemRecipeView extends VerticalLayout {
 
     private final MenuItemService menuItemService;
     private final RecipeService recipeService;
-    private final SourceService sourceService;
+    private final SourceItemService sourceItemService;
     private final StationService stationService;
 
     // ComboBox для выбора блюда (MenuItem)
@@ -58,11 +58,11 @@ public class MenuItemRecipeView extends VerticalLayout {
     @Autowired
     public MenuItemRecipeView(MenuItemService menuItemService,
                               RecipeService recipeService,
-                              SourceService sourceService,
+                              SourceItemService sourceItemService,
                               StationService stationService) {
         this.menuItemService = menuItemService;
         this.recipeService = recipeService;
-        this.sourceService = sourceService;
+        this.sourceItemService = sourceItemService;
         this.stationService = stationService;
 
         initMainComboBox();
@@ -155,7 +155,7 @@ public class MenuItemRecipeView extends VerticalLayout {
 
         // Найдём источник SourceDto (по имени или по id, если у DTO есть sourceId)
         if (recipeItem.getSourceName() != null) {
-            SourceDto sourceDto = sourceService.getAllSources().stream()
+            SourceDto sourceDto = sourceItemService.getAllSources().stream()
                     .filter(s -> recipeItem.getSourceName().equals(s.getName()))
                     .findFirst()
                     .orElse(null);
@@ -188,7 +188,7 @@ public class MenuItemRecipeView extends VerticalLayout {
      */
     private void initRecipeForm() {
         // Источники
-        List<SourceDto> allSources = sourceService.getAllSources();
+        List<SourceDto> allSources = sourceItemService.getAllSources();
         sourceComboBox.setItems(allSources);
         sourceComboBox.setItemLabelGenerator(sourceDto -> sourceDto.getName() + " " + sourceDto.getType());
         sourceComboBox.setPlaceholder("Ингредиент / заготовка...");

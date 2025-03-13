@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class OrderItemDto {
 
     private final Long id;
@@ -18,7 +18,8 @@ public class OrderItemDto {
     private final String orderName;
     private final String name;
     private final List<IngredientCompactDTO> ingredients;
-    private final Instant createdAt;
+    private final Instant statusUpdatedAt;
+    private final Instant createdAt = Instant.now(); //обратная совместимость для старых версий
     private final int timeToCook;
     //TODO Так делать плохо
     private OrderItemStationStatus status;

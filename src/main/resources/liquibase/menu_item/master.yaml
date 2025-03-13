@@ -2,3 +2,6 @@ databaseChangeLog:
   - include:
       file: menu_item.NEW_FIELD_PACKAGE.14.02.25.03.55.yaml
       relativeToChangelogFile: true
+  - include:
+      file: menu_item.NEW_FIELD_TIME_TO_COOK.04.03.25.03.55.yaml
+      relativeToChangelogFile: true

@@ -16,7 +16,7 @@ import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeData;
 import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
 import ru.sushi.delivery.kds.domain.service.PrepackService;
 import ru.sushi.delivery.kds.domain.service.RecipeService;
-import ru.sushi.delivery.kds.domain.service.SourceService;
+import ru.sushi.delivery.kds.domain.service.SourceItemService;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +27,7 @@ public class PrepackRecipeView extends VerticalLayout {
 
     private final PrepackService prepackService;
     private final RecipeService recipeService;
-    private final SourceService sourceService;
+    private final SourceItemService sourceItemService;
 
     // Комбо-бокс для выбора заготовки
     private final ComboBox<PrepackData> prepackComboBox = new ComboBox<>("Выберите заготовку");
@@ -55,10 +55,10 @@ public class PrepackRecipeView extends VerticalLayout {
     @Autowired
     public PrepackRecipeView(PrepackService prepackService,
                              RecipeService recipeService,
-                             SourceService sourceService) {
+                             SourceItemService sourceItemService) {
         this.prepackService = prepackService;
         this.recipeService = recipeService;
-        this.sourceService = sourceService;
+        this.sourceItemService = sourceItemService;
 
         initMainComboBox();
         initRecipeGrid();
@@ -146,7 +146,7 @@ public class PrepackRecipeView extends VerticalLayout {
         if (recipeItem.getSourceName() != null) {
             // Ищем SourceDto по имени (или по id, если есть)
             // Ниже - поиск по имени (не всегда идеален):
-            SourceDto sourceDto = sourceService.getAllSources().stream()
+            SourceDto sourceDto = sourceItemService.getAllSources().stream()
                     .filter(s -> s.getName().equals(recipeItem.getSourceName()))
                     .findFirst()
                     .orElse(null);
@@ -169,7 +169,7 @@ public class PrepackRecipeView extends VerticalLayout {
      * Инициализация формы (ComboBox источника, поля, кнопки)
      */
     private void initRecipeForm() {
-        List<SourceDto> allSources = sourceService.getAllSources();
+        List<SourceDto> allSources = sourceItemService.getAllSources();
         sourceComboBox.setItems(allSources);
         sourceComboBox.setItemLabelGenerator(sourceDto -> sourceDto.getName() + " " + sourceDto.getType());
         sourceComboBox.setPlaceholder("Ингредиент или заготовка...");

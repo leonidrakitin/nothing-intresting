@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: write_off_item.CREATE.10.02.25.15.00.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: write_off_item_aud.CREATE.12.02.25.02.00.yaml
+      relativeToChangelogFile: true
