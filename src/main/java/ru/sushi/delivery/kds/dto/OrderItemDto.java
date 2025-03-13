@@ -19,6 +19,7 @@ public class OrderItemDto {
     private final String name;
     private final List<IngredientCompactDTO> ingredients;
     private final Instant statusUpdatedAt;
+    private final Instant createdAt = Instant.now(); //обратная совместимость для старых версий
     private final int timeToCook;
     //TODO Так делать плохо
     private OrderItemStationStatus status;
