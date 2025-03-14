@@ -14,8 +14,8 @@ import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.ScreenRepository;
-import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
+import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.dto.PackageDto;
 import ru.sushi.delivery.kds.model.FlowStepType;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
@@ -74,12 +74,12 @@ public class OrderService {
         List<PackageDto> packageDtos = this.productPackageService.calculatePackages(order);
     }
 
-    public List<OrderFullDto> getAllItemsByStationId(Screen screen) {
+    public List<OrderShortDto> getAllItemsByStationId(Screen screen) {
         Long screenId = screen.getId();
         return orderRepository.findAllByStationId(screen.getStation().getId())
                 .stream()
                 //todo remove this shit
-                .map(order -> OrderFullDto.of(order, this.getOrderFullItemData(order).stream()
+                .map(order -> OrderShortDto.of(order, this.getOrderFullItemData(order).stream()
                         .map(orderItemDto -> orderItemDto.toBuilder()
                                 .ingredients(
                                         orderItemDto.getIngredients().stream()
@@ -203,15 +203,15 @@ public class OrderService {
         }
     }
 
-    public List<OrderFullDto> getAllActiveOrdersWithItems() {
+    public List<OrderShortDto> getAllActiveOrdersWithItems() {
         return orderRepository.findAllActive().stream()
-                .map(order -> OrderFullDto.of(order, this.getOrderFullItemData(order)))
+                .map(order -> OrderShortDto.of(order, this.getOrderFullItemData(order)))
                 .toList();
     }
 
-    public List<OrderFullDto> getAllKitchenOrdersWithItems() {
+    public List<OrderShortDto> getAllKitchenOrdersWithItems() {
         return orderRepository.findAllActiveKitchen().stream()
-                .map(order -> OrderFullDto.of(order, this.getOrderShortItemData(order)))
+                .map(order -> OrderShortDto.of(order, this.getOrderShortItemData(order)))
                 .toList();
     }
 

@@ -16,8 +16,8 @@ import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.UIScope;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
+import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.service.ViewService;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
@@ -123,14 +123,14 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
             col.removeAll();
         }
 
-        List<OrderFullDto> orders = this.viewService.getScreenOrderItems(this.screenId);
+        List<OrderShortDto> orders = this.viewService.getScreenOrderItems(this.screenId);
         if (orders == null || orders.isEmpty()) {
             columns[0].add("Заказов нет");
             return;
         }
 
         int index = 0;
-        for (OrderFullDto order : orders) {
+        for (OrderShortDto order : orders) {
             for (OrderItemDto itemDto : order.getItems()) {
                 VerticalLayout col = columns[index % GRID_SIZE];
                 index++;

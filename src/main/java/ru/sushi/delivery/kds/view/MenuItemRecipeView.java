@@ -190,7 +190,7 @@ public class MenuItemRecipeView extends VerticalLayout {
         // Источники
         List<SourceDto> allSources = sourceItemService.getAllSources();
         sourceComboBox.setItems(allSources);
-        sourceComboBox.setItemLabelGenerator(sourceDto -> sourceDto.getName() + " " + sourceDto.getType());
+        sourceComboBox.setItemLabelGenerator(sourceDto -> String.format("%s [%s]", sourceDto.getName(), sourceDto.getType()));
         sourceComboBox.setPlaceholder("Ингредиент / заготовка...");
         sourceComboBox.setClearButtonVisible(true);
 

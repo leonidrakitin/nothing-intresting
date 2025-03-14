@@ -7,6 +7,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -17,6 +18,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.FlowRepository;
 import ru.sushi.delivery.kds.domain.service.MenuItemService;
 
+import java.time.Duration;
 import java.util.List;
 
 @Route(value = "menu-items")
@@ -31,6 +33,8 @@ public class MenuItemView extends VerticalLayout {
 
     private final TextField nameField = new TextField("Название");
     private final ComboBox<Flow> flowComboBox = new ComboBox<>("Отображение");
+    private final NumberField timeToCookSecField = new NumberField("Время приготовления (сек)");
+    private final NumberField priceField = new NumberField("Цена (рублей)");
 
     // Кнопка, которая переключается между "Добавить" и "Изменить"
     private final Button saveButton = new Button("Добавить пункт меню");
@@ -69,8 +73,18 @@ public class MenuItemView extends VerticalLayout {
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
+        menuItemGrid.addColumn(MenuItemData::getPrice)
+                .setHeader("Цена")
+                .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
         menuItemGrid.addColumn(MenuItemData::getFlow)
                 .setHeader("Отображение")
+                .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
+        menuItemGrid.addColumn(item -> item.getTimeToCook().toSeconds())
+                .setHeader("Время готовки (сек)")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
@@ -111,9 +125,13 @@ public class MenuItemView extends VerticalLayout {
                     .findFirst()
                     .orElse(null);
             flowComboBox.setValue(flow);
+            timeToCookSecField.setValue((double) menuItem.getTimeToCook().toSeconds());
+            priceField.setValue(menuItem.getPrice());
         }
         else {
             flowComboBox.clear();
+            timeToCookSecField.clear();
+            priceField.clear();
         }
 
         // Меняем текст кнопки
@@ -127,6 +145,8 @@ public class MenuItemView extends VerticalLayout {
      */
     private FormLayout createForm() {
         nameField.setPlaceholder("Введите название пункта меню");
+        timeToCookSecField.setPlaceholder("Введите количество секунд");
+        priceField.setPlaceholder("Введите цену");
 
         // Список всех доступных потоков (Flow)
         List<Flow> flows = flowRepository.findAll();
@@ -162,6 +182,8 @@ public class MenuItemView extends VerticalLayout {
         formLayout.add(
                 nameField,
                 flowComboBox,
+                timeToCookSecField,
+                priceField,
                 new HorizontalLayout(saveButton, cancelButton)
         );
 
@@ -180,11 +202,18 @@ public class MenuItemView extends VerticalLayout {
             return;
         }
 
+        long expirationSec = timeToCookSecField.getValue() != null
+                ? timeToCookSecField.getValue().longValue()
+                : 0;
+        Duration timeToCookDuration = Duration.ofSeconds(expirationSec);
+
         // Собираем DTO
         MenuItemData menuItemData = MenuItemData.builder()
                 .id(id)
                 .name(name)
                 .flow(selectedFlow.getName())
+                .timeToCook(timeToCookDuration)
+                .price(priceField.getValue())
                 .build();
 
         // Сохраняем (сервис сам определит create/update по наличию id)
@@ -219,7 +248,8 @@ public class MenuItemView extends VerticalLayout {
     private void clearForm() {
         nameField.clear();
         flowComboBox.clear();
-
+        timeToCookSecField.clear();
+        priceField.clear();
         currentEditingMenuItem = null;
         saveButton.setText("Добавить пункт меню");
         cancelButton.setVisible(false);

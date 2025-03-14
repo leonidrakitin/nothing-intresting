@@ -25,7 +25,7 @@ public class MenuItemRecipeDto {
     public static MenuItemRecipeDto of(MenuItemRecipe menuItemRecipe, String sourceName) {
         return MenuItemRecipeDto.builder()
                 .id(menuItemRecipe.getId())
-                .sourceName(sourceName)
+                .sourceName(String.format("%s [%s]", sourceName, menuItemRecipe.getSourceType().name()))
                 .measurementUnit(new MeasurementUnitDto(
                         menuItemRecipe.getMeasurement().getId(),
                         menuItemRecipe.getMeasurement().getName()
