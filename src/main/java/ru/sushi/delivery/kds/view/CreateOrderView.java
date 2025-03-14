@@ -375,7 +375,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         kitchenStartLayout.setAlignItems(Alignment.CENTER);
         changeKitchenStartButton.addClickListener(e -> openKitchenStartDialog());
 
-        finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
+        finishPicker.setValue(LocalDateTime.now().plusMinutes(15));
         HorizontalLayout finishLayout = new HorizontalLayout(finishPicker, isYandexOrder); // Чекбокс рядом с временем готовности
         finishLayout.setAlignItems(Alignment.CENTER);
         finishLayout.setWidthFull();
