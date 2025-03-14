@@ -1,9 +1,9 @@
-package ru.sushi.delivery.kds.controller;
+package ru.sushi.delivery.kds.domain.controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.sushi.delivery.kds.dto.OrderFullDto;
+import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.service.ViewService;
 
 import java.util.List;
@@ -16,12 +16,12 @@ public class OrderController {
     private final ViewService viewService; //do not use view
 
     @GetMapping("{screenId}")
-    public ResponseEntity<List<OrderFullDto>> getScreenOrderItems(@PathVariable Long screenId) {
+    public ResponseEntity<List<OrderShortDto>> getScreenOrderItems(@PathVariable Long screenId) {
         return ResponseEntity.ok(viewService.getScreenOrderItems(screenId));
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<OrderFullDto>> getAllOrdersWithItems() {
+    public ResponseEntity<List<OrderShortDto>> getAllOrdersWithItems() {
         return ResponseEntity.ok(viewService.getAllOrdersWithItems());
     }
 

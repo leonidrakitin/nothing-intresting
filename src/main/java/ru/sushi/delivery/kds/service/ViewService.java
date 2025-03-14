@@ -10,8 +10,8 @@ import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.service.*;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
-import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
+import ru.sushi.delivery.kds.dto.OrderShortDto;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -63,7 +63,7 @@ public class ViewService {
         return this.screenService.get(screenId).map(Screen::getStation).map(Station::getId);
     }
 
-    public List<OrderFullDto> getScreenOrderItems(Long screenId) {
+    public List<OrderShortDto> getScreenOrderItems(Long screenId) {
         Screen screen = this.screenService.getOrThrow(screenId);
         return this.orderService.getAllItemsByStationId(screen);
     }
@@ -76,11 +76,11 @@ public class ViewService {
         this.orderService.updateKitchenShouldGetOrderAt(orderId, newInstant);
     }
 
-    public List<OrderFullDto> getAllOrdersWithItems() {
+    public List<OrderShortDto> getAllOrdersWithItems() {
         return this.orderService.getAllActiveOrdersWithItems();
     }
 
-    public List<OrderFullDto> getAllKitchenOrdersWithItems() {
+    public List<OrderShortDto> getAllKitchenOrdersWithItems() {
         return this.orderService.getAllKitchenOrdersWithItems();
     }
 

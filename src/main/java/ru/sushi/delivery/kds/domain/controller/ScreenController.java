@@ -1,4 +1,4 @@
-package ru.sushi.delivery.kds.controller;
+package ru.sushi.delivery.kds.domain.controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;

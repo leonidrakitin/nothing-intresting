@@ -13,8 +13,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
-import ru.sushi.delivery.kds.dto.OrderFullDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
+import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.model.OrderStatus;
 import ru.sushi.delivery.kds.service.ViewService;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
@@ -109,7 +109,7 @@ public class CollectorView extends VerticalLayout implements BroadcastListener {
         removeAll();
         itemClickedState.clear();
 
-        List<OrderFullDto> allOrders = viewService.getAllOrdersWithItems();
+        List<OrderShortDto> allOrders = viewService.getAllOrdersWithItems();
         if (allOrders.isEmpty()) {
             add(new H2("Нет заказов в системе"));
             return;
@@ -134,7 +134,7 @@ public class CollectorView extends VerticalLayout implements BroadcastListener {
         flex.getStyle().set("gap", "20px");
         flex.getStyle().set("padding", "10px");
 
-        for (OrderFullDto orderDto : allOrders) {
+        for (OrderShortDto orderDto : allOrders) {
 
             // Фильтруем позиции в заказе:
             // 1) исключаем те, что CANCELED

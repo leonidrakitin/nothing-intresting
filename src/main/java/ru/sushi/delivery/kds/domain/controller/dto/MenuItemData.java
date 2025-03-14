@@ -16,6 +16,8 @@ public class MenuItemData {
 
     private String flow;
 
+    private Double price;
+
     private Long id;
 
     private String name;
@@ -27,6 +29,7 @@ public class MenuItemData {
                 .flow(menuItem.getFlow().getName())
                 .id(menuItem.getId())
                 .name(menuItem.getName())
+                .price(menuItem.getPrice())
                 .timeToCook(menuItem.getTimeToCook())
                 .build();
     }
