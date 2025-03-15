@@ -115,6 +115,7 @@ public class ViewService {
                 .ingredients(new ArrayList<>(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId())))
                 .status(item.getStatus())
                 .statusUpdatedAt(item.getStatusUpdatedAt())
+                .createdAt(item.getStatusUpdatedAt())
                 .timeToCook(180)
                 //todo remove
                 .currentStation(
