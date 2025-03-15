@@ -36,6 +36,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 class CartItem {
@@ -110,6 +111,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         this.menuMenuItems = viewService.getAllMenuItems();
         this.menuItemCombos = viewService.getAllCombos();
         this.menuExtras = viewService.getAllExtras();
+
+        finishPicker.setLocale(Locale.of("ru", "RU"));
 
         // ЛЕВАЯ ЧАСТЬ
         Tab tabRolls = new Tab("Роллы");
