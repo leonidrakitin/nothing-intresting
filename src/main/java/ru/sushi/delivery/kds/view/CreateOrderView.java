@@ -29,6 +29,7 @@ import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
 import ru.sushi.delivery.kds.service.listeners.BroadcastListener;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
+import ru.sushi.delivery.kds.view.dto.CartItem;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -38,38 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
-
-class CartItem {
-    private final MenuItem menuItem;
-    private int quantity;
-
-    public CartItem(MenuItem menuItem, int quantity) {
-        this.menuItem = menuItem;
-        this.quantity = quantity;
-    }
-
-    public MenuItem getMenuItem() {
-        return menuItem;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    public void increment() {
-        this.quantity++;
-    }
-
-    public void decrement() {
-        if (this.quantity > 0) {
-            this.quantity--;
-        }
-    }
-}
 
 @Route("create")
 public class CreateOrderView extends HorizontalLayout implements BroadcastListener {
@@ -530,6 +499,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         editDialog.setHeaderTitle("Редактировать время начала приготовления");
 
         DateTimePicker picker = new DateTimePicker("Время начала приготовления");
+        picker.setLocale(Locale.of("ru", "RU"));
+
         picker.setValue(orderDto.getKitchenShouldGetOrderAt().atZone(ZoneId.systemDefault()).toLocalDateTime());
 
         Button saveBtn = new Button("Сохранить", ev -> {
@@ -760,6 +731,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         dialog.setHeaderTitle("Выберите время начала приготовления");
 
         DateTimePicker picker = new DateTimePicker();
+        picker.setLocale(Locale.of("ru", "RU"));
+
         picker.setValue(selectedKitchenStart != null
                 ? selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime()
                 : LocalDateTime.now());
