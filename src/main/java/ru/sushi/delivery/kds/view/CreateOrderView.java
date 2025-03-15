@@ -338,7 +338,20 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                         menuExtras
                 );
             });
+            Button addBtn = new Button(VaadinIcon.PLUS.create());
+            addBtn.addClickListener(e -> {
+                cartItem.increment();
+                updateTotalPay();
+                updateTotalTime();
+                chosenGrid.getDataProvider().refreshAll();
+                updateExtrasList(
+                        (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+                        (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+                        menuExtras
+                );
+            });
             buttons.add(removeBtn);
+            buttons.add(addBtn);
             return buttons;
         }).setHeader("Действие");
         chosenGrid.setItems(cartItems);
