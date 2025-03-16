@@ -73,5 +73,11 @@ public class MainView extends VerticalLayout {
                 UI.getCurrent().navigate("menu-item-recipe")
         );
         add(goToMenuItemRecipeView);
+
+        Button goToInvoiceView = new Button("Накладные");
+        goToInvoiceView.addClickListener(e ->
+            UI.getCurrent().navigate("invoices")
+        );
+        add(goToInvoiceView);
     }
 }

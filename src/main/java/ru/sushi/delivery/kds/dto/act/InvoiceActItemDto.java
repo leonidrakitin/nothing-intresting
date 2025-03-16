@@ -1,11 +1,13 @@
 package ru.sushi.delivery.kds.dto.act;
 
 import jakarta.validation.constraints.PositiveOrZero;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
+@Builder(toBuilder = true)
 public class InvoiceActItemDto {
 
     private final Long id;
