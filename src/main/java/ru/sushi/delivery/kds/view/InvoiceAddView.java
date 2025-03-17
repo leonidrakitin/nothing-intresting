@@ -27,6 +27,8 @@ import java.util.List;
 @Route(value = "invoices/:id")
 public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserver {
 
+    private static final String NEW_INVOICE = "new";
+
     private final ActService actService;
     private final SourceItemService sourceItemService;
     private InvoiceActDto invoice;
@@ -44,8 +46,8 @@ public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserve
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        String idParam = event.getRouteParameters().get("id").orElse("new");
-        if ("new".equals(idParam)) {
+        String idParam = event.getRouteParameters().get("id").orElse(NEW_INVOICE);
+        if (NEW_INVOICE.equals(idParam)) {
             invoice = InvoiceActDto.builder()
                 .date(LocalDate.now())
                 .vendor("")
@@ -178,9 +180,6 @@ public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserve
     }
 
     private SourceDto findSource(Long sourceId, String sourceType) {
-        if (sourceId == null || sourceType == null) {
-            return null;
-        }
         return sources.stream()
             .filter(s -> s.getId().equals(sourceId) && s.getType().equals(sourceType))
             .findFirst()
