@@ -40,8 +40,13 @@ public class WarehouseController {
     }
 
     @PostMapping("/write-off")
-    public void writeOffIngredient(@RequestBody WriteOffRequest writeOffRequest) {
+    public void writeOff(@RequestBody WriteOffRequest writeOffRequest) {
         writeOffService.writeOff(writeOffRequest);
+    }
+
+    @PostMapping("/add-write-off")
+    public void addWriteOff(@RequestBody WriteOffRequest writeOffRequest) {
+        writeOffService.createWriteOff(writeOffRequest);
     }
 
     @GetMapping("/allWriteOff")

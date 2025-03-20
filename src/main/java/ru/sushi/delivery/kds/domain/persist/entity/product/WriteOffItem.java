@@ -65,7 +65,8 @@ public class WriteOffItem {
     private Instant createdAt = Instant.now();
 
     public static WriteOffItem of(
-            SourceItem sourceItem,
+        Long sourceId,
+        SourceType sourceType,
             Double amount,
             Boolean isCompleted,
             String comment,
@@ -73,8 +74,8 @@ public class WriteOffItem {
             DiscontinuedReason reason
     ) {
         return WriteOffItem.builder()
-                .sourceId(sourceItem.getId())
-                .sourceType(sourceItem.getSourceType())
+            .sourceId(sourceId)
+            .sourceType(sourceType)
                 .amount(amount)
                 .isCompleted(isCompleted)
                 .discontinuedComment(comment)

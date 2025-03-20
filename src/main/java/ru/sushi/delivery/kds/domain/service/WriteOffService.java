@@ -23,8 +23,10 @@ import java.time.Instant;
 public class WriteOffService {
 
     private final IngredientItemService ingredientItemService;
+    private final IngredientService ingredientService;
     private final PrepackItemService prepackItemService;
     private final SourceItemService sourceItemService;
+    private final SourceService sourceService;
     private final WriteOffItemRepository writeOffItemRepository;
 
     public Page<WriteOffItemDto> getAll(PageRequest pageRequest) {
@@ -34,7 +36,7 @@ public class WriteOffService {
     public void writeOff(WriteOffRequest writeOffRequest) {
         if (writeOffRequest.getSourceType() == SourceType.INGREDIENT) {
 
-            IngredientItem ingredientItem = ingredientItemService.get(writeOffRequest.getSourceItemId());
+            IngredientItem ingredientItem = ingredientItemService.get(writeOffRequest.getId());
 
             if (writeOffRequest.getDiscontinuedReason() == DiscontinuedReason.OTHER) {
                 this.writeOffItemWithOtherReason(
@@ -52,7 +54,7 @@ public class WriteOffService {
             }
         }
         else if (writeOffRequest.getSourceType() == SourceType.PREPACK) {
-            PrepackItem prepackItem = prepackItemService.get(writeOffRequest.getSourceItemId());
+            PrepackItem prepackItem = prepackItemService.get(writeOffRequest.getId());
 
             if (writeOffRequest.getDiscontinuedReason() == DiscontinuedReason.OTHER) {
                 this.writeOffItemWithOtherReason(
@@ -84,7 +86,8 @@ public class WriteOffService {
         String comment = createComment(sourceItem, writeOffRequest, "'продукт испорчен'");
 
         WriteOffItem writeOffItem = WriteOffItem.of(
-                sourceItem,
+            productId,
+            sourceItem.getSourceType(),
                 writeOffRequest.getWriteOffAmount(),
                 isCompleted,
                 comment,
@@ -107,7 +110,8 @@ public class WriteOffService {
         String comment = createComment(sourceItem, writeOffRequest, writeOffRequest.getCustomReasonComment());
 
         WriteOffItem writeOffItem = WriteOffItem.of(
-                sourceItem,
+            productId,
+            sourceItem.getSourceType(),
                 writeOffRequest.getWriteOffAmount(),
                 isCompleted,
                 comment,
@@ -119,6 +123,28 @@ public class WriteOffService {
         if (isCompleted) {
             sourceItemService.updateSourceItemAmount(sourceItem);
         }
+    }
+
+    public void createWriteOff(WriteOffRequest writeOffRequest) {
+        String comment = String.format(
+            "%s '%s' был списан сотрудником %s по причине '%s'",
+            writeOffRequest.getSourceType().getValue(),
+            sourceService.getSourceName(writeOffRequest.getId(), writeOffRequest.getSourceType()),
+            writeOffRequest.getEmployeeName(),
+            writeOffRequest.getCustomReasonComment()
+        );
+
+        WriteOffItem writeOffItem = WriteOffItem.of(
+            writeOffRequest.getId(),
+            writeOffRequest.getSourceType(),
+            writeOffRequest.getWriteOffAmount(),
+            false,
+            comment,
+            writeOffRequest.getEmployeeName(),
+            writeOffRequest.getDiscontinuedReason()
+        );
+
+        writeOffItemRepository.save(writeOffItem);
     }
 
     private String createComment(SourceItem sourceItem, WriteOffRequest writeOffRequest, String reason) {

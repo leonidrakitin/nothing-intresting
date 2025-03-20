@@ -25,4 +25,9 @@ public class SourceController {
     public List<SourceDto> getAllPrepacks() {
         return this.sourceItemService.getAllPrepacks();
     }
+
+    @GetMapping("/ingredients")
+    public List<SourceDto> getAllIngredients() {
+        return this.sourceItemService.getAllIngredients();
+    }
 }
