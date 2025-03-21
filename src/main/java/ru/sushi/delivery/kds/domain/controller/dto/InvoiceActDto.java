@@ -1,5 +1,6 @@
 package ru.sushi.delivery.kds.domain.controller.dto;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Getter
 @RequiredArgsConstructor
+@Builder(toBuilder = true)
 public class InvoiceActDto {
     private final Long id;
     private final Long employeeId;
