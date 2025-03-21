@@ -23,7 +23,7 @@ public class WriteOffController {
 
     @PostMapping("/v2/write-off")
     public void addWriteOff(@RequestBody WriteOffRequest writeOffRequest) {
-        writeOffService.createWriteOff(writeOffRequest);
+        writeOffService.writeOffV2(writeOffRequest);
     }
 
     @GetMapping("/write-off/list")

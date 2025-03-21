@@ -11,7 +11,7 @@ import ru.sushi.delivery.kds.model.SourceType;
 @AllArgsConstructor
 public class WriteOffRequest {
 
-    private Long id;
+    private Long sourceId;
     private SourceType sourceType;
     private String employeeName;
     private Double writeOffAmount;

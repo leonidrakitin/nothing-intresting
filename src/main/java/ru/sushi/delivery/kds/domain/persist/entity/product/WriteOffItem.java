@@ -1,20 +1,7 @@
 package ru.sushi.delivery.kds.domain.persist.entity.product;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.envers.Audited;
 import ru.sushi.delivery.kds.model.DiscontinuedReason;
@@ -65,8 +52,8 @@ public class WriteOffItem {
     private Instant createdAt = Instant.now();
 
     public static WriteOffItem of(
-        Long sourceId,
-        SourceType sourceType,
+            Long sourceId,
+            SourceType sourceType,
             Double amount,
             Boolean isCompleted,
             String comment,
@@ -74,8 +61,8 @@ public class WriteOffItem {
             DiscontinuedReason reason
     ) {
         return WriteOffItem.builder()
-            .sourceId(sourceId)
-            .sourceType(sourceType)
+                .sourceId(sourceId)
+                .sourceType(sourceType)
                 .amount(amount)
                 .isCompleted(isCompleted)
                 .discontinuedComment(comment)
