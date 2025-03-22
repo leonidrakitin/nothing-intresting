@@ -7,7 +7,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
-import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.domain.persist.entity.product.Meal;
 import ru.sushi.delivery.kds.domain.service.*;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
@@ -25,30 +25,30 @@ public class ViewService {
 
     private final OrderService orderService;
     private final ScreenService screenService;
-    private final MenuItemService menuItemService;
+    private final MealService mealService;
     private final IngredientService ingredientService;
     private final FlowCacheService flowCacheService; //todo remove
     private final ItemComboService itemComboService;
 
     public void createOrder(
             String name,
-            List<MenuItem> menuItems,
+            List<Meal> meals,
             Instant shouldBeFinishedAt,
             Instant kitchenShouldGetOrderAt
     ) {
-        this.orderService.createOrder(name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt);
+        this.orderService.createOrder(name, meals, shouldBeFinishedAt, kitchenShouldGetOrderAt);
     }
 
-    public List<MenuItem> getAllMenuItems() {
-        return this.menuItemService.getAllMenuItems();
+    public List<Meal> getAllMeals() {
+        return this.mealService.getAllMeals();
     }
 
     public List<ItemCombo> getAllCombos() {
         return this.itemComboService.findAll();
     }
 
-    public List<MenuItem> getAllExtras() {
-        return this.menuItemService.getAllExtras();
+    public List<Meal> getAllExtras() {
+        return this.mealService.getAllExtras();
     }
 
     public List<KitchenDisplayInfoDto> getAvailableDisplaysData() {
@@ -98,8 +98,8 @@ public class ViewService {
         this.orderService.cancelOrderItem(orderItemId);
     }
 
-    public void addItemToOrder(Long orderId, MenuItem menuItem) {
-        this.orderService.createOrderItem(orderId, menuItem);
+    public void addItemToOrder(Long orderId, Meal meal) {
+        this.orderService.createOrderItem(orderId, meal);
     }
 
     public void cancelOrder(Long orderId) {
@@ -111,23 +111,23 @@ public class ViewService {
                 .id(item.getId())
                 .orderName(item.getOrder().getName())
                 .orderId(item.getOrder().getId())
-                .name(item.getMenuItem().getName())
-                .ingredients(new ArrayList<>(this.ingredientService.getMenuItemIngredients(item.getMenuItem().getId())))
+                .name(item.getMeal().getName())
+                .ingredients(new ArrayList<>(this.ingredientService.getMealIngredients(item.getMeal().getId())))
                 .status(item.getStatus())
                 .statusUpdatedAt(item.getStatusUpdatedAt())
                 .createdAt(item.getStatusUpdatedAt())
                 .timeToCook(180)
                 //todo remove
                 .currentStation(
-                        this.flowCacheService.getStep(item.getMenuItem().getFlow().getId(), item.getCurrentFlowStep())
+                        this.flowCacheService.getStep(item.getMeal().getFlow().getId(), item.getCurrentFlowStep())
                                 .getStation()
                 )
                 //todo remove
                 .flowStepType(
-                        this.flowCacheService.getStep(item.getMenuItem().getFlow().getId(), item.getCurrentFlowStep())
+                        this.flowCacheService.getStep(item.getMeal().getFlow().getId(), item.getCurrentFlowStep())
                                 .getStepType()
                 )
-                .extra(item.getMenuItem().getProductType().isExtra())
+                .extra(item.getMeal().getProductType().isExtra())
                 .build();
     }
 }

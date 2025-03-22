@@ -1,23 +1,10 @@
 package ru.sushi.delivery.kds.domain.persist.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
-import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.domain.persist.entity.product.Meal;
 
 import java.util.List;
 
@@ -45,5 +32,5 @@ public class ItemCombo {
             joinColumns = @JoinColumn(name = "item_combo_id"),
             inverseJoinColumns = @JoinColumn(name = "menu_item_id")
     )
-    private final List<MenuItem> menuItems;
+    private final List<Meal> meals;
 }

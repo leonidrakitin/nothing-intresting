@@ -4,7 +4,7 @@ import com.vaadin.flow.router.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.controller.dto.IngredientDto;
-import ru.sushi.delivery.kds.domain.controller.dto.MenuItemRecipeDto;
+import ru.sushi.delivery.kds.domain.controller.dto.MealRecipeDto;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Ingredient;
 import ru.sushi.delivery.kds.domain.persist.repository.MeasurementRepository;
@@ -40,9 +40,9 @@ public class IngredientService {
 //        );
 //    }
 
-    public List<IngredientCompactDTO> getMenuItemIngredients(Long menuItemId) {
-        return this.recipeService.getMenuRecipeByMenuId(menuItemId).stream()
-                .sorted(Comparator.comparingLong(MenuItemRecipeDto::getPriority))
+    public List<IngredientCompactDTO> getMealIngredients(Long mealId) {
+        return this.recipeService.getMenuRecipeByMenuId(mealId).stream()
+                .sorted(Comparator.comparingLong(MealRecipeDto::getPriority))
                 .map(IngredientCompactDTO::of)
                 .toList();
     }

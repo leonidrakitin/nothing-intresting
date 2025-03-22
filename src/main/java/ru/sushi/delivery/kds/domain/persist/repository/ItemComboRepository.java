@@ -10,6 +10,6 @@ import java.util.List;
 @Repository
 public interface ItemComboRepository extends JpaRepository<ItemCombo, Long> {
 
-    @Query("select ic from ItemCombo ic left join fetch ic.menuItems")
+    @Query("select ic from ItemCombo ic left join fetch ic.meals")
     List<ItemCombo> findAll();
 }

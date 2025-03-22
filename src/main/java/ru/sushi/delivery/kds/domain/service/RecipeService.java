@@ -4,33 +4,20 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.sushi.delivery.kds.domain.controller.dto.AbstractProductData;
-import ru.sushi.delivery.kds.domain.controller.dto.MeasurementUnitDto;
-import ru.sushi.delivery.kds.domain.controller.dto.MenuItemRecipeDto;
-import ru.sushi.delivery.kds.domain.controller.dto.PrepackRecipeData;
-import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
+import ru.sushi.delivery.kds.domain.controller.dto.*;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
-import ru.sushi.delivery.kds.domain.persist.entity.product.IngredientItem;
-import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
-import ru.sushi.delivery.kds.domain.persist.entity.product.Prepack;
-import ru.sushi.delivery.kds.domain.persist.entity.product.PrepackItem;
-import ru.sushi.delivery.kds.domain.persist.entity.product.SourceItem;
-import ru.sushi.delivery.kds.domain.persist.entity.recipe.MenuItemRecipe;
+import ru.sushi.delivery.kds.domain.persist.entity.product.*;
+import ru.sushi.delivery.kds.domain.persist.entity.recipe.MealRecipe;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.PrepackRecipe;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.Recipe;
-import ru.sushi.delivery.kds.domain.persist.repository.recipe.MenuItemRecipeRepository;
+import ru.sushi.delivery.kds.domain.persist.repository.recipe.MealRecipeRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.recipe.PrepackRecipeRepository;
 import ru.sushi.delivery.kds.dto.PrepackRecipeItemDto;
 import ru.sushi.delivery.kds.model.DiscontinuedReason;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -40,13 +27,13 @@ import java.util.stream.Stream;
 public class RecipeService {
 
     private final IngredientItemService ingredientItemService;
-    private final MenuItemRecipeRepository menuItemRecipeRepository;
+    private final MealRecipeRepository mealRecipeRepository;
     private final PrepackRecipeRepository prepackRecipeRepository;
     private final PrepackItemService prepackItemService;
     private final SourceItemService sourceItemService;
     private final SourceService sourceService;
     private final PrepackService prepackService;
-    private final MenuItemService menuItemService;
+    private final MealService mealService;
     private final MeasurementService measurementService;
 
     public List<PrepackRecipeItemDto> getPrepackRecipe(Long prepackId) {
@@ -104,10 +91,10 @@ public class RecipeService {
     }
 
     @Transactional
-    public void calculateMenuItemsBalance(List<Long> menuItemIds) {
-        List<Recipe> menuItemRecipes = this.menuItemRecipeRepository.findByMenuItemIds(menuItemIds);
-        menuItemRecipes.forEach(this::calculateRecipe);
-        this.checkAndNotifyIfAlmostFinished(menuItemRecipes);
+    public void calculateMealsBalance(List<Long> mealIds) {
+        List<Recipe> mealRecipes = this.mealRecipeRepository.findByMealIds(mealIds);
+        mealRecipes.forEach(this::calculateRecipe);
+        this.checkAndNotifyIfAlmostFinished(mealRecipes);
     }
 
     public List<PrepackRecipeData> getPrepackRecipeByPrepackId(Long prepackId) {
@@ -164,65 +151,65 @@ public class RecipeService {
         this.prepackRecipeRepository.deleteById(prepackRecipeData.getId());
     }
 
-    public List<MenuItemRecipeDto> getMenuRecipeByMenuId(Long menuId) {
-        List<MenuItemRecipe> menuItemRecipes = this.menuItemRecipeRepository.findByMenuItemId(menuId);
-        return menuItemRecipes.stream().map(menuItemRecipe -> MenuItemRecipeDto.of(
-                                menuItemRecipe,
+    public List<MealRecipeDto> getMenuRecipeByMenuId(Long menuId) {
+        List<MealRecipe> mealRecipes = this.mealRecipeRepository.findByMealId(menuId);
+        return mealRecipes.stream().map(mealRecipe -> MealRecipeDto.of(
+                                mealRecipe,
                         this.sourceService.getSourceName(
-                                        menuItemRecipe.getSourceId(),
-                                        menuItemRecipe.getSourceType())
+                                        mealRecipe.getSourceId(),
+                                        mealRecipe.getSourceType())
                         )
                 )
                 .toList();
     }
 
-    public void saveMenuRecipe(MenuItemRecipeDto menuItemRecipeDto, SourceDto sourceDto, Long menuId) {
-        MenuItem menuItem = this.menuItemService.getMenuItemById(menuId);
+    public void saveMenuRecipe(MealRecipeDto mealRecipeDto, SourceDto sourceDto, Long menuId) {
+        Meal meal = this.mealService.getMealById(menuId);
 
-        Measurement measurement = Optional.ofNullable(menuItemRecipeDto.getMeasurementUnit())
+        Measurement measurement = Optional.ofNullable(mealRecipeDto.getMeasurementUnit())
                 .map(MeasurementUnitDto::getId)
                 .map(this.measurementService::getById)
                 .orElseGet(() -> this.sourceService.getSourceMeasurementUnit(
                         sourceDto.getId(), SourceType.valueOf(sourceDto.getType())
                 ));
 
-        MenuItemRecipe menuItemRecipe = Optional.ofNullable(menuItemRecipeDto.getId())
-                .map(this.menuItemRecipeRepository::findById)
+        MealRecipe mealRecipe = Optional.ofNullable(mealRecipeDto.getId())
+                .map(this.mealRecipeRepository::findById)
                 .flatMap(Function.identity())
-                .map(m -> setNewMenuItemRecipeData(m, menuItemRecipeDto, sourceDto, menuItem, measurement))
-                .orElseGet(() -> MenuItemRecipe.of(menuItemRecipeDto, sourceDto, menuItem, measurement));
+                .map(m -> setNewMealRecipeData(m, mealRecipeDto, sourceDto, meal, measurement))
+                .orElseGet(() -> MealRecipe.of(mealRecipeDto, sourceDto, meal, measurement));
 
-        this.menuItemRecipeRepository.save(menuItemRecipe);
+        this.mealRecipeRepository.save(mealRecipe);
     }
 
-    public MenuItemRecipe setNewMenuItemRecipeData(
-            MenuItemRecipe menuItemRecipe,
-            MenuItemRecipeDto menuItemRecipeDto,
+    public MealRecipe setNewMealRecipeData(
+            MealRecipe mealRecipe,
+            MealRecipeDto mealRecipeDto,
             SourceDto sourceDto,
-            MenuItem menuItem,
+            Meal meal,
             Measurement measurement
     ) {
-        return menuItemRecipe.toBuilder()
-                .id(menuItemRecipe.getId())
-                .menuItem(menuItem)
-                .stationId(menuItemRecipeDto.getStationId())
+        return mealRecipe.toBuilder()
+                .id(mealRecipe.getId())
+                .meal(meal)
+                .stationId(mealRecipeDto.getStationId())
                 .measurement(measurement)
                 .sourceId(sourceDto.getId())
                 .sourceType(SourceType.valueOf(sourceDto.getType()))
-                .initAmount(menuItemRecipeDto.getInitAmount())
-                .finalAmount(menuItemRecipeDto.getFinalAmount())
-                .lossesAmount(menuItemRecipeDto.getLossesAmount())
-                .lossesPercentage(menuItemRecipeDto.getLossesPercentage())
+                .initAmount(mealRecipeDto.getInitAmount())
+                .finalAmount(mealRecipeDto.getFinalAmount())
+                .lossesAmount(mealRecipeDto.getLossesAmount())
+                .lossesPercentage(mealRecipeDto.getLossesPercentage())
                 .build();
     }
 
-    public void deleteMenuItemRecipe(MenuItemRecipeDto menuItemRecipeDto) {
-        this.menuItemRecipeRepository.deleteById(menuItemRecipeDto.getId());
+    public void deleteMealRecipe(MealRecipeDto mealRecipeDto) {
+        this.mealRecipeRepository.deleteById(mealRecipeDto.getId());
     }
 
     //todo Можно сделать с wrapper
     public List<Recipe> checkRecipeDependencies(AbstractProductData productData, SourceType sourceType) {
-        List<MenuItemRecipe> menuItemRecipes = menuItemRecipeRepository.findAllBySourceIdAndSourceType(
+        List<MealRecipe> mealRecipes = mealRecipeRepository.findAllBySourceIdAndSourceType(
                 productData.getId(),
                 sourceType
         );
@@ -232,12 +219,12 @@ public class RecipeService {
                 sourceType
         );
 
-        return Stream.concat(menuItemRecipes.stream(), prepackRecipes.stream()).toList();
+        return Stream.concat(mealRecipes.stream(), prepackRecipes.stream()).toList();
     }
 
-    private void checkAndNotifyIfAlmostFinished(List<Recipe> menuItemRecipes) {
+    private void checkAndNotifyIfAlmostFinished(List<Recipe> mealRecipes) {
         Set<SourceItem> checkedSourceItems = new HashSet<>();
-        ListIterator<Recipe> recipeIterator = menuItemRecipes.listIterator();
+        ListIterator<Recipe> recipeIterator = mealRecipes.listIterator();
         while (recipeIterator.hasNext()) {
             Recipe recipe = recipeIterator.next();
             if (recipe.getSourceType() == SourceType.PREPACK) {

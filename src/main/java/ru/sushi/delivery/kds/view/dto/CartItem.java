@@ -4,14 +4,14 @@ package ru.sushi.delivery.kds.view.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.domain.persist.entity.product.Meal;
 
 @AllArgsConstructor
 @Setter
 @Getter
 public class CartItem {
 
-    private final MenuItem menuItem;
+    private final Meal meal;
     private int quantity;
 
     public void increment() {

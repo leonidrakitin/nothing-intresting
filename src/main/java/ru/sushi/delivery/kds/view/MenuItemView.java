@@ -13,10 +13,10 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.controller.dto.MenuItemData;
+import ru.sushi.delivery.kds.domain.controller.dto.MealData;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.FlowRepository;
-import ru.sushi.delivery.kds.domain.service.MenuItemService;
+import ru.sushi.delivery.kds.domain.service.MealService;
 
 import java.time.Duration;
 import java.util.List;
@@ -24,12 +24,12 @@ import java.util.List;
 @Route(value = "menu-items")
 @PageTitle("Пункты меню | Доставка Суши")
 @PermitAll
-public class MenuItemView extends VerticalLayout {
+public class MealView extends VerticalLayout {
 
-    private final MenuItemService menuItemService;
+    private final MealService mealService;
     private final FlowRepository flowRepository;
 
-    private final Grid<MenuItemData> menuItemGrid = new Grid<>();
+    private final Grid<MealData> mealGrid = new Grid<>();
 
     private final TextField nameField = new TextField("Название");
     private final ComboBox<Flow> flowComboBox = new ComboBox<>("Отображение");
@@ -42,17 +42,17 @@ public class MenuItemView extends VerticalLayout {
     private final Button cancelButton = new Button("Отменить изменения");
 
     // Текущий пункт меню, который редактируем (если null — значит режим добавления)
-    private MenuItemData currentEditingMenuItem = null;
+    private MealData currentEditingMeal = null;
 
     @Autowired
-    public MenuItemView(MenuItemService menuItemService, FlowRepository flowRepository) {
-        this.menuItemService = menuItemService;
+    public MealView(MealService mealService, FlowRepository flowRepository) {
+        this.mealService = mealService;
         this.flowRepository = flowRepository;
 
         setSizeFull();
 
         configureGrid();
-        add(createForm(), menuItemGrid);
+        add(createForm(), mealGrid);
 
         updateGrid();
     }
@@ -61,35 +61,35 @@ public class MenuItemView extends VerticalLayout {
      * Настраиваем Grid: колонки + колонка "Действия" (Изменить/Удалить).
      */
     private void configureGrid() {
-        menuItemGrid.setSizeFull();
+        mealGrid.setSizeFull();
 
-        menuItemGrid.addColumn(MenuItemData::getId)
+        mealGrid.addColumn(MealData::getId)
                 .setHeader("ID")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        menuItemGrid.addColumn(MenuItemData::getName)
+        mealGrid.addColumn(MealData::getName)
                 .setHeader("Название")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        menuItemGrid.addColumn(MenuItemData::getPrice)
+        mealGrid.addColumn(MealData::getPrice)
                 .setHeader("Цена")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        menuItemGrid.addColumn(MenuItemData::getFlow)
+        mealGrid.addColumn(MealData::getFlow)
                 .setHeader("Отображение")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        menuItemGrid.addColumn(item -> item.getTimeToCook().toSeconds())
+        mealGrid.addColumn(item -> item.getTimeToCook().toSeconds())
                 .setHeader("Время готовки (сек)")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
         // Добавляем колонку «Действия»
-        menuItemGrid.addComponentColumn(this::createActionButtons)
+        mealGrid.addComponentColumn(this::createActionButtons)
                 .setHeader("Действия")
                 .setClassNameGenerator(item -> "text-center");
     }
@@ -97,13 +97,13 @@ public class MenuItemView extends VerticalLayout {
     /**
      * Создаём горизонтальный лэйаут с кнопками "Изменить" и "Удалить"
      */
-    private HorizontalLayout createActionButtons(MenuItemData menuItem) {
+    private HorizontalLayout createActionButtons(MealData meal) {
         Button editButton = new Button("Изменить", event -> {
-            loadMenuItemIntoForm(menuItem);
+            loadMealIntoForm(meal);
         });
 
         Button deleteButton = new Button("Удалить", event -> {
-            deleteMenuItem(menuItem);
+            deleteMeal(meal);
         });
 
         editButton.getStyle().set("margin-right", "0.5em");
@@ -113,20 +113,20 @@ public class MenuItemView extends VerticalLayout {
     /**
      * Загрузка выбранного пункта меню в поля формы (режим редактирования).
      */
-    private void loadMenuItemIntoForm(MenuItemData menuItem) {
-        this.currentEditingMenuItem = menuItem;
+    private void loadMealIntoForm(MealData meal) {
+        this.currentEditingMeal = meal;
 
         // Заполняем поля
-        nameField.setValue(menuItem.getName() != null ? menuItem.getName() : "");
-        // Найдём Flow по названию из DTO (menuItem.getFlow()) и выставим в ComboBox
-        if (menuItem.getFlow() != null) {
+        nameField.setValue(meal.getName() != null ? meal.getName() : "");
+        // Найдём Flow по названию из DTO (meal.getFlow()) и выставим в ComboBox
+        if (meal.getFlow() != null) {
             Flow flow = flowRepository.findAll().stream()
-                    .filter(f -> f.getName().equals(menuItem.getFlow()))
+                    .filter(f -> f.getName().equals(meal.getFlow()))
                     .findFirst()
                     .orElse(null);
             flowComboBox.setValue(flow);
-            timeToCookSecField.setValue((double) menuItem.getTimeToCook().toSeconds());
-            priceField.setValue(menuItem.getPrice());
+            timeToCookSecField.setValue((double) meal.getTimeToCook().toSeconds());
+            priceField.setValue(meal.getPrice());
         }
         else {
             flowComboBox.clear();
@@ -160,13 +160,13 @@ public class MenuItemView extends VerticalLayout {
 
         // Логика при нажатии на основную кнопку
         saveButton.addClickListener(e -> {
-            if (currentEditingMenuItem == null) {
+            if (currentEditingMeal == null) {
                 // Режим добавления
-                createOrUpdateMenuItem(null);
+                createOrUpdateMeal(null);
             }
             else {
                 // Режим редактирования
-                createOrUpdateMenuItem(currentEditingMenuItem.getId());
+                createOrUpdateMeal(currentEditingMeal.getId());
             }
         });
         saveButton.getStyle().set("min-width", "150px");
@@ -193,7 +193,7 @@ public class MenuItemView extends VerticalLayout {
     /**
      * Создаём или обновляем пункт меню (если id != null, значит обновляем).
      */
-    private void createOrUpdateMenuItem(Long id) {
+    private void createOrUpdateMeal(Long id) {
         String name = nameField.getValue();
         Flow selectedFlow = flowComboBox.getValue();
 
@@ -208,7 +208,7 @@ public class MenuItemView extends VerticalLayout {
         Duration timeToCookDuration = Duration.ofSeconds(expirationSec);
 
         // Собираем DTO
-        MenuItemData menuItemData = MenuItemData.builder()
+        MealData mealData = MealData.builder()
                 .id(id)
                 .name(name)
                 .flow(selectedFlow.getName())
@@ -217,7 +217,7 @@ public class MenuItemView extends VerticalLayout {
                 .build();
 
         // Сохраняем (сервис сам определит create/update по наличию id)
-        menuItemService.saveMenuItem(menuItemData);
+        mealService.saveMeal(mealData);
 
         Notification.show(id == null ? "Пункт меню успешно добавлен!" : "Изменения сохранены!");
         clearForm();
@@ -227,17 +227,17 @@ public class MenuItemView extends VerticalLayout {
     /**
      * Удаляем пункт меню
      */
-    private void deleteMenuItem(MenuItemData menuItem) {
-        if (menuItem.getId() == null) {
+    private void deleteMeal(MealData meal) {
+        if (meal.getId() == null) {
             Notification.show("Не удалось удалить: отсутствует ID пункта меню.");
             return;
         }
-        menuItemService.deleteMenuItem(menuItem);
+        mealService.deleteMeal(meal);
         Notification.show("Пункт меню удалён!");
         updateGrid();
 
         // Если удалили тот, который редактировали, сбрасываем форму
-        if (currentEditingMenuItem != null && currentEditingMenuItem.getId().equals(menuItem.getId())) {
+        if (currentEditingMeal != null && currentEditingMeal.getId().equals(meal.getId())) {
             clearForm();
         }
     }
@@ -250,7 +250,7 @@ public class MenuItemView extends VerticalLayout {
         flowComboBox.clear();
         timeToCookSecField.clear();
         priceField.clear();
-        currentEditingMenuItem = null;
+        currentEditingMeal = null;
         saveButton.setText("Добавить пункт меню");
         cancelButton.setVisible(false);
     }
@@ -259,7 +259,7 @@ public class MenuItemView extends VerticalLayout {
      * Обновляет данные в Grid
      */
     private void updateGrid() {
-        List<MenuItemData> menuItems = menuItemService.getAllMenuItemsDTO();
-        menuItemGrid.setItems(menuItems);
+        List<MealData> meals = mealService.getAllMealsDTO();
+        mealGrid.setItems(meals);
     }
 }

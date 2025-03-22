@@ -56,11 +56,11 @@ public class MainView extends VerticalLayout {
         );
         add(goToPrepackView);
 
-        Button goToMenuItemView = new Button("Добавить меню");
-        goToMenuItemView.addClickListener(e ->
+        Button goToMealView = new Button("Добавить меню");
+        goToMealView.addClickListener(e ->
                 UI.getCurrent().navigate("menu-items")
         );
-        add(goToMenuItemView);
+        add(goToMealView);
 
         Button goToPrepackRecipeView = new Button("Добавить ТТК заготовки");
         goToPrepackRecipeView.addClickListener(e ->
@@ -68,11 +68,11 @@ public class MainView extends VerticalLayout {
         );
         add(goToPrepackRecipeView);
 
-        Button goToMenuItemRecipeView = new Button("Добавить ТТК меню");
-        goToMenuItemRecipeView.addClickListener(e ->
+        Button goToMealRecipeView = new Button("Добавить ТТК меню");
+        goToMealRecipeView.addClickListener(e ->
                 UI.getCurrent().navigate("menu-item-recipe")
         );
-        add(goToMenuItemRecipeView);
+        add(goToMealRecipeView);
 
         Button goToInvoiceView = new Button("Накладные");
         goToInvoiceView.addClickListener(e ->

@@ -1,24 +1,10 @@
 package ru.sushi.delivery.kds.domain.persist.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
-import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.domain.persist.entity.product.Meal;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 
 import java.time.Instant;
@@ -46,7 +32,7 @@ public class OrderItem {
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "menu_item_id")
-    private MenuItem menuItem;
+    private Meal meal;
 
     @Builder.Default
     private Integer currentFlowStep = 1;
@@ -61,10 +47,10 @@ public class OrderItem {
     @Builder.Default
     private Instant stationChangedAt = Instant.now();
 
-    public static OrderItem of(Order order, MenuItem menuItem) {
+    public static OrderItem of(Order order, Meal meal) {
         return OrderItem.builder()
                 .order(order)
-                .menuItem(menuItem)
+                .meal(meal)
                 .build();
     }
 }

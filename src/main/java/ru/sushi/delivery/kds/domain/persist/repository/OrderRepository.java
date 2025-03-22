@@ -36,7 +36,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("""
         select distinct o from Order o
         left join fetch o.orderItems oi
-        left join MenuItem mi on mi.id = oi.menuItem.id
+        left join Meal mi on mi.id = oi.meal.id
         left join FlowStep step on step.flow.id = mi.flow.id and step.stepOrder = oi.currentFlowStep
         where step.station.id = :stationId and oi.order.kitchenGotOrderAt is not null 
         order by o.kitchenShouldGetOrderAt

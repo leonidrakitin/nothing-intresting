@@ -11,11 +11,11 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.sushi.delivery.kds.domain.controller.dto.MenuItemData;
-import ru.sushi.delivery.kds.domain.controller.dto.MenuItemRecipeDto;
+import ru.sushi.delivery.kds.domain.controller.dto.MealData;
+import ru.sushi.delivery.kds.domain.controller.dto.MealRecipeDto;
 import ru.sushi.delivery.kds.domain.controller.dto.SourceDto;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
-import ru.sushi.delivery.kds.domain.service.MenuItemService;
+import ru.sushi.delivery.kds.domain.service.MealService;
 import ru.sushi.delivery.kds.domain.service.RecipeService;
 import ru.sushi.delivery.kds.domain.service.SourceItemService;
 import ru.sushi.delivery.kds.domain.service.StationService;
@@ -25,18 +25,18 @@ import java.util.List;
 
 @Route("menu-item-recipe")
 @PageTitle("Рецепты для блюд")
-public class MenuItemRecipeView extends VerticalLayout {
+public class MealRecipeView extends VerticalLayout {
 
-    private final MenuItemService menuItemService;
+    private final MealService mealService;
     private final RecipeService recipeService;
     private final SourceItemService sourceItemService;
     private final StationService stationService;
 
-    // ComboBox для выбора блюда (MenuItem)
-    private final ComboBox<MenuItemData> menuItemComboBox = new ComboBox<>("Выберите блюдо");
+    // ComboBox для выбора блюда (Meal)
+    private final ComboBox<MealData> mealComboBox = new ComboBox<>("Выберите блюдо");
 
     // Таблица для отображения рецепта выбранного блюда
-    private final Grid<MenuItemRecipeDto> recipeGrid = new Grid<>(MenuItemRecipeDto.class, false);
+    private final Grid<MealRecipeDto> recipeGrid = new Grid<>(MealRecipeDto.class, false);
 
     // Поля формы добавления / редактирования
     private final ComboBox<SourceDto> sourceComboBox = new ComboBox<>("Источник");
@@ -51,16 +51,16 @@ public class MenuItemRecipeView extends VerticalLayout {
     private final Button cancelButton = new Button("Отменить изменения");
 
     // Текущее выбранное блюдо
-    private MenuItemData selectedMenuItem;
+    private MealData selectedMeal;
     // Текущая запись рецепта (для редактирования), null => режим добавления
-    private MenuItemRecipeDto currentEditingRecipe = null;
+    private MealRecipeDto currentEditingRecipe = null;
 
     @Autowired
-    public MenuItemRecipeView(MenuItemService menuItemService,
+    public MealRecipeView(MealService mealService,
                               RecipeService recipeService,
                               SourceItemService sourceItemService,
                               StationService stationService) {
-        this.menuItemService = menuItemService;
+        this.mealService = mealService;
         this.recipeService = recipeService;
         this.sourceItemService = sourceItemService;
         this.stationService = stationService;
@@ -71,7 +71,7 @@ public class MenuItemRecipeView extends VerticalLayout {
 
         // Размещаем на странице
         add(
-                menuItemComboBox,
+                mealComboBox,
                 recipeGrid,
                 new Hr(),
                 createRecipeFormLayout()
@@ -86,25 +86,25 @@ public class MenuItemRecipeView extends VerticalLayout {
      */
     private void initMainComboBox() {
         // Список всех блюд
-        List<MenuItemData> allMenuItems = menuItemService.getAllMenuItemsDTO();
-        menuItemComboBox.setItems(allMenuItems);
+        List<MealData> allMeals = mealService.getAllMealsDTO();
+        mealComboBox.setItems(allMeals);
 
         // Только название
-        menuItemComboBox.setItemLabelGenerator(MenuItemData::getName);
+        mealComboBox.setItemLabelGenerator(MealData::getName);
 
         // Placeholder, очистка
-        menuItemComboBox.setPlaceholder("Поиск блюда...");
-        menuItemComboBox.setClearButtonVisible(true);
-        menuItemComboBox.setWidth("400px");
+        mealComboBox.setPlaceholder("Поиск блюда...");
+        mealComboBox.setClearButtonVisible(true);
+        mealComboBox.setWidth("400px");
 
         // Обработка выбора
-        menuItemComboBox.addValueChangeListener(event -> {
-            selectedMenuItem = event.getValue();
-            boolean enableForm = (selectedMenuItem != null);
+        mealComboBox.addValueChangeListener(event -> {
+            selectedMeal = event.getValue();
+            boolean enableForm = (selectedMeal != null);
             enableForm(enableForm);
 
             if (enableForm) {
-                refreshRecipeGrid(selectedMenuItem.getId());
+                refreshRecipeGrid(selectedMeal.getId());
             }
             else {
                 recipeGrid.setItems(Collections.emptyList());
@@ -116,17 +116,17 @@ public class MenuItemRecipeView extends VerticalLayout {
      * Инициализация таблицы с добавлением колонки «Действия».
      */
     private void initRecipeGrid() {
-        recipeGrid.addColumn(MenuItemRecipeDto::getSourceName)
+        recipeGrid.addColumn(MealRecipeDto::getSourceName)
                 .setHeader("Источник");
-        recipeGrid.addColumn(MenuItemRecipeDto::getStationId)
+        recipeGrid.addColumn(MealRecipeDto::getStationId)
                 .setHeader("Станция");
-        recipeGrid.addColumn(MenuItemRecipeDto::getInitAmount)
+        recipeGrid.addColumn(MealRecipeDto::getInitAmount)
                 .setHeader("Изнач. кол-во");
-        recipeGrid.addColumn(MenuItemRecipeDto::getFinalAmount)
+        recipeGrid.addColumn(MealRecipeDto::getFinalAmount)
                 .setHeader("Итог. кол-во");
-        recipeGrid.addColumn(MenuItemRecipeDto::getLossesAmount)
+        recipeGrid.addColumn(MealRecipeDto::getLossesAmount)
                 .setHeader("Потери");
-        recipeGrid.addColumn(MenuItemRecipeDto::getLossesPercentage)
+        recipeGrid.addColumn(MealRecipeDto::getLossesPercentage)
                 .setHeader("Потери (%)");
 
         // Колонка "Действия" — «Изменить» и «Удалить»
@@ -138,7 +138,7 @@ public class MenuItemRecipeView extends VerticalLayout {
     /**
      * Создаём горизонтальный лэйаут кнопок «Изменить» и «Удалить».
      */
-    private HorizontalLayout createActionButtons(MenuItemRecipeDto recipeItem) {
+    private HorizontalLayout createActionButtons(MealRecipeDto recipeItem) {
         Button editButton = new Button("Изменить", e -> loadRecipeIntoForm(recipeItem));
         Button deleteButton = new Button("Удалить", e -> deleteRecipeItem(recipeItem));
 
@@ -150,7 +150,7 @@ public class MenuItemRecipeView extends VerticalLayout {
     /**
      * Загружаем существующую запись рецепта в форму (режим редактирования).
      */
-    private void loadRecipeIntoForm(MenuItemRecipeDto recipeItem) {
+    private void loadRecipeIntoForm(MealRecipeDto recipeItem) {
         this.currentEditingRecipe = recipeItem;
 
         // Найдём источник SourceDto (по имени или по id, если у DTO есть sourceId)
@@ -227,7 +227,7 @@ public class MenuItemRecipeView extends VerticalLayout {
 
         // Логика при нажатии на «Добавить / Изменить»
         saveButton.addClickListener(e -> {
-            if (selectedMenuItem == null) {
+            if (selectedMeal == null) {
                 Notification.show("Сначала выберите блюдо!");
                 return;
             }
@@ -281,7 +281,7 @@ public class MenuItemRecipeView extends VerticalLayout {
      */
     private void createOrUpdateRecipe(Long id, SourceDto chosenSource, Station chosenStation) {
         // Собираем DTO
-        MenuItemRecipeDto recipeDto = MenuItemRecipeDto.builder()
+        MealRecipeDto recipeDto = MealRecipeDto.builder()
                 .id(id)  // null => новая запись, иначе обновление
                 .stationId(chosenStation.getId())
                 .initAmount(initAmountField.getValue())
@@ -291,29 +291,29 @@ public class MenuItemRecipeView extends VerticalLayout {
                 .build();
 
         // Вызываем сервис (создание/обновление)
-        recipeService.saveMenuRecipe(recipeDto, chosenSource, selectedMenuItem.getId());
+        recipeService.saveMenuRecipe(recipeDto, chosenSource, selectedMeal.getId());
 
         Notification.show(id == null
                 ? "Успешно добавлено в рецепт!"
                 : "Изменения сохранены!");
 
         clearForm();
-        refreshRecipeGrid(selectedMenuItem.getId());
+        refreshRecipeGrid(selectedMeal.getId());
     }
 
     /**
      * Удалить запись рецепта
      */
-    private void deleteRecipeItem(MenuItemRecipeDto recipeItem) {
+    private void deleteRecipeItem(MealRecipeDto recipeItem) {
         if (recipeItem.getId() == null) {
             Notification.show("Невозможно удалить, отсутствует ID рецепта.");
             return;
         }
         // Предположим, что в вашем сервисе есть метод removeMenuRecipeById или deleteMenuRecipe(...)
-        recipeService.deleteMenuItemRecipe(recipeItem);
+        recipeService.deleteMealRecipe(recipeItem);
         Notification.show("Строка рецепта удалена!");
 
-        refreshRecipeGrid(selectedMenuItem.getId());
+        refreshRecipeGrid(selectedMeal.getId());
 
         // Если удалили ту, что редактировалась, сбрасываем форму
         if (currentEditingRecipe != null
@@ -379,7 +379,7 @@ public class MenuItemRecipeView extends VerticalLayout {
      * Обновляем таблицу для выбранного блюда.
      */
     private void refreshRecipeGrid(Long menuId) {
-        List<MenuItemRecipeDto> recipes = recipeService.getMenuRecipeByMenuId(menuId);
+        List<MealRecipeDto> recipes = recipeService.getMenuRecipeByMenuId(menuId);
         recipeGrid.setItems(recipes);
     }
 }

@@ -10,7 +10,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.FlowStep;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
-import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.domain.persist.entity.product.Meal;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.ScreenRepository;
@@ -46,27 +46,27 @@ public class OrderService {
     private final WSMessageSender wsMessageSender;
 
     public void calculateOrderBalance(Order order) {
-        List<Long> orderMenuItemIds = order.getOrderItems().stream()
-                .map(OrderItem::getMenuItem)
-                .map(MenuItem::getId)
+        List<Long> orderMealIds = order.getOrderItems().stream()
+                .map(OrderItem::getMeal)
+                .map(Meal::getId)
                 .toList();
-        this.recipeService.calculateMenuItemsBalance(orderMenuItemIds);
+        this.recipeService.calculateMealsBalance(orderMealIds);
     }
 
     public void createOrder(
             String name,
-            List<MenuItem> menuItems,
+            List<Meal> meals,
             Instant shouldBeFinishedAt,
             Instant kitchenShouldGetOrderAt
     ) {
         Order order = this.orderRepository.save(Order.of(name, shouldBeFinishedAt, kitchenShouldGetOrderAt));
         List<OrderItem> orderItems = new ArrayList<>();
         Set<FlowStep> flowSteps = new HashSet<>();
-        for (MenuItem menuItem : menuItems) {
-            OrderItem orderItem = OrderItem.of(order, menuItem);
+        for (Meal meal : meals) {
+            OrderItem orderItem = OrderItem.of(order, meal);
             orderItems.add(orderItem);
             flowSteps.add(this.flowCacheService.getStep(
-                    orderItem.getMenuItem().getFlow().getId(),
+                    orderItem.getMeal().getFlow().getId(),
                     orderItem.getCurrentFlowStep()
             ));
         }
@@ -99,12 +99,12 @@ public class OrderService {
         Integer doneStepOrder = null;
         for (OrderItem orderItem : this.getOrderItems(orderId)) {
             FlowStep step = this.flowCacheService.getStep(
-                    orderItem.getMenuItem().getFlow().getId(),
+                    orderItem.getMeal().getFlow().getId(),
                     orderItem.getCurrentFlowStep()
             );
 
             if (doneStepOrder == null) {
-                doneStepOrder = this.flowCacheService.getDoneStep(orderItem.getMenuItem().getFlow().getId()).getStepOrder();
+                doneStepOrder = this.flowCacheService.getDoneStep(orderItem.getMeal().getFlow().getId()).getStepOrder();
             }
 
             if (step.getStepType() != FlowStepType.FINAL_STEP) {
@@ -144,7 +144,7 @@ public class OrderService {
         };
         if (orderItem.getStatus() == OrderItemStationStatus.COMPLETED) {
             FlowStep nextFlowStep = this.flowCacheService.getNextStep(
-                    orderItem.getMenuItem().getFlow().getId(),
+                    orderItem.getMeal().getFlow().getId(),
                     orderItem.getCurrentFlowStep()
             );
             orderItem = orderItem.toBuilder()
@@ -218,19 +218,19 @@ public class OrderService {
     private List<OrderItemDto> getOrderShortItemData(Order order) {
         return order.getOrderItems()
                 .stream()
-                .sorted(Comparator.<OrderItem>comparingInt(item -> item.getMenuItem().getProductType().getPriority())
+                .sorted(Comparator.<OrderItem>comparingInt(item -> item.getMeal().getProductType().getPriority())
                         .thenComparingLong(OrderItem::getId))
                 .map(orderItem -> OrderItemDto.builder()
                         .id(orderItem.getId())
                         .orderId(order.getId())
                         .orderName(order.getName())
-                        .name(orderItem.getMenuItem().getName())
+                        .name(orderItem.getMeal().getName())
                         .status(orderItem.getStatus())
                         .currentStation(this.getStationFromOrderItem(orderItem))
                         .flowStepType(this.getStepTypeFromOrderItem(orderItem))
                         .statusUpdatedAt(orderItem.getStatusUpdatedAt())
                         .createdAt(orderItem.getStatusUpdatedAt())
-                        .extra(orderItem.getMenuItem().getProductType().isExtra())
+                        .extra(orderItem.getMeal().getProductType().isExtra())
                         .build()
                 )
                 .toList();
@@ -239,20 +239,20 @@ public class OrderService {
     private List<OrderItemDto> getOrderFullItemData(Order order) {
         return order.getOrderItems()
                 .stream()
-                .sorted(Comparator.<OrderItem>comparingInt(item -> item.getMenuItem().getProductType().getPriority())
+                .sorted(Comparator.<OrderItem>comparingInt(item -> item.getMeal().getProductType().getPriority())
                         .thenComparingLong(OrderItem::getId))
                 .map(orderItem -> OrderItemDto.builder()
                         .id(orderItem.getId())
                         .orderId(order.getId())
                         .orderName(order.getName())
-                        .name(orderItem.getMenuItem().getName())
-                        .ingredients(this.ingredientService.getMenuItemIngredients(orderItem.getMenuItem().getId()))
+                        .name(orderItem.getMeal().getName())
+                        .ingredients(this.ingredientService.getMealIngredients(orderItem.getMeal().getId()))
                         .status(orderItem.getStatus())
                         .currentStation(this.getStationFromOrderItem(orderItem))
                         .flowStepType(this.getStepTypeFromOrderItem(orderItem))
                         .statusUpdatedAt(orderItem.getStatusUpdatedAt())
                         .createdAt(orderItem.getStatusUpdatedAt())
-                        .extra(orderItem.getMenuItem().getProductType().isExtra())
+                        .extra(orderItem.getMeal().getProductType().isExtra())
                         .build()
                 )
                 .toList();
@@ -260,7 +260,7 @@ public class OrderService {
 
     private Station getStationFromOrderItem(OrderItem orderItem) {
         return this.flowCacheService.getStep(
-                        orderItem.getMenuItem().getFlow().getId(),
+                        orderItem.getMeal().getFlow().getId(),
                         orderItem.getCurrentFlowStep()
                 )
                 .getStation();
@@ -268,7 +268,7 @@ public class OrderService {
 
     private FlowStepType getStepTypeFromOrderItem(OrderItem orderItem) {
         return this.flowCacheService.getStep(
-                        orderItem.getMenuItem().getFlow().getId(),
+                        orderItem.getMeal().getFlow().getId(),
                         orderItem.getCurrentFlowStep()
                 )
                 .getStepType();
@@ -285,11 +285,11 @@ public class OrderService {
         this.wsMessageSender.sendRefreshAll();
     }
 
-    public void createOrderItem(Long orderId, MenuItem menuItem) {
+    public void createOrderItem(Long orderId, Meal meal) {
         orderItemRepository.save(
                 OrderItem.builder()
                         .order(Order.of(orderId))
-                        .menuItem(menuItem)
+                        .meal(meal)
                         .build()
         );
     }
@@ -341,7 +341,7 @@ public class OrderService {
                     order.setKitchenGotOrderAt(now);
                     for (OrderItem orderItem : order.getOrderItems()) {
                         FlowStep step = this.flowCacheService.getStep(
-                                orderItem.getMenuItem().getFlow().getId(),
+                                orderItem.getMeal().getFlow().getId(),
                                 orderItem.getCurrentFlowStep()
                         );
                         flowSteps.add(step);

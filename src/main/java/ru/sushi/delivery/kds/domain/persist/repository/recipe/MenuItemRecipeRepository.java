@@ -3,22 +3,22 @@ package ru.sushi.delivery.kds.domain.persist.repository.recipe;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import ru.sushi.delivery.kds.domain.persist.entity.recipe.MenuItemRecipe;
+import ru.sushi.delivery.kds.domain.persist.entity.recipe.MealRecipe;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.Recipe;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.util.List;
 
 @Repository
-public interface MenuItemRecipeRepository extends JpaRepository<MenuItemRecipe, Long> {
+public interface MealRecipeRepository extends JpaRepository<MealRecipe, Long> {
 
     @Query("""
-        select recipe from MenuItemRecipe recipe
-        where recipe.menuItem.id in :menuItemIds
+        select recipe from MealRecipe recipe
+        where recipe.meal.id in :mealIds
     """)
-    List<Recipe> findByMenuItemIds(List<Long> menuItemId);
+    List<Recipe> findByMealIds(List<Long> mealId);
 
-    List<MenuItemRecipe> findByMenuItemId(Long id);
+    List<MealRecipe> findByMealId(Long id);
 
-    List<MenuItemRecipe> findAllBySourceIdAndSourceType(Long sourceId, SourceType sourceType);
+    List<MealRecipe> findAllBySourceIdAndSourceType(Long sourceId, SourceType sourceType);
 }

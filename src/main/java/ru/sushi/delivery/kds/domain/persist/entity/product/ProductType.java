@@ -1,22 +1,9 @@
 package ru.sushi.delivery.kds.domain.persist.entity.product;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.envers.Audited;
-import ru.sushi.delivery.kds.domain.controller.dto.MenuItemData;
+import ru.sushi.delivery.kds.domain.controller.dto.MealData;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 
 import java.util.HashSet;
@@ -58,9 +45,9 @@ public class ProductType {
     @Builder.Default
     private Set<ProductType> allowedNeighbors = new HashSet<>();
 
-    public static ProductType of(MenuItemData menuItemData, Flow flow) {
+    public static ProductType of(MealData mealData, Flow flow) {
         return ProductType.builder()
-                .name(menuItemData.getName())
+                .name(mealData.getName())
 //                .priority(priority)
 //                .length(length)
 //                .width(width)

@@ -19,7 +19,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
-import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.domain.persist.entity.product.Meal;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
@@ -55,11 +55,11 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     private final VerticalLayout setsTabLayout = new VerticalLayout();
     private final VerticalLayout extrasLayout = new VerticalLayout();
 
-    private final Grid<MenuItem> rollsGrid = new Grid<>(MenuItem.class, false);
+    private final Grid<Meal> rollsGrid = new Grid<>(Meal.class, false);
     private final Grid<ItemCombo> setsGrid = new Grid<>(ItemCombo.class, false);
-    private final List<MenuItem> menuMenuItems;
-    private final List<ItemCombo> menuItemCombos;
-    private final List<MenuItem> menuExtras;
+    private final List<Meal> menuMeals;
+    private final List<ItemCombo> mealCombos;
+    private final List<Meal> menuExtras;
 
     private final Grid<CartItem> chosenGrid = new Grid<>(CartItem.class, false);
     private final Grid<OrderShortDto> ordersGrid = new Grid<>(OrderShortDto.class, false);
@@ -77,8 +77,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         getStyle().set("padding", "20px");
         getStyle().set("gap", "20px");
 
-        this.menuMenuItems = viewService.getAllMenuItems();
-        this.menuItemCombos = viewService.getAllCombos();
+        this.menuMeals = viewService.getAllMeals();
+        this.mealCombos = viewService.getAllCombos();
         this.menuExtras = viewService.getAllExtras();
 
         finishPicker.setLocale(Locale.of("ru", "RU"));
@@ -114,19 +114,19 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         rollsSearchField.addValueChangeListener(e -> {
             String searchValue = e.getValue().trim().toLowerCase();
             if (searchValue.isEmpty()) {
-                rollsGrid.setItems(menuMenuItems);
+                rollsGrid.setItems(menuMeals);
             } else {
                 rollsGrid.setItems(
-                        menuMenuItems.stream()
+                        menuMeals.stream()
                                 .filter(item -> item.getName().toLowerCase().contains(searchValue))
                                 .collect(Collectors.toList())
                 );
             }
         });
 
-        rollsGrid.setItems(menuMenuItems);
-        rollsGrid.addColumn(MenuItem::getName).setHeader("Наименование");
-        rollsGrid.addColumn(MenuItem::getPrice).setHeader("Цена");
+        rollsGrid.setItems(menuMeals);
+        rollsGrid.addColumn(Meal::getName).setHeader("Наименование");
+        rollsGrid.addColumn(Meal::getPrice).setHeader("Цена");
         rollsGrid.setWidthFull();
         rollsGrid.addItemClickListener(e -> addToCart(e.getItem()));
 
@@ -143,22 +143,22 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsSearchField.addValueChangeListener(e -> {
             String searchValue = e.getValue().trim().toLowerCase();
             if (searchValue.isEmpty()) {
-                setsGrid.setItems(menuItemCombos);
+                setsGrid.setItems(mealCombos);
             } else {
                 setsGrid.setItems(
-                        menuItemCombos.stream()
+                        mealCombos.stream()
                                 .filter(s -> s.getName().toLowerCase().contains(searchValue))
                                 .collect(Collectors.toList())
                 );
             }
         });
 
-        setsGrid.setItems(menuItemCombos);
+        setsGrid.setItems(mealCombos);
         setsGrid.addColumn(ItemCombo::getName).setHeader("Наименование");
         setsGrid.setWidthFull();
         setsGrid.addItemClickListener(e -> {
             ItemCombo clickedSet = e.getItem();
-            for (MenuItem item : clickedSet.getMenuItems()) {
+            for (Meal item : clickedSet.getMeals()) {
                 addToCart(item);
             }
             Notification.show("Добавлен сет: " + clickedSet.getName());
@@ -230,13 +230,13 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     }
 
     // Метод для обновления списка допов в две колонки
-    private void updateExtrasList(VerticalLayout leftColumn, VerticalLayout rightColumn, List<MenuItem> items) {
+    private void updateExtrasList(VerticalLayout leftColumn, VerticalLayout rightColumn, List<Meal> items) {
         leftColumn.removeAll();
         rightColumn.removeAll();
 
         int halfSize = (items.size() + 1) / 2; // Делим список на две части, округляя вверх
         for (int i = 0; i < items.size(); i++) {
-            MenuItem item = items.get(i);
+            Meal item = items.get(i);
             HorizontalLayout itemLayout = new HorizontalLayout();
             itemLayout.setWidthFull();
             itemLayout.setAlignItems(Alignment.CENTER);
@@ -261,9 +261,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         }
     }
 
-    private void addToCart(MenuItem item) {
+    private void addToCart(Meal item) {
         CartItem existingItem = cartItems.stream()
-                .filter(cartItem -> cartItem.getMenuItem().equals(item))
+                .filter(cartItem -> cartItem.getMeal().equals(item))
                 .findFirst()
                 .orElse(null);
 
@@ -284,9 +284,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         ); // Обновляем список допов
     }
 
-    private void removeFromCart(MenuItem item, Span quantityLabel) {
+    private void removeFromCart(Meal item, Span quantityLabel) {
         CartItem existingItem = cartItems.stream()
-                .filter(cartItem -> cartItem.getMenuItem().equals(item))
+                .filter(cartItem -> cartItem.getMeal().equals(item))
                 .findFirst()
                 .orElse(null);
 
@@ -304,9 +304,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         }
     }
 
-    private int getCartQuantity(MenuItem item) {
+    private int getCartQuantity(Meal item) {
         return cartItems.stream()
-                .filter(cartItem -> cartItem.getMenuItem().equals(item))
+                .filter(cartItem -> cartItem.getMeal().equals(item))
                 .mapToInt(CartItem::getQuantity)
                 .findFirst()
                 .orElse(0);
@@ -317,9 +317,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         cartLayout.setWidthFull();
 
         H3 chosenTitle = new H3("Корзина:");
-        chosenGrid.addColumn(cartItem -> cartItem.getMenuItem().getName()).setHeader("Наименование");
+        chosenGrid.addColumn(cartItem -> cartItem.getMeal().getName()).setHeader("Наименование");
         chosenGrid.addColumn(CartItem::getQuantity).setHeader("Кол-во");
-        chosenGrid.addColumn(cartItem -> cartItem.getMenuItem().getPrice() * cartItem.getQuantity()).setHeader("Цена");
+        chosenGrid.addColumn(cartItem -> cartItem.getMeal().getPrice() * cartItem.getQuantity()).setHeader("Цена");
         chosenGrid.addComponentColumn(cartItem -> {
             HorizontalLayout buttons = new HorizontalLayout();
             Button removeBtn = new Button(VaadinIcon.MINUS.create());
@@ -395,10 +395,10 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 return;
             }
 
-            List<MenuItem> itemsToCreate = new ArrayList<>();
+            List<Meal> itemsToCreate = new ArrayList<>();
             for (CartItem cartItem : cartItems) {
                 for (int i = 0; i < cartItem.getQuantity(); i++) {
-                    itemsToCreate.add(cartItem.getMenuItem());
+                    itemsToCreate.add(cartItem.getMeal());
                 }
             }
 
@@ -447,7 +447,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
 
     private void updateTotalPay() {
         double total = cartItems.stream()
-                .mapToDouble(cartItem -> cartItem.getMenuItem().getPrice() * cartItem.getQuantity())
+                .mapToDouble(cartItem -> cartItem.getMeal().getPrice() * cartItem.getQuantity())
                 .sum();
         totalPay.setText("К оплате: " + total + " рублей");
     }
@@ -614,9 +614,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         rollSearchField.setPlaceholder("Введите название...");
         rollSearchField.setValueChangeMode(ValueChangeMode.EAGER);
 
-        Grid<MenuItem> rollsGrid = new Grid<>(MenuItem.class, false);
+        Grid<Meal> rollsGrid = new Grid<>(Meal.class, false);
         rollsGrid.setWidthFull();
-        rollsGrid.addColumn(MenuItem::getName).setHeader("Наименование");
+        rollsGrid.addColumn(Meal::getName).setHeader("Наименование");
 
         rollsGrid.addComponentColumn(item -> {
             Button addButton = new Button("Добавить");
@@ -628,15 +628,15 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             return addButton;
         }).setHeader("Действие");
 
-        rollsGrid.setItems(menuMenuItems);
+        rollsGrid.setItems(menuMeals);
 
         rollSearchField.addValueChangeListener(ev -> {
             String search = ev.getValue().toLowerCase().trim();
             if (search.isEmpty()) {
-                rollsGrid.setItems(menuMenuItems);
+                rollsGrid.setItems(menuMeals);
             } else {
                 rollsGrid.setItems(
-                        menuMenuItems.stream()
+                        menuMeals.stream()
                                 .filter(item -> item.getName().toLowerCase().contains(search))
                                 .collect(Collectors.toList())
                 );
@@ -656,7 +656,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         setsGrid.addComponentColumn(set -> {
             Button addButton = new Button("Добавить");
             addButton.addClickListener(click -> {
-                for (MenuItem i : set.getMenuItems()) {
+                for (Meal i : set.getMeals()) {
                     viewService.addItemToOrder(orderId, i);
                 }
                 Notification.show("Добавлен сет: " + set.getName());
@@ -665,15 +665,15 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             return addButton;
         }).setHeader("Действие");
 
-        setsGrid.setItems(menuItemCombos);
+        setsGrid.setItems(mealCombos);
 
         setSearchField.addValueChangeListener(ev -> {
             String search = ev.getValue().toLowerCase().trim();
             if (search.isEmpty()) {
-                setsGrid.setItems(menuItemCombos);
+                setsGrid.setItems(mealCombos);
             } else {
                 setsGrid.setItems(
-                        menuItemCombos.stream()
+                        mealCombos.stream()
                                 .filter(set -> set.getName().toLowerCase().contains(search))
                                 .collect(Collectors.toList())
                 );
@@ -720,10 +720,10 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     private void updateTotalTime() {
         int totalSeconds = cartItems.stream()
                 .mapToInt(cartItem -> {
-                    if (cartItem.getMenuItem().getTimeToCook() == null) {
+                    if (cartItem.getMeal().getTimeToCook() == null) {
                         return 0;
                     }
-                    return Math.toIntExact(cartItem.getMenuItem().getTimeToCook().toSeconds()) * cartItem.getQuantity();
+                    return Math.toIntExact(cartItem.getMeal().getTimeToCook().toSeconds()) * cartItem.getQuantity();
                 })
                 .sum();
 
