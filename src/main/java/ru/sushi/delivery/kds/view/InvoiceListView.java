@@ -17,7 +17,7 @@ import ru.sushi.delivery.kds.domain.service.ActService;
 
 import java.util.List;
 
-@Route("invoices")
+@Route("invoice-add")
 public class InvoiceListView extends VerticalLayout {
 
     private final ActService actService;
@@ -43,13 +43,13 @@ public class InvoiceListView extends VerticalLayout {
         grid.addColumn(new ComponentRenderer<>(invoice -> new Button("Удалить", e -> confirmDelete(invoice))))
             .setHeader("Действия").setWidth("100px");
         grid.setHeight("70vh");
-        grid.addItemClickListener(event -> UI.getCurrent().navigate("invoices/" + event.getItem().getId()));
+        grid.addItemClickListener(event -> UI.getCurrent().navigate("invoice-add/" + event.getItem().getId()));
 
         // Инициализация диалога удаления
         deleteDialog = createDeleteDialog();
 
         // Кнопка добавления
-        Button addButton = new Button("Добавить накладную", e -> UI.getCurrent().navigate("invoices/new"));
+        Button addButton = new Button("Добавить накладную", e -> UI.getCurrent().navigate("invoice-add/new"));
         HorizontalLayout buttonLayout = new HorizontalLayout(addButton);
         buttonLayout.setJustifyContentMode(JustifyContentMode.END);
         buttonLayout.setWidthFull();
