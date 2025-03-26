@@ -29,12 +29,12 @@ public interface WriteOffItemRepository extends JpaRepository<WriteOffItem, Long
                             wi.createdAt
                         )
                         from WriteOffItem wi
-                        left join IngredientItem ii 
+                    left join Ingredient ii 
                             on ii.id = wi.sourceId and wi.sourceType = ru.sushi.delivery.kds.model.SourceType.INGREDIENT
-                        left join Ingredient i on i.id = ii.ingredient.id
-                        left join PrepackItem pi 
+                    left join Ingredient i on i.id = ii.id
+                    left join Prepack pi 
                             on pi.id = wi.sourceId and wi.sourceType = ru.sushi.delivery.kds.model.SourceType.PREPACK
-                        left join Prepack p on p.id = pi.prepack.id
+                    left join Prepack p on p.id = pi.id
             """)
     Page<WriteOffItemWrapper> findAllWithName(Pageable pageable);
 }

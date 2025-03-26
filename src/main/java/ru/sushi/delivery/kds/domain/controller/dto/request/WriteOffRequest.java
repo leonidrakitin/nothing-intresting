@@ -11,10 +11,10 @@ import ru.sushi.delivery.kds.model.SourceType;
 @AllArgsConstructor
 public class WriteOffRequest {
 
-    private Long sourceItemId;                 // ID продукта (IngredientItem / PrepackItem)
-    private SourceType sourceType;             // INGREDIENT или PREPACK
-    private String employeeName;               // имя сотрудника
+    private Long sourceId;
+    private SourceType sourceType;
+    private String employeeName;
     private Double writeOffAmount;
-    private DiscontinuedReason discontinuedReason; // причина (SPOILED, FINISHED и т.д.)
-    private String customReasonComment;        // опционально — свой комментарий
+    private DiscontinuedReason discontinuedReason;
+    private String customReasonComment;
 }

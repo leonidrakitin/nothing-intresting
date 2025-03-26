@@ -50,6 +50,15 @@ public class SourceItemService {
                 )).toList();
     }
 
+    public List<SourceDto> getAllIngredients() {
+        return this.ingredientRepository.findAll().stream()
+            .map(ingredient -> new SourceDto(
+                ingredient.getId(),
+                ingredient.getName(),
+                SourceType.INGREDIENT.name()
+            )).toList();
+    }
+
     public List<SourceItem> getSourceActiveItems(Long sourceId, SourceType sourceType) {
         return switch (sourceType) {
             case INGREDIENT -> this.ingredientItemRepository.findActiveByIngredientId(sourceId);
