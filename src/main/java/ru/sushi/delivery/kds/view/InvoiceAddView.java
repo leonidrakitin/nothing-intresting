@@ -22,9 +22,11 @@ import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-@Route(value = "invoices/:id")
+@Route(value = "invoice-add/:id")
 public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserver {
 
     private static final String NEW_INVOICE = "new";
@@ -36,6 +38,7 @@ public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserve
     private final List<SourceDto> sources;
     private Grid<InvoiceActItemDto> itemsGrid;
     private Span summarySpan;
+    private final Map<InvoiceActItemDto, Double> itemVatMap = new HashMap<>();
 
     public InvoiceAddView(ActService actService, SourceItemService sourceItemService) {
         this.actService = actService;
@@ -59,6 +62,7 @@ public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserve
             Long invoiceId = Long.parseLong(idParam);
             invoice = actService.getInvoice(invoiceId);
             isEditMode = false;
+            invoice.getItemDataList().forEach(item -> itemVatMap.put(item, 0.0));
         }
         buildUI();
     }
@@ -80,12 +84,10 @@ public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserve
             vendorField.addValueChangeListener(e -> invoice = invoice.toBuilder().vendor(e.getValue()).build());
         }
 
-        // Инициализация таблицы для позиций
         itemsGrid = new Grid<>(InvoiceActItemDto.class, false);
         itemsGrid.setItems(invoice.getItemDataList());
-        itemsGrid.setHeight("400px"); // Устанавливаем фиксированную высоту для прокрутки
+        itemsGrid.setHeight("400px");
 
-        // Колонки таблицы
         if (isEditMode) {
             itemsGrid.addColumn(new ComponentRenderer<>(item -> {
                 ComboBox<SourceDto> sourceCombo = new ComboBox<>();
@@ -105,38 +107,80 @@ public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserve
                     }
                 });
                 return sourceCombo;
-            })).setHeader("Наименование").setWidth("40%");
+            })).setHeader("Наименование").setWidth("30%");
 
             itemsGrid.addColumn(new ComponentRenderer<>(item -> {
                 NumberField amountField = new NumberField();
                 amountField.setValue(item.getAmount());
                 amountField.addValueChangeListener(e -> {
-                    InvoiceActItemDto updatedItem = item.toBuilder().amount(e.getValue()).build();
-                    updateItemInList(item, updatedItem);
-                    updateGridAndSummary();
+                    double newAmount = e.getValue();
+                    if (newAmount > 0) {
+                        double vat = itemVatMap.getOrDefault(item, 0.0) / 100;
+                        double currentTotalWithVat = Math.round(item.getAmount() * item.getPrice() * (1 + vat) * 100.0) / 100.0;
+                        double newPrice = Math.round((currentTotalWithVat / (1 + vat) / newAmount) * 100.0) / 100.0;
+                        InvoiceActItemDto updatedItem = item.toBuilder()
+                            .amount(newAmount)
+                            .price(newPrice)
+                            .build();
+                        updateItemInList(item, updatedItem);
+                        updateGridAndSummary();
+                    }
+                    else {
+                        Notification.show("Количество должно быть больше нуля");
+                        amountField.setValue(item.getAmount());
+                    }
                 });
                 return amountField;
             })).setHeader("Количество").setWidth("15%");
 
+            itemsGrid.addColumn(item -> String.format("%.2f", item.getPrice()))
+                .setHeader("Цена").setWidth("15%");
+
             itemsGrid.addColumn(new ComponentRenderer<>(item -> {
-                NumberField priceField = new NumberField();
-                priceField.setValue(item.getPrice());
-                priceField.addValueChangeListener(e -> {
-                    InvoiceActItemDto updatedItem = item.toBuilder().price(e.getValue()).build();
+                double vat = itemVatMap.getOrDefault(item, 0.0) / 100;
+                double totalWithVat = Math.round(item.getAmount() * item.getPrice() * (1 + vat) * 100.0) / 100.0;
+                NumberField totalField = new NumberField();
+                totalField.setValue(totalWithVat);
+                totalField.addValueChangeListener(e -> {
+                    double newTotalWithVat = e.getValue();
+                    double amount = item.getAmount();
+                    if (amount > 0) {
+                        double itemVat = itemVatMap.getOrDefault(item, 0.0) / 100;
+                        double newPrice = Math.round((newTotalWithVat / (1 + itemVat) / amount) * 100.0) / 100.0;
+                        InvoiceActItemDto updatedItem = item.toBuilder()
+                            .price(newPrice)
+                            .build();
+                        updateItemInList(item, updatedItem);
+                        updateGridAndSummary();
+                    }
+                    else {
+                        Notification.show("Количество должно быть больше нуля");
+                    }
+                });
+                return totalField;
+            })).setHeader("Сумма").setWidth("15%");
+
+            itemsGrid.addColumn(new ComponentRenderer<>(item -> {
+                NumberField vatField = new NumberField();
+                vatField.setValue(itemVatMap.getOrDefault(item, 0.0));
+                vatField.addValueChangeListener(e -> {
+                    double newVat = e.getValue() / 100; // НДС в долях
+                    double currentTotalWithVat = Math.round(item.getAmount() * item.getPrice() * (1 + itemVatMap.getOrDefault(item, 0.0) / 100) * 100.0) / 100.0;
+                    double newPrice = Math.round((currentTotalWithVat / (item.getAmount() * (1 + newVat))) * 100.0) / 100.0;
+                    InvoiceActItemDto updatedItem = item.toBuilder().price(newPrice).build();
                     updateItemInList(item, updatedItem);
+                    itemVatMap.put(updatedItem, e.getValue());
                     updateGridAndSummary();
                 });
-                return priceField;
-            })).setHeader("Цена").setWidth("15%");
-
-            itemsGrid.addColumn(item -> String.format("%.2f", item.getAmount() * item.getPrice()))
-                .setHeader("Сумма").setWidth("15%");
+                return vatField;
+            })).setHeader("НДС %").setWidth("10%");
 
             itemsGrid.addColumn(new ComponentRenderer<>(item -> {
                 Button removeButton = new Button("Удалить", e -> {
                     List<InvoiceActItemDto> newList = new ArrayList<>(invoice.getItemDataList());
                     newList.remove(item);
                     invoice = invoice.toBuilder().itemDataList(newList).build();
+                    itemVatMap.remove(item);
                     updateGridAndSummary();
                 });
                 return removeButton;
@@ -144,11 +188,16 @@ public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserve
         }
         else {
             itemsGrid.addColumn(item -> item.getName() != null ? item.getName() : "")
-                .setHeader("Наименование").setWidth("40%");
+                .setHeader("Наименование").setWidth("30%");
+            itemsGrid.addColumn(item -> String.format("%.2f%%", itemVatMap.getOrDefault(item, 0.0)))
+                .setHeader("НДС").setWidth("10%");
             itemsGrid.addColumn(InvoiceActItemDto::getAmount).setHeader("Количество").setWidth("15%");
-            itemsGrid.addColumn(InvoiceActItemDto::getPrice).setHeader("Цена").setWidth("15%");
-            itemsGrid.addColumn(item -> String.format("%.2f", item.getAmount() * item.getPrice()))
-                .setHeader("Сумма").setWidth("30%");
+            itemsGrid.addColumn(item -> {
+                double vat = itemVatMap.getOrDefault(item, 0.0) / 100;
+                return String.format("%.2f", Math.round(item.getAmount() * item.getPrice() * (1 + vat) * 100.0) / 100.0);
+            }).setHeader("Сумма").setWidth("15%");
+            itemsGrid.addColumn(item -> String.format("%.2f", item.getPrice()))
+                .setHeader("Цена").setWidth("15%");
         }
 
         Button addItemButton = new Button("Добавить позицию", e -> {
@@ -162,6 +211,7 @@ public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserve
             List<InvoiceActItemDto> newList = new ArrayList<>(invoice.getItemDataList());
             newList.add(newItem);
             invoice = invoice.toBuilder().itemDataList(newList).build();
+            itemVatMap.put(newItem, 0.0);
             updateGridAndSummary();
         });
         addItemButton.setVisible(isEditMode);
@@ -190,8 +240,11 @@ public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserve
         List<InvoiceActItemDto> newList = new ArrayList<>(invoice.getItemDataList());
         int index = newList.indexOf(oldItem);
         if (index != -1) {
+            Double vat = itemVatMap.get(oldItem);
             newList.set(index, newItem);
             invoice = invoice.toBuilder().itemDataList(newList).build();
+            itemVatMap.remove(oldItem);
+            itemVatMap.put(newItem, vat != null ? vat : 0.0);
         }
     }
 
@@ -202,7 +255,10 @@ public class InvoiceAddView extends VerticalLayout implements BeforeEnterObserve
 
     private void updateSummary() {
         double totalCost = invoice.getItemDataList().stream()
-            .mapToDouble(item -> item.getAmount() * item.getPrice())
+            .mapToDouble(item -> {
+                double vat = itemVatMap.getOrDefault(item, 0.0) / 100;
+                return Math.round(item.getAmount() * item.getPrice() * (1 + vat) * 100.0) / 100.0;
+            })
             .sum();
         int totalItems = invoice.getItemDataList().size();
         summarySpan.setText(String.format("Позиций: %d, Сумма: %.2f", totalItems, totalCost));

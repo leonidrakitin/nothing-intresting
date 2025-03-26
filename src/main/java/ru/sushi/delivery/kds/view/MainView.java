@@ -76,7 +76,7 @@ public class MainView extends VerticalLayout {
 
         Button goToInvoiceView = new Button("Накладные");
         goToInvoiceView.addClickListener(e ->
-            UI.getCurrent().navigate("invoices")
+            UI.getCurrent().navigate("invoice-add")
         );
         add(goToInvoiceView);
     }
