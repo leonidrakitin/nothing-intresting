@@ -38,4 +38,13 @@ public class SourceService {
         };
     }
 
+    public Product getSource(Long sourceId, SourceType sourceType) {
+        return switch (sourceType) {
+            case INGREDIENT -> this.ingredientRepository.findById(sourceId)
+                    .orElseThrow(() -> new NotFoundException("Ingredient not found by id " + sourceId));
+            case PREPACK -> this.prepackRepository.findById(sourceId)
+                    .orElseThrow(() -> new NotFoundException("Prepack not found by " + sourceId));
+            default -> throw new IllegalStateException("Unexpected value: " + sourceType);
+        };
+    }
 }

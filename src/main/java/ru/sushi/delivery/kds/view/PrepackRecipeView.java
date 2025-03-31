@@ -4,6 +4,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -42,6 +43,8 @@ public class PrepackRecipeView extends VerticalLayout {
     private final NumberField lossesAmountField = new NumberField("Потери");
     private final NumberField lossesPercentField = new NumberField("Потери (%)");
 
+    private final HorizontalLayout totalsLayout = new HorizontalLayout();
+
     // Кнопки
     private final Button saveButton = new Button("Добавить в рецепт");
     private final Button cancelButton = new Button("Отменить изменения");
@@ -62,12 +65,14 @@ public class PrepackRecipeView extends VerticalLayout {
 
         initMainComboBox();
         initRecipeGrid();
+        initTotalsLayout(); // Инициализация итогов
         initRecipeForm();
 
         // Размещаем компоненты на странице
         add(
                 prepackComboBox,
                 recipeGrid,
+                totalsLayout, // Убедитесь, что эта строка присутствует
                 new Hr(),
                 createAddFormLayout()
         );
@@ -115,6 +120,8 @@ public class PrepackRecipeView extends VerticalLayout {
                 .setHeader("Потери");
         recipeGrid.addColumn(PrepackRecipeData::getLossesPercentage)
                 .setHeader("Потери (%)");
+        recipeGrid.addColumn(PrepackRecipeData::getFcCost)
+                .setHeader("Себестоимость");
 
         // Добавляем колонку "Действия" с кнопками "Изменить"/"Удалить"
         recipeGrid.addComponentColumn(this::createActionButtons)
@@ -339,5 +346,46 @@ public class PrepackRecipeView extends VerticalLayout {
         List<PrepackRecipeData> recipeList =
                 recipeService.getPrepackRecipeByPrepackId(prepackId);
         recipeGrid.setItems(recipeList);
+        updateTotals(); // Обновляем итоги после изменения данных
+    }
+
+    private void initTotalsLayout() {
+        totalsLayout.setWidthFull();
+        totalsLayout.setJustifyContentMode(JustifyContentMode.START);
+        updateTotals(); // Изначально пустые значения
+    }
+
+    private void updateTotals() {
+        List<PrepackRecipeData> items = recipeGrid.getListDataView().getItems().toList();
+
+        double totalInitAmount = items.stream()
+                .mapToDouble(item -> item.getInitAmount() != null ? item.getInitAmount() : 0.0)
+                .sum();
+        double totalFinalAmount = items.stream()
+                .mapToDouble(item -> item.getFinalAmount() != null ? item.getFinalAmount() : 0.0)
+                .sum();
+        double totalLossesAmount = items.stream()
+                .mapToDouble(item -> item.getLossesAmount() != null ? item.getLossesAmount() : 0.0)
+                .sum();
+        double totalFcCost = items.stream()
+                .mapToDouble(item -> item.getFcCost() != null ? item.getFcCost() : 0.0)
+                .sum();
+        double totalFcCostFor1Kg = totalFcCost * 1000 / totalFinalAmount;
+
+        // Очищаем предыдущие значения
+        totalsLayout.removeAll();
+
+        // Добавляем новые итоговые значения
+        totalsLayout.add(
+                new Span("Изнач. кол-во: " + String.format("%.2f руб", totalInitAmount)),
+                new Span("Итог. кол-во: " + String.format("%.2f руб", totalFinalAmount)),
+                new Span("Потери: " + String.format("%.2f руб", totalLossesAmount)),
+                new Span("Себестоимость: " + String.format("%.2f руб", totalFcCost)),
+                new Span("Себестоимость за 1кг: " + String.format("%.2f рубц", totalFcCostFor1Kg))
+        );
+
+        // Устанавливаем отступы между элементами
+        totalsLayout.getChildren().forEach(component ->
+                component.getElement().getStyle().set("margin-right", "20px"));
     }
 }

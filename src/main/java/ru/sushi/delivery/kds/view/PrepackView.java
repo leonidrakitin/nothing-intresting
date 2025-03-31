@@ -41,6 +41,7 @@ public class PrepackView extends VerticalLayout {
     private final NumberField expirationDaysField = new NumberField("Срок годности (дни)");
     private final NumberField expirationHoursField = new NumberField("Срок годности (часы)");
     private final NumberField notifyAfterAmountField = new NumberField("Уведомить при остатке");
+    private final NumberField fcPriceField = new NumberField("Закупочная цена");
     private final ComboBox<Measurement> measurementUnitField = new ComboBox<>("Единица измерения");
 
     // Кнопка, которая переключается между "Добавить" и "Изменить"
@@ -98,6 +99,11 @@ public class PrepackView extends VerticalLayout {
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
+        prepackGrid.addColumn(PrepackData::getFcPrice)
+                .setHeader("Себестоимость за 1кг")
+                .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
         // Колонка с кнопками "Изменить" и "Удалить"
         prepackGrid.addComponentColumn(this::createActionButtons)
                 .setHeader("Действия")
@@ -137,6 +143,7 @@ public class PrepackView extends VerticalLayout {
                 ? prepack.getNotifyAfterAmount()
                 : 0.0
         );
+        fcPriceField.setValue(prepack.getFcPrice() != null ? prepack.getFcPrice() : 0.0);
 
         // Measurement
         Measurement measurement = measurementService.getAll().stream()
@@ -159,6 +166,7 @@ public class PrepackView extends VerticalLayout {
         notifyAfterAmountField.setPlaceholder("Введите количество для уведомления");
         expirationDaysField.setPlaceholder("Введите количество дней");
         expirationHoursField.setPlaceholder("Введите количество часов");
+        fcPriceField.setPlaceholder("Введите себестоимость за 1кг или за 100 шт");
 
         // Заполняем ComboBox единицами измерения
         List<Measurement> measurements = measurementService.getAll();
@@ -198,6 +206,7 @@ public class PrepackView extends VerticalLayout {
                 expirationHoursField,
                 notifyAfterAmountField,
                 measurementUnitField,
+                fcPriceField,
                 new HorizontalLayout(saveButton, cancelButton)
         );
 
@@ -220,6 +229,9 @@ public class PrepackView extends VerticalLayout {
         Long expirationHours = expirationHoursField.getValue() != null
                 ? expirationHoursField.getValue().longValue()
                 : 0;
+        Double fcPrice = fcPriceField.getValue() != null
+                ? fcPriceField.getValue()
+                : null;
 
         double notifyAfterAmount = notifyAfterAmountField.getValue() != null
                 ? notifyAfterAmountField.getValue()
@@ -236,13 +248,12 @@ public class PrepackView extends VerticalLayout {
         PrepackData prepackData = PrepackData.builder()
                 .id(id)
                 .name(name)
+                .fcPrice(fcPrice)
                 .measurementUnitName(selectedMeasurement.getName())
                 .expirationDuration(expirationDuration)
                 .notifyAfterAmount(notifyAfterAmount)
                 .build();
 
-        // Предполагаем, что метод savePrepack в сервисе
-        // умеет и создавать, и обновлять в зависимости от того, есть ли ID
         prepackService.savePrepack(prepackData);
 
         Notification.show(id == null ? "ПФ добавлен!" : "Изменения сохранены!");

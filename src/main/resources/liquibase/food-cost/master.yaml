@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: products.NEW_FIELD_PACKAGE.30.03.25.12.55.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: products_aud.NEW_FIELD_PACKAGE.30.03.25.12.55.yaml
+      relativeToChangelogFile: true

@@ -81,6 +81,7 @@ public class IngredientService {
         return ingredient.toBuilder()
                 .id(ingredientData.getId())
                 .name(ingredientData.getName())
+                .fcPrice(ingredientData.getFcPrice())
                 .pieceInGrams(ingredientData.getPieceInGrams())
                 .expirationDuration(ingredientData.getExpirationDuration())
                 .notifyAfterAmount(ingredientData.getNotifyAfterAmount())

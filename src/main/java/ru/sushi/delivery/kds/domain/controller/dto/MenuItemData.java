@@ -18,6 +18,8 @@ public class MenuItemData {
 
     private Double price;
 
+    private Double fcPrice;
+
     private Long id;
 
     private String name;
@@ -30,6 +32,7 @@ public class MenuItemData {
                 .id(menuItem.getId())
                 .name(menuItem.getName())
                 .price(menuItem.getPrice())
+                .fcPrice(menuItem.getFcPrice())
                 .timeToCook(menuItem.getTimeToCook())
                 .build();
     }

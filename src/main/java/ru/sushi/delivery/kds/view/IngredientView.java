@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.controller.dto.IngredientDto;
 import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.Recipe;
+import ru.sushi.delivery.kds.domain.service.FoodCostService;
 import ru.sushi.delivery.kds.domain.service.IngredientService;
 import ru.sushi.delivery.kds.domain.service.MeasurementService;
 import ru.sushi.delivery.kds.domain.service.RecipeService;
@@ -34,18 +35,22 @@ public class IngredientView extends VerticalLayout {
     private final MeasurementService measurementService;
     private final RecipeService recipeService;
     private final SourceService sourceService;
+    private final FoodCostService foodCostService;
 
     private final Grid<IngredientDto> ingredientGrid = new Grid<>();
     private final ComboBox<Measurement> measurementUnitField = new ComboBox<>("Единица измерения");
 
     private final TextField nameField = new TextField("Название");
     private final NumberField pieceInGramsField = new NumberField("Количество в граммах");
+    private final NumberField fcPriceField = new NumberField("Закупочная цена");
     private final NumberField expirationDaysField = new NumberField("Срок годности (дни)");
     private final NumberField expirationHoursField = new NumberField("Срок годности (часы)");
     private final NumberField notifyAfterAmountField = new NumberField("Уведомить при остатке");
 
     // Кнопка, которая будет переключаться между "Добавить" и "Изменить"
     private final Button saveButton = new Button("Добавить новый ингредиент");
+    private final Button fcCalcButton = new Button("Пересчитать себестоимость");
+
     // Кнопка "Отменить изменение"
     private final Button cancelButton = new Button("Отменить изменения");
 
@@ -53,7 +58,14 @@ public class IngredientView extends VerticalLayout {
     private IngredientDto currentEditingIngredient = null;
 
     @Autowired
-    public IngredientView(IngredientService ingredientService, MeasurementService measurementService, RecipeService recipeService, SourceService sourceService) {
+    public IngredientView(
+            FoodCostService foodCostService,
+            IngredientService ingredientService,
+            MeasurementService measurementService,
+            RecipeService recipeService,
+            SourceService sourceService
+    ) {
+        this.foodCostService = foodCostService;
         this.ingredientService = ingredientService;
         this.measurementService = measurementService;
         this.recipeService = recipeService;
@@ -98,6 +110,11 @@ public class IngredientView extends VerticalLayout {
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
+        ingredientGrid.addColumn(IngredientDto::getFcPrice)
+                .setHeader("Себестоимость за 1кг")
+                .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
         // Добавляем колонку "Действия" с кнопками "Изменить" и "Удалить"
         ingredientGrid.addComponentColumn(this::createActionButtons)
                 .setHeader("Действия")
@@ -130,6 +147,7 @@ public class IngredientView extends VerticalLayout {
 
         nameField.setValue(ingredient.getName() != null ? ingredient.getName() : "");
         pieceInGramsField.setValue(ingredient.getPieceInGrams() != null ? ingredient.getPieceInGrams().doubleValue() : 0.0);
+        fcPriceField.setValue(ingredient.getFcPrice() != null ? ingredient.getFcPrice() : 0.0);
         if (ingredient.getExpirationDuration() != null) {
             long days = ingredient.getExpirationDuration().toDays();
             long hours = ingredient.getExpirationDuration().toHours() % 24;
@@ -165,6 +183,7 @@ public class IngredientView extends VerticalLayout {
         nameField.setPlaceholder("Введите название");
         notifyAfterAmountField.setPlaceholder("Введите количество для уведомления");
         pieceInGramsField.setPlaceholder("Введите количество в граммах");
+        fcPriceField.setPlaceholder("Введите себестоимость за 1кг или за 100шт");
         expirationDaysField.setPlaceholder("Введите количество дней");
         expirationHoursField.setPlaceholder("Введите количество часов");
 
@@ -208,6 +227,12 @@ public class IngredientView extends VerticalLayout {
             }
         });
         saveButton.getStyle().set("min-width", "150px"); // Минимальная ширина кнопки
+        fcCalcButton.addClickListener(e -> {
+            if (fcPriceField.getValue() != null) {
+                foodCostService.calculateFoodCost();
+                Notification.show("Фудкост пересчитан!");
+            }
+        });
 
         // Создаём FormLayout
         FormLayout formLayout = new FormLayout();
@@ -225,7 +250,8 @@ public class IngredientView extends VerticalLayout {
                 notifyAfterAmountField,
                 measurementUnitField,
                 pieceInGramsField,
-                new HorizontalLayout(saveButton, cancelButton)
+                fcPriceField,
+                new HorizontalLayout(saveButton, fcCalcButton, cancelButton)
         );
 
         // Задаём выравнивание кнопки
@@ -244,7 +270,9 @@ public class IngredientView extends VerticalLayout {
         Long pieceInGrams = pieceInGramsField.getValue() != null
                 ? pieceInGramsField.getValue().longValue()
                 : null;
-
+        Double fcPrice = fcPriceField.getValue() != null
+                ? fcPriceField.getValue()
+                : null;
         Long expirationDays = expirationDaysField.getValue() != null
                 ? expirationDaysField.getValue().longValue()
                 : 0;
@@ -270,6 +298,7 @@ public class IngredientView extends VerticalLayout {
         IngredientDto ingredientDto = IngredientDto.builder()
                 .id(id) // если id=null, значит создаём новый; если нет — обновляем
                 .name(name)
+                .fcPrice(fcPrice)
                 .pieceInGrams(pieceInGrams)
                 .expirationDuration(expirationDuration)
                 .notifyAfterAmount(notifyAfterAmount)

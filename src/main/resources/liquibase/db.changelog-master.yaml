@@ -35,3 +35,6 @@ databaseChangeLog:
   - include:
       file: orders/master.yaml
       relativeToChangelogFile: true
+  - include:
+      file: food-cost/master.yaml
+      relativeToChangelogFile: true

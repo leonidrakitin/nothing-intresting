@@ -78,6 +78,11 @@ public class MenuItemView extends VerticalLayout {
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
+        menuItemGrid.addColumn(MenuItemData::getFcPrice)
+                .setHeader("Себестоимость")
+                .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
         menuItemGrid.addColumn(MenuItemData::getFlow)
                 .setHeader("Отображение")
                 .setSortable(true)

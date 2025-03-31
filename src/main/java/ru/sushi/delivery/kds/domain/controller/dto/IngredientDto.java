@@ -21,6 +21,7 @@ public class IngredientDto extends AbstractProductData {
                 .id(ingredient.getId())
                 .name(ingredient.getName())
                 .pieceInGrams(ingredient.getPieceInGrams())
+                .fcPrice(ingredient.getFcPrice())
                 .measurementUnitName(ingredient.getMeasurementUnit().getName())
                 .expirationDuration(ingredient.getExpirationDuration())
                 .notifyAfterAmount(ingredient.getNotifyAfterAmount())

@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: products.NEW_FIELD_PACKAGE.30.03.25.12.55
+      author: rakitin
+      changes:
+        - addColumn:
+            tableName: ingredient_aud
+            columns:
+              - column:
+                  name: fc_price
+                  type: FLOAT8
+        - addColumn:
+            tableName: prepack_aud
+            columns:
+              - column:
+                  name: fc_price
+                  type: FLOAT8
+        - addColumn:
+            tableName: menu_item_aud
+            columns:
+              - column:
+                  name: fc_price
+                  type: FLOAT8

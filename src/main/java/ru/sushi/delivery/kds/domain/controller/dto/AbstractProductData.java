@@ -18,4 +18,5 @@ public abstract class AbstractProductData {
     private String measurementUnitName;
     private Duration expirationDuration;
     private Double notifyAfterAmount;
+    private Double fcPrice;
 }

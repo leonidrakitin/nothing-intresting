@@ -29,9 +29,9 @@ management:
       enabled: true
 spring:
   datasource:
-    url: ${SQL_URL}
-    username: ${SQL_USERNAME}
-    password: ${SQL_PASSWORD}
+    url: ${SQL_URL:jdbc:postgresql://185.239.50.43:5432/kds}
+    username: ${SQL_USERNAME:root}
+    password: ${SQL_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
   jpa:
     database: postgresql

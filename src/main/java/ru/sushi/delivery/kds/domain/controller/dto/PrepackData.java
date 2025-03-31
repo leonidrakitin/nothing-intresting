@@ -16,6 +16,7 @@ public class PrepackData extends AbstractProductData {
         return PrepackData.builder()
                 .id(prepack.getId())
                 .name(prepack.getName())
+                .fcPrice(prepack.getFcPrice())
                 .measurementUnitName(prepack.getMeasurementUnit().getName())
                 .expirationDuration(prepack.getExpirationDuration())
                 .notifyAfterAmount(prepack.getNotifyAfterAmount())

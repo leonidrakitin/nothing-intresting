@@ -114,7 +114,10 @@ public class RecipeService {
         List<PrepackRecipe> prepackRecipes = this.prepackRecipeRepository.findByPrepackId(prepackId);
         return prepackRecipes.stream().map(prepackRecipe -> PrepackRecipeData.of(
                         prepackRecipe,
-                this.sourceService.getSourceName(
+                        this.sourceService.getSourceName(
+                                prepackRecipe.getSourceId(),
+                                prepackRecipe.getSourceType()),
+                        this.sourceService.getSource(
                                 prepackRecipe.getSourceId(),
                                 prepackRecipe.getSourceType())
                 )
@@ -168,7 +171,10 @@ public class RecipeService {
         List<MenuItemRecipe> menuItemRecipes = this.menuItemRecipeRepository.findByMenuItemId(menuId);
         return menuItemRecipes.stream().map(menuItemRecipe -> MenuItemRecipeDto.of(
                                 menuItemRecipe,
-                        this.sourceService.getSourceName(
+                                this.sourceService.getSourceName(
+                                        menuItemRecipe.getSourceId(),
+                                        menuItemRecipe.getSourceType()),
+                                this.sourceService.getSource(
                                         menuItemRecipe.getSourceId(),
                                         menuItemRecipe.getSourceType())
                         )

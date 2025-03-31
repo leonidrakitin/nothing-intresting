@@ -4,6 +4,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -46,6 +47,8 @@ public class MenuItemRecipeView extends VerticalLayout {
     private final NumberField lossesAmountField = new NumberField("Потери");
     private final NumberField lossesPercentField = new NumberField("Потери (%)");
 
+    private final HorizontalLayout totalsLayout = new HorizontalLayout();
+
     // Кнопки формы
     private final Button saveButton = new Button("Добавить в рецепт");
     private final Button cancelButton = new Button("Отменить изменения");
@@ -67,12 +70,14 @@ public class MenuItemRecipeView extends VerticalLayout {
 
         initMainComboBox();
         initRecipeGrid();
+        initTotalsLayout(); // Инициализация итогов
         initRecipeForm();
 
         // Размещаем на странице
         add(
                 menuItemComboBox,
                 recipeGrid,
+                totalsLayout, // Убедитесь, что эта строка присутствует
                 new Hr(),
                 createRecipeFormLayout()
         );
@@ -128,6 +133,8 @@ public class MenuItemRecipeView extends VerticalLayout {
                 .setHeader("Потери");
         recipeGrid.addColumn(MenuItemRecipeDto::getLossesPercentage)
                 .setHeader("Потери (%)");
+        recipeGrid.addColumn(MenuItemRecipeDto::getFcCost)
+                .setHeader("Себестоимость");
 
         // Колонка "Действия" — «Изменить» и «Удалить»
         recipeGrid.addComponentColumn(this::createActionButtons)
@@ -381,5 +388,44 @@ public class MenuItemRecipeView extends VerticalLayout {
     private void refreshRecipeGrid(Long menuId) {
         List<MenuItemRecipeDto> recipes = recipeService.getMenuRecipeByMenuId(menuId);
         recipeGrid.setItems(recipes);
+        updateTotals(); // Обновляем итоги после изменения данных
+    }
+
+    private void initTotalsLayout() {
+        totalsLayout.setWidthFull();
+        totalsLayout.setJustifyContentMode(JustifyContentMode.START);
+        updateTotals(); // Изначально пустые значения
+    }
+
+    private void updateTotals() {
+        List<MenuItemRecipeDto> items = recipeGrid.getListDataView().getItems().toList();
+
+        double totalInitAmount = items.stream()
+                .mapToDouble(item -> item.getInitAmount() != null ? item.getInitAmount() : 0.0)
+                .sum();
+        double totalFinalAmount = items.stream()
+                .mapToDouble(item -> item.getFinalAmount() != null ? item.getFinalAmount() : 0.0)
+                .sum();
+        double totalLossesAmount = items.stream()
+                .mapToDouble(item -> item.getLossesAmount() != null ? item.getLossesAmount() : 0.0)
+                .sum();
+        double totalFcCost = items.stream()
+                .mapToDouble(item -> item.getFcCost() != null ? item.getFcCost() : 0.0)
+                .sum();
+
+        // Очищаем предыдущие значения
+        totalsLayout.removeAll();
+
+        // Добавляем новые итоговые значения
+        totalsLayout.add(
+                new Span("Изнач. кол-во: " + String.format("%.2f", totalInitAmount)),
+                new Span("Итог. кол-во: " + String.format("%.2f", totalFinalAmount)),
+                new Span("Потери: " + String.format("%.2f", totalLossesAmount)),
+                new Span("Себестоимость: " + String.format("%.2f", totalFcCost))
+        );
+
+        // Устанавливаем отступы между элементами
+        totalsLayout.getChildren().forEach(component ->
+                component.getElement().getStyle().set("margin-right", "20px"));
     }
 }

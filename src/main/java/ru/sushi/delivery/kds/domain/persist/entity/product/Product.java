@@ -27,6 +27,8 @@ public abstract class Product {
 
     private String name;
 
+    private Double fcPrice;
+
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "measurement_unit_id")

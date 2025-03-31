@@ -50,6 +50,8 @@ public class MenuItem {
 
     private Double price;
 
+    private Double fcPrice;
+
     private Duration timeToCook;
 
     public static MenuItem of(MenuItemData menuItemData, Flow flow) {
