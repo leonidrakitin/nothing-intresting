@@ -377,8 +377,8 @@ public class PrepackRecipeView extends VerticalLayout {
 
         // Добавляем новые итоговые значения
         totalsLayout.add(
-                new Span("Изнач. кол-во: " + String.format("%.2f руб", totalInitAmount)),
-                new Span("Итог. кол-во: " + String.format("%.2f руб", totalFinalAmount)),
+                new Span("Изнач. кол-во: " + String.format("%.2fг", totalInitAmount)),
+                new Span("Итог. кол-во: " + String.format("%.2fг", totalFinalAmount)),
                 new Span("Потери: " + String.format("%.2f руб", totalLossesAmount)),
                 new Span("Себестоимость: " + String.format("%.2f руб", totalFcCost)),
                 new Span("Себестоимость за 1кг: " + String.format("%.2f рубц", totalFcCostFor1Kg))

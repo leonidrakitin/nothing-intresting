@@ -418,10 +418,10 @@ public class MenuItemRecipeView extends VerticalLayout {
 
         // Добавляем новые итоговые значения
         totalsLayout.add(
-                new Span("Изнач. кол-во: " + String.format("%.2f", totalInitAmount)),
-                new Span("Итог. кол-во: " + String.format("%.2f", totalFinalAmount)),
-                new Span("Потери: " + String.format("%.2f", totalLossesAmount)),
-                new Span("Себестоимость: " + String.format("%.2f", totalFcCost))
+                new Span("Изнач. кол-во: " + String.format("%.2fг", totalInitAmount)),
+                new Span("Итог. кол-во: " + String.format("%.2fг", totalFinalAmount)),
+                new Span("Потери: " + String.format("%.2fг", totalLossesAmount)),
+                new Span("Себестоимость: " + String.format("%.2f руб", totalFcCost))
         );
 
         // Устанавливаем отступы между элементами
