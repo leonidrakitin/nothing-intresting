@@ -4,10 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.sushi.delivery.kds.domain.persist.entity.product.Product;
 import ru.sushi.delivery.kds.domain.persist.entity.recipe.PrepackRecipe;
-
-import java.util.Optional;
 
 @Data
 @Builder
@@ -24,15 +21,7 @@ public class PrepackRecipeData {
     private Double lossesPercentage;
     private Double fcCost;
 
-    public static PrepackRecipeData of(PrepackRecipe prepackRecipe, String sourceName, Product product) {
-        double fcPrice = Optional.ofNullable(product.getFcPrice()).orElse(0.0);
-        if (product.getMeasurementUnit().getId() == 1) {
-            fcPrice += fcPrice == 0
-                    ? 0.0
-                    : fcPrice / prepackRecipe.getInitAmount();
-        } else {
-            fcPrice += fcPrice / 100 * prepackRecipe.getInitAmount();
-        }
+    public static PrepackRecipeData of(PrepackRecipe prepackRecipe, String sourceName) {
         return PrepackRecipeData.builder()
                 .id(prepackRecipe.getId())
                 .sourceName(sourceName)
@@ -44,7 +33,7 @@ public class PrepackRecipeData {
                 .finalAmount(prepackRecipe.getFinalAmount())
                 .lossesAmount(prepackRecipe.getLossesAmount())
                 .lossesPercentage(prepackRecipe.getLossesPercentage())
-                .fcCost(fcPrice)
+                .fcCost(prepackRecipe.getFcPrice())
                 .build();
     }
 }

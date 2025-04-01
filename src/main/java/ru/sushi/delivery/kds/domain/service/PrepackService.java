@@ -8,16 +8,19 @@ import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 import ru.sushi.delivery.kds.domain.persist.entity.product.Prepack;
 import ru.sushi.delivery.kds.domain.persist.repository.MeasurementRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.product.PrepackRepository;
+import ru.sushi.delivery.kds.domain.persist.repository.recipe.PrepackRecipeRepository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.DoubleStream;
 
 @Service
 @RequiredArgsConstructor
 public class PrepackService {
 
     private final PrepackRepository prepackRepository;
+    private final PrepackRecipeRepository prepackRecipeRepository;
     private final MeasurementRepository measurementRepository;
 
     public Prepack get(Long id) {
@@ -26,7 +29,14 @@ public class PrepackService {
     }
 
     public List<PrepackData> getAllPrepacks() {
-        return this.prepackRepository.findAll().stream().map(PrepackData::of).toList();
+        return this.prepackRepository.findAll().stream()
+                .map(prepack -> PrepackData.of(
+                        prepack,
+                        this.prepackRecipeRepository.findByPrepackId(prepack.getId()).stream()
+                                .flatMapToDouble(recipe -> DoubleStream.of(recipe.getInitAmount()))
+                                .sum()
+                ))
+                .toList();
     }
 
     public void deletePrepack(PrepackData prepackData) {

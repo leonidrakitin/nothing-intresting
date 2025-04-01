@@ -11,12 +11,12 @@ import ru.sushi.delivery.kds.domain.persist.entity.product.Prepack;
 @NoArgsConstructor
 @SuperBuilder
 public class PrepackData extends AbstractProductData {
-
-    public static PrepackData of(Prepack prepack) {
+    public static PrepackData of(Prepack prepack, Double totalAmount) {
+        double fcPrice = prepack.getFcPrice()/totalAmount * (prepack.getMeasurementUnit().getId() == 1 ? 1000 : 100);
         return PrepackData.builder()
                 .id(prepack.getId())
                 .name(prepack.getName())
-                .fcPrice(prepack.getFcPrice())
+                .fcPrice(fcPrice)
                 .measurementUnitName(prepack.getMeasurementUnit().getName())
                 .expirationDuration(prepack.getExpirationDuration())
                 .notifyAfterAmount(prepack.getNotifyAfterAmount())

@@ -55,6 +55,7 @@ public class FoodCostService {
         for (Prepack prepack : prepacks) {
             double prepackPrice = this.calculatePrepackFoodCost(prepack, prepackPriceCache, ingredientPriceCache);
             prepack.setFcPrice(prepackPrice);
+
         }
         for (MenuItem menuItem : menuItems) {
             double fcPrice = 0;
@@ -75,7 +76,9 @@ public class FoodCostService {
                 if (isPeaces) {
                     measurementCoefValue = 100;
                 }
-                fcPrice += initPrice / measurementCoefValue * menuItemRecipe.getInitAmount();
+                double recipeFcCost = initPrice / measurementCoefValue * menuItemRecipe.getInitAmount();
+                menuItemRecipe.setFcPrice(recipeFcCost);
+                fcPrice += recipeFcCost;
             }
             menuItem.setFcPrice(fcPrice);
         }
@@ -94,17 +97,17 @@ public class FoodCostService {
         }
         List<PrepackRecipe> prepackRecipeList = this.prepackRecipeRepository.findByPrepackId(prepackId);
         double totalWeight = 0;
-        for (PrepackRecipe prepackRecipe : prepackRecipeList) {
-            if (prepackRecipe.getSourceType() == SourceType.INGREDIENT && prepackRecipe.getMeasurement().getId() == 2) {
-                long onePeaceInGrams = this.ingredientRepository.findById(prepackRecipe.getSourceId())
-                        .map(Ingredient::getPieceInGrams)
-                        .orElse(0L);
-                totalWeight += onePeaceInGrams * prepackRecipe.getFinalAmount();
-            } else {
-                totalWeight += prepackRecipe.getFinalAmount();
-            }
-        }
-        double coefAmount = totalWeight <= 0 ? 1 : 1000 / totalWeight;
+//        for (PrepackRecipe prepackRecipe : prepackRecipeList) {
+//            if (prepackRecipe.getSourceType() == SourceType.INGREDIENT && prepackRecipe.getMeasurement().getId() == 2) {
+//                long onePeaceInGrams = this.ingredientRepository.findById(prepackRecipe.getSourceId())
+//                        .map(Ingredient::getPieceInGrams)
+//                        .orElse(0L);
+//                totalWeight += onePeaceInGrams * prepackRecipe.getFinalAmount();
+//            } else {
+//                totalWeight += prepackRecipe.getFinalAmount();
+//            }
+//        }
+//        double coefAmount = totalWeight <= 0 ? 1 : 1000 / totalWeight;
         double price = 0;
         for (PrepackRecipe prepackRecipe : prepackRecipeList) {
             if (prepackRecipe.getSourceType() == SourceType.PREPACK) {
@@ -119,19 +122,32 @@ public class FoodCostService {
                         : prepackPriceInit / prepackRecipe.getInitAmount();
                 prepack.setFcPrice(prepackPrice);
                 prepackPriceCache.put(prepackRecipe.getSourceId(), prepackPrice);
-                price += prepackPrice * coefAmount;
+                price += prepackPrice;// * coefAmount;
+                prepackRecipe.setFcPrice(prepackPrice);
             } else {
                 double ingredientPriceInit = ingredientPriceCache.getOrDefault(prepackRecipe.getSourceId(), 0.0);
-                if (prepackRecipe.getMeasurement().getId() == 1) {
-                    ingredientPriceInit = ingredientPriceInit * (1 + prepackRecipe.getLossesPercentage());
-                    price += ingredientPriceInit == 0
-                            ? 0.0
-                            : ingredientPriceInit / prepackRecipe.getInitAmount() * coefAmount;
+                double qtyAmount;
+                if (prepackRecipe.getMeasurement().getId() == 2) {
+                    qtyAmount = 100;
                 } else {
-                    price += ingredientPriceInit / 100 * prepackRecipe.getInitAmount() * coefAmount;
+                    qtyAmount = 1000;
                 }
+                double recipePrice = ingredientPriceInit == 0
+                        ? 0.0
+                        : ingredientPriceInit * (1 + prepackRecipe.getLossesPercentage()/100) / qtyAmount * prepackRecipe.getInitAmount();
+                price += recipePrice;
+                prepackRecipe.setFcPrice(recipePrice);
+            }
+            if (prepackRecipe.getSourceType() == SourceType.INGREDIENT && prepackRecipe.getMeasurement().getId() == 2) {
+                long onePeaceInGrams = this.ingredientRepository.findById(prepackRecipe.getSourceId())
+                        .map(Ingredient::getPieceInGrams)
+                        .orElse(0L);
+                totalWeight += onePeaceInGrams * prepackRecipe.getFinalAmount();
+            } else {
+                totalWeight += prepackRecipe.getInitAmount();
             }
         }
+        prepackPriceCache.put(prepack.getId(), price/totalWeight*1000);
         return price;
     }
 }

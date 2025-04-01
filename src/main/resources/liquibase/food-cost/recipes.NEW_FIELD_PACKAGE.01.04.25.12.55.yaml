@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: recipes.NEW_FIELD_PACKAGE.30.03.25.12.55
+      author: rakitin
+      changes:
+        - addColumn:
+            tableName: recipe_prepack
+            columns:
+              - column:
+                  name: fc_price
+                  type: FLOAT8
+        - addColumn:
+            tableName: recipe_prepack_aud
+            columns:
+              - column:
+                  name: fc_price
+                  type: FLOAT8
+        - addColumn:
+            tableName: recipe_menu_item
+            columns:
+              - column:
+                  name: fc_price
+                  type: FLOAT8
+        - addColumn:
+            tableName: recipe_menu_item_aud
+            columns:
+              - column:
+                  name: fc_price
+                  type: FLOAT8

@@ -98,7 +98,7 @@ public class PrepackView extends VerticalLayout {
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        prepackGrid.addColumn(PrepackData::getFcPrice)
+        prepackGrid.addColumn(prepack -> String.format("%.2f руб", prepack.getFcPrice()))
                 .setHeader("Себестоимость за 1кг")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");

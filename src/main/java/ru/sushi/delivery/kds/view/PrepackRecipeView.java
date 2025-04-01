@@ -120,7 +120,7 @@ public class PrepackRecipeView extends VerticalLayout {
                 .setHeader("Потери");
         recipeGrid.addColumn(PrepackRecipeData::getLossesPercentage)
                 .setHeader("Потери (%)");
-        recipeGrid.addColumn(PrepackRecipeData::getFcCost)
+        recipeGrid.addColumn(recipe -> String.format("%.2f руб", recipe.getFcCost()))
                 .setHeader("Себестоимость");
 
         // Добавляем колонку "Действия" с кнопками "Изменить"/"Удалить"
@@ -370,7 +370,7 @@ public class PrepackRecipeView extends VerticalLayout {
         double totalFcCost = items.stream()
                 .mapToDouble(item -> item.getFcCost() != null ? item.getFcCost() : 0.0)
                 .sum();
-        double totalFcCostFor1Kg = totalFcCost * 1000 / totalFinalAmount;
+        double totalFcCostFor1Kg = totalFcCost * 1000 / totalInitAmount;
 
         // Очищаем предыдущие значения
         totalsLayout.removeAll();
@@ -381,7 +381,7 @@ public class PrepackRecipeView extends VerticalLayout {
                 new Span("Итог. кол-во: " + String.format("%.2fг", totalFinalAmount)),
                 new Span("Потери: " + String.format("%.2f руб", totalLossesAmount)),
                 new Span("Себестоимость: " + String.format("%.2f руб", totalFcCost)),
-                new Span("Себестоимость за 1кг: " + String.format("%.2f рубц", totalFcCostFor1Kg))
+                new Span("Себестоимость за 1кг: " + String.format("%.2f руб", totalFcCostFor1Kg))
         );
 
         // Устанавливаем отступы между элементами

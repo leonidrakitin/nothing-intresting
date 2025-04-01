@@ -110,7 +110,7 @@ public class IngredientView extends VerticalLayout {
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        ingredientGrid.addColumn(IngredientDto::getFcPrice)
+        ingredientGrid.addColumn(ingredientDto -> String.format("%.2f руб", ingredientDto.getFcPrice()))
                 .setHeader("Себестоимость за 1кг")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");

@@ -116,9 +116,6 @@ public class RecipeService {
                         prepackRecipe,
                         this.sourceService.getSourceName(
                                 prepackRecipe.getSourceId(),
-                                prepackRecipe.getSourceType()),
-                        this.sourceService.getSource(
-                                prepackRecipe.getSourceId(),
                                 prepackRecipe.getSourceType())
                 )
         ).toList();
@@ -172,9 +169,6 @@ public class RecipeService {
         return menuItemRecipes.stream().map(menuItemRecipe -> MenuItemRecipeDto.of(
                                 menuItemRecipe,
                                 this.sourceService.getSourceName(
-                                        menuItemRecipe.getSourceId(),
-                                        menuItemRecipe.getSourceType()),
-                                this.sourceService.getSource(
                                         menuItemRecipe.getSourceId(),
                                         menuItemRecipe.getSourceType())
                         )

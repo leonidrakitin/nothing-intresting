@@ -18,7 +18,7 @@ public class MenuItemData {
 
     private Double price;
 
-    private Double fcPrice;
+    private String fcPrice;
 
     private Long id;
 
@@ -32,7 +32,7 @@ public class MenuItemData {
                 .id(menuItem.getId())
                 .name(menuItem.getName())
                 .price(menuItem.getPrice())
-                .fcPrice(menuItem.getFcPrice())
+                .fcPrice(String.format("%.2f руб", menuItem.getFcPrice()))
                 .timeToCook(menuItem.getTimeToCook())
                 .build();
     }

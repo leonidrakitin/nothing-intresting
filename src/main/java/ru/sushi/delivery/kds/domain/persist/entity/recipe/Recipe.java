@@ -38,6 +38,8 @@ public abstract class Recipe {
 
     private Double finalAmount;
 
+    private Double fcPrice;
+
     @Builder.Default
     private Double lossesAmount = 0.0;
 

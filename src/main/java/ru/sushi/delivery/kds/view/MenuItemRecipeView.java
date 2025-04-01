@@ -133,7 +133,7 @@ public class MenuItemRecipeView extends VerticalLayout {
                 .setHeader("Потери");
         recipeGrid.addColumn(MenuItemRecipeDto::getLossesPercentage)
                 .setHeader("Потери (%)");
-        recipeGrid.addColumn(MenuItemRecipeDto::getFcCost)
+        recipeGrid.addColumn(recipe -> String.format("%.2f руб", recipe.getFcCost()))
                 .setHeader("Себестоимость");
 
         // Колонка "Действия" — «Изменить» и «Удалить»
