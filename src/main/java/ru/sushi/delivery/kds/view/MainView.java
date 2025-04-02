@@ -75,7 +75,7 @@ public class MainView extends VerticalLayout {
         add(goToMenuItemRecipeView);
 
         Button goToMenuPriceView = new Button("Изменить цены");
-        goToMenuItemView.addClickListener(e ->
+        goToMenuPriceView.addClickListener(e ->
                 UI.getCurrent().navigate("menu-price")
         );
         add(goToMenuPriceView);
