@@ -18,13 +18,17 @@ import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.FlowRepository;
 import ru.sushi.delivery.kds.domain.service.MenuItemService;
 
+import java.text.DecimalFormat;
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 
 @Route(value = "menu-items")
 @PageTitle("Пункты меню | Доставка Суши")
 @PermitAll
 public class MenuItemView extends VerticalLayout {
+
+    private final DecimalFormat priceFactFormat = new DecimalFormat("#");
 
     private final MenuItemService menuItemService;
     private final FlowRepository flowRepository;
@@ -64,6 +68,7 @@ public class MenuItemView extends VerticalLayout {
         menuItemGrid.setSizeFull();
 
         menuItemGrid.addColumn(MenuItemData::getId)
+                .setAutoWidth(true)
                 .setHeader("ID")
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
@@ -78,9 +83,30 @@ public class MenuItemView extends VerticalLayout {
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        menuItemGrid.addColumn(MenuItemData::getFcPrice)
+        menuItemGrid.addColumn(data -> Double.valueOf(priceFactFormat.format(
+                        Double.isNaN(data.getFcPrice()) ? 0.0 : data.getFcPrice()/ getCoef(data)
+                )))
+                .setHeader("Расчет. цены")
+                .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
+        menuItemGrid.addColumn(data -> String.format(
+                        "%.0f (%.01f%%)",
+                        data.getPrice() - Double.parseDouble(
+                                Double.isNaN(data.getFcPrice()) ? String.valueOf(0.0) : priceFactFormat.format(data.getFcPrice()/ getCoef(data))
+                        ),
+                        (data.getPrice() - Double.parseDouble(
+                                Double.isNaN(data.getFcPrice()) ? String.valueOf(0.0) : priceFactFormat.format(data.getFcPrice()/ getCoef(data))
+                        )) / data.getPrice() * 100
+                ))
+                .setHeader("Изменение цены")
+                .setSortable(true)
+                .setClassNameGenerator(item -> "text-center");
+
+        menuItemGrid.addColumn(data -> String.format("%.2f", data.getFcPrice()))
                 .setHeader("Себестоимость")
                 .setSortable(true)
+                .setComparator(Comparator.comparingDouble(MenuItemData::getFcPrice))
                 .setClassNameGenerator(item -> "text-center");
 
         menuItemGrid.addColumn(MenuItemData::getFlow)
@@ -97,6 +123,10 @@ public class MenuItemView extends VerticalLayout {
         menuItemGrid.addComponentColumn(this::createActionButtons)
                 .setHeader("Действия")
                 .setClassNameGenerator(item -> "text-center");
+    }
+
+    private static double getCoef(MenuItemData data) {
+        return data.getName().toLowerCase().contains("фила") ? 0.4 : 0.32;
     }
 
     /**
