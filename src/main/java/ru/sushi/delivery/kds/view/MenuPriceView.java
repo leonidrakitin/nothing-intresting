@@ -13,7 +13,6 @@ import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.controller.dto.MenuItemData;
-import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.FlowRepository;
 import ru.sushi.delivery.kds.domain.service.MenuItemService;
 
@@ -151,8 +150,6 @@ public class MenuPriceView extends VerticalLayout {
         priceField.setPlaceholder("Введите цену");
         fcCoefField.setPlaceholder("Введите % себестоимости");
 
-        List<Flow> flows = flowRepository.findAll();
-
         cancelButton.setVisible(false);
         cancelButton.addClickListener(e -> {
             remove(formLayout);
@@ -178,11 +175,12 @@ public class MenuPriceView extends VerticalLayout {
 
     private void createOrUpdateMenuItem(Long id) {
         MenuItemData menuItemData = MenuItemData.builder()
+                .id(id)
                 .fcCoef(fcCoefField.getValue())
                 .price(priceField.getValue())
                 .build();
 
-        menuItemService.saveMenuItem(menuItemData);
+        menuItemService.saveMenuPrice(menuItemData);
         Notification.show("Изменения сохранены!");
         remove(formLayout); // Удаляем форму после сохранения
         clearForm();

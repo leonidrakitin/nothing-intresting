@@ -54,6 +54,15 @@ public class MenuItemService {
         menuItemRepository.save(menuItem);
     }
 
+    public void saveMenuPrice(MenuItemData menuItemData) {
+        MenuItem menuItem = Optional.ofNullable(menuItemData.getId())
+                .map(this.menuItemRepository::findById)
+                .flatMap(Function.identity())
+                .map(m -> this.setNewMenuItemData(m, menuItemData))
+                .orElseThrow();
+        menuItemRepository.save(menuItem);
+    }
+
     public MenuItem setNewMenuItemData(
             MenuItem menuItem,
             MenuItemData menuItemData,
@@ -63,6 +72,16 @@ public class MenuItemService {
                 .id(menuItem.getId())
                 .name(menuItemData.getName())
                 .flow(flow)
+                .build();
+    }
+
+    public MenuItem setNewMenuItemData(
+            MenuItem menuItem,
+            MenuItemData menuItemData
+    ) {
+        return menuItem.toBuilder()
+                .price(menuItemData.getPrice())
+                .fcCoef(menuItemData.getFcCoef())
                 .build();
     }
 }
