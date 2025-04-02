@@ -20,6 +20,8 @@ public class MenuItemData {
 
     private Double fcPrice;
 
+    private Double fcCoef;
+
     private Long id;
 
     private String name;
@@ -32,6 +34,7 @@ public class MenuItemData {
                 .id(menuItem.getId())
                 .name(menuItem.getName())
                 .price(menuItem.getPrice())
+                .fcCoef(menuItem.getFcCoef())
                 .fcPrice(menuItem.getFcPrice())
                 .timeToCook(menuItem.getTimeToCook())
                 .build();

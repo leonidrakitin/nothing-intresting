@@ -24,6 +24,7 @@ import ru.sushi.delivery.kds.domain.service.SourceService;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 
 @Route(value = "ingredients")
@@ -113,6 +114,7 @@ public class IngredientView extends VerticalLayout {
         ingredientGrid.addColumn(ingredientDto -> String.format("%.2f руб", ingredientDto.getFcPrice()))
                 .setHeader("Себестоимость за 1кг")
                 .setSortable(true)
+                .setComparator(Comparator.comparingDouble(IngredientDto::getFcPrice))
                 .setClassNameGenerator(item -> "text-center");
 
         // Добавляем колонку "Действия" с кнопками "Изменить" и "Удалить"

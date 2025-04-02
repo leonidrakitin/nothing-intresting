@@ -18,17 +18,13 @@ import ru.sushi.delivery.kds.domain.persist.entity.flow.Flow;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.FlowRepository;
 import ru.sushi.delivery.kds.domain.service.MenuItemService;
 
-import java.text.DecimalFormat;
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.List;
 
 @Route(value = "menu-items")
 @PageTitle("Пункты меню | Доставка Суши")
 @PermitAll
 public class MenuItemView extends VerticalLayout {
-
-    private final DecimalFormat priceFactFormat = new DecimalFormat("#");
 
     private final MenuItemService menuItemService;
     private final FlowRepository flowRepository;
@@ -38,7 +34,6 @@ public class MenuItemView extends VerticalLayout {
     private final TextField nameField = new TextField("Название");
     private final ComboBox<Flow> flowComboBox = new ComboBox<>("Отображение");
     private final NumberField timeToCookSecField = new NumberField("Время приготовления (сек)");
-    private final NumberField priceField = new NumberField("Цена (рублей)");
 
     // Кнопка, которая переключается между "Добавить" и "Изменить"
     private final Button saveButton = new Button("Добавить пункт меню");
@@ -78,37 +73,6 @@ public class MenuItemView extends VerticalLayout {
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        menuItemGrid.addColumn(MenuItemData::getPrice)
-                .setHeader("Цена")
-                .setSortable(true)
-                .setClassNameGenerator(item -> "text-center");
-
-        menuItemGrid.addColumn(data -> Double.valueOf(priceFactFormat.format(
-                        Double.isNaN(data.getFcPrice()) ? 0.0 : data.getFcPrice()/ getCoef(data)
-                )))
-                .setHeader("Расчет. цены")
-                .setSortable(true)
-                .setClassNameGenerator(item -> "text-center");
-
-        menuItemGrid.addColumn(data -> String.format(
-                        "%.0f (%.01f%%)",
-                        data.getPrice() - Double.parseDouble(
-                                Double.isNaN(data.getFcPrice()) ? String.valueOf(0.0) : priceFactFormat.format(data.getFcPrice()/ getCoef(data))
-                        ),
-                        (data.getPrice() - Double.parseDouble(
-                                Double.isNaN(data.getFcPrice()) ? String.valueOf(0.0) : priceFactFormat.format(data.getFcPrice()/ getCoef(data))
-                        )) / data.getPrice() * 100
-                ))
-                .setHeader("Изменение цены")
-                .setSortable(true)
-                .setClassNameGenerator(item -> "text-center");
-
-        menuItemGrid.addColumn(data -> String.format("%.2f", data.getFcPrice()))
-                .setHeader("Себестоимость")
-                .setSortable(true)
-                .setComparator(Comparator.comparingDouble(MenuItemData::getFcPrice))
-                .setClassNameGenerator(item -> "text-center");
-
         menuItemGrid.addColumn(MenuItemData::getFlow)
                 .setHeader("Отображение")
                 .setSortable(true)
@@ -123,10 +87,6 @@ public class MenuItemView extends VerticalLayout {
         menuItemGrid.addComponentColumn(this::createActionButtons)
                 .setHeader("Действия")
                 .setClassNameGenerator(item -> "text-center");
-    }
-
-    private static double getCoef(MenuItemData data) {
-        return data.getName().toLowerCase().contains("фила") ? 0.4 : 0.32;
     }
 
     /**
@@ -161,12 +121,10 @@ public class MenuItemView extends VerticalLayout {
                     .orElse(null);
             flowComboBox.setValue(flow);
             timeToCookSecField.setValue((double) menuItem.getTimeToCook().toSeconds());
-            priceField.setValue(menuItem.getPrice());
         }
         else {
             flowComboBox.clear();
             timeToCookSecField.clear();
-            priceField.clear();
         }
 
         // Меняем текст кнопки
@@ -181,7 +139,6 @@ public class MenuItemView extends VerticalLayout {
     private FormLayout createForm() {
         nameField.setPlaceholder("Введите название пункта меню");
         timeToCookSecField.setPlaceholder("Введите количество секунд");
-        priceField.setPlaceholder("Введите цену");
 
         // Список всех доступных потоков (Flow)
         List<Flow> flows = flowRepository.findAll();
@@ -218,7 +175,6 @@ public class MenuItemView extends VerticalLayout {
                 nameField,
                 flowComboBox,
                 timeToCookSecField,
-                priceField,
                 new HorizontalLayout(saveButton, cancelButton)
         );
 
@@ -242,16 +198,13 @@ public class MenuItemView extends VerticalLayout {
                 : 0;
         Duration timeToCookDuration = Duration.ofSeconds(expirationSec);
 
-        // Собираем DTO
         MenuItemData menuItemData = MenuItemData.builder()
                 .id(id)
                 .name(name)
                 .flow(selectedFlow.getName())
                 .timeToCook(timeToCookDuration)
-                .price(priceField.getValue())
                 .build();
 
-        // Сохраняем (сервис сам определит create/update по наличию id)
         menuItemService.saveMenuItem(menuItemData);
 
         Notification.show(id == null ? "Пункт меню успешно добавлен!" : "Изменения сохранены!");
@@ -284,7 +237,6 @@ public class MenuItemView extends VerticalLayout {
         nameField.clear();
         flowComboBox.clear();
         timeToCookSecField.clear();
-        priceField.clear();
         currentEditingMenuItem = null;
         saveButton.setText("Добавить пункт меню");
         cancelButton.setVisible(false);

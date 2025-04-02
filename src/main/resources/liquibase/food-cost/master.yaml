@@ -8,3 +8,6 @@ databaseChangeLog:
   - include:
       file: recipes.NEW_FIELD_PACKAGE.01.04.25.12.55.yaml
       relativeToChangelogFile: true
+  - include:
+      file: menu-item.NEW_FIELD_FC_COST.02.04.25.12.55.yaml
+      relativeToChangelogFile: true

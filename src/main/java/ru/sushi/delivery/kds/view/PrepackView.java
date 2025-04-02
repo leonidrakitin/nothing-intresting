@@ -23,6 +23,7 @@ import ru.sushi.delivery.kds.domain.service.SourceService;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 
 @Route(value = "prepacks")
@@ -101,6 +102,7 @@ public class PrepackView extends VerticalLayout {
         prepackGrid.addColumn(prepack -> String.format("%.2f руб", prepack.getFcPrice()))
                 .setHeader("Себестоимость за 1кг")
                 .setSortable(true)
+                .setComparator(Comparator.comparingDouble(PrepackData::getFcPrice))
                 .setClassNameGenerator(item -> "text-center");
 
         // Колонка с кнопками "Изменить" и "Удалить"

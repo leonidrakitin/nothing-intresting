@@ -53,7 +53,14 @@ public class FoodCostService {
                 ));
 
         for (Prepack prepack : prepacks) {
-            double prepackPrice = this.calculatePrepackFoodCost(prepack, prepackPriceCache, ingredientPriceCache);
+            double prepackPrice = 0;
+            try {
+                prepackPrice = this.calculatePrepackFoodCost(prepack, prepackPriceCache, ingredientPriceCache, 0);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                prepackPrice = 0;
+            }
+
             prepack.setFcPrice(prepackPrice);
 
         }
@@ -89,8 +96,12 @@ public class FoodCostService {
     private double calculatePrepackFoodCost(
             Prepack prepack,
             Map<Long, Double> prepackPriceCache,
-            Map<Long, Double> ingredientPriceCache
+            Map<Long, Double> ingredientPriceCache,
+            int cycle
     ) {
+        if (cycle > 100) {
+            return 0;
+        }
         Long prepackId = prepack.getId();
         if (prepackPriceCache.containsKey(prepackId)) {
             return prepackPriceCache.get(prepackId);
@@ -114,14 +125,17 @@ public class FoodCostService {
                 double prepackPriceInit = this.calculatePrepackFoodCost(
                         this.prepackRepository.findById(prepackRecipe.getSourceId()).get(),
                         prepackPriceCache,
-                        ingredientPriceCache
+                        ingredientPriceCache,
+                        cycle+1
                 );
                 prepackPriceInit = prepackPriceInit * (1 + prepackRecipe.getLossesPercentage());
                 double prepackPrice = prepackPriceInit == 0
                         ? 0.0
                         : prepackPriceInit / prepackRecipe.getInitAmount();
                 prepack.setFcPrice(prepackPrice);
-                prepackPriceCache.put(prepackRecipe.getSourceId(), prepackPrice);
+                if (prepackPriceCache.get(prepackRecipe.getSourceId()) != null) {
+                    prepackPriceCache.put(prepackRecipe.getSourceId(), prepackPriceInit);
+                }
                 price += prepackPrice;// * coefAmount;
                 prepackRecipe.setFcPrice(prepackPrice);
             } else {

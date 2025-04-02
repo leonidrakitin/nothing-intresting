@@ -48,6 +48,8 @@ public class MenuItem {
     @JoinColumn(name = "flow_id")
     private Flow flow;
 
+    private Double fcCoef;
+
     private Double price;
 
     private Double fcPrice;
@@ -61,4 +63,12 @@ public class MenuItem {
                 .timeToCook(menuItemData.getTimeToCook())
                 .build();
     }
+
+    public static MenuItem of(MenuItemData menuItemData) {
+        return MenuItem.builder()
+                .price(menuItemData.getPrice())
+                .fcCoef(menuItemData.getFcCoef())
+                .build();
+    }
+
 }
