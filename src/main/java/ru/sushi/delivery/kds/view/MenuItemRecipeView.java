@@ -23,6 +23,7 @@ import ru.sushi.delivery.kds.domain.service.StationService;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Route("menu-item-recipe")
 @PageTitle("Рецепты для блюд")
@@ -298,6 +299,10 @@ public class MenuItemRecipeView extends VerticalLayout {
                 .build();
 
         // Вызываем сервис (создание/обновление)
+        if (Objects.equals(selectedMenuItem.getId(), id)) {
+            Notification.show("Вы добавляете элемент, для которого создаете рецепт!");
+            return;
+        }
         recipeService.saveMenuRecipe(recipeDto, chosenSource, selectedMenuItem.getId());
 
         Notification.show(id == null
