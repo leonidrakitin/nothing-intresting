@@ -72,7 +72,7 @@ public class MenuPriceView extends VerticalLayout {
         menuItemGrid.addColumn(data -> Double.valueOf(priceFactFormat.format(
                         data.getFcPrice() == null || Double.isNaN(data.getFcPrice())
                                 ? 0.0
-                                : data.getFcPrice()/(data.getFcCoef()/100)
+                                : (data.getFcPrice()/(data.getFcCoef()/100)+30)*1.05
                 )))
                 .setHeader("Расчет. цены")
                 .setSortable(true)
