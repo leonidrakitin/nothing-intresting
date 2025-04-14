@@ -27,6 +27,8 @@ import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 import ru.sushi.delivery.kds.websocket.WSMessageSender;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 
 @Log4j2
@@ -207,6 +209,13 @@ public class OrderService {
         return orderRepository.findAllActive().stream()
                 .map(order -> OrderShortDto.of(order, this.getOrderFullItemData(order)))
                 .toList();
+    }
+
+    public List<OrderShortDto> getAllOrdersWithItemsBetweenDates(Instant from, Instant to) {
+        return orderRepository.findAllBetweenDates(from, to).stream()
+                .map(order -> OrderShortDto.of(order, this.getOrderFullItemData(order)))
+                .toList()
+                .reversed();
     }
 
     public List<OrderShortDto> getAllKitchenOrdersWithItems() {

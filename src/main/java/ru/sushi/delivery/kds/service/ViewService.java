@@ -14,6 +14,8 @@ import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -78,6 +80,10 @@ public class ViewService {
 
     public List<OrderShortDto> getAllOrdersWithItems() {
         return this.orderService.getAllActiveOrdersWithItems();
+    }
+
+    public List<OrderShortDto> getAllOrdersWithItemsBetweenDates(Instant from, Instant to) {
+        return this.orderService.getAllOrdersWithItemsBetweenDates(from, to);
     }
 
     public List<OrderShortDto> getAllKitchenOrdersWithItems() {

@@ -1,13 +1,17 @@
 package ru.sushi.delivery.kds.view;
 
+import com.vaadin.componentfactory.DateRange;
+import com.vaadin.componentfactory.EnhancedDateRangePicker;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -15,8 +19,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
@@ -32,10 +38,12 @@ import ru.sushi.delivery.kds.service.listeners.CashListener;
 import ru.sushi.delivery.kds.view.dto.CartItem;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -50,7 +58,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     private final Span kitchenStartDisplay = new Span("Время начала приготовления: Сейчас");
     private final Button changeKitchenStartButton = new Button("изменить");
     private final DateTimePicker finishPicker = new DateTimePicker("Время готовности");
-    private final Checkbox isYandexOrder = new Checkbox("Заказ Яндекс"); // Новый чекбокс
+    private final Checkbox isYandexOrder = new Checkbox("Заказ Яндекс");
     private final VerticalLayout rollsTabLayout = new VerticalLayout();
     private final VerticalLayout setsTabLayout = new VerticalLayout();
     private final VerticalLayout extrasLayout = new VerticalLayout();
@@ -66,6 +74,9 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
     private final TextField orderNumberField = new TextField("Номер заказа");
     private final H3 totalPay = new H3("К оплате: 0.0 рублей");
     private final H5 totalTime = new H5("Общее время приготовления: 0 минут");
+    private final EnhancedDateRangePicker datePicker = new EnhancedDateRangePicker("Диапазон дат");
+    private final ComboBox<OrderStatus> statusFilter = new ComboBox<>("Статус");
+    private final Button applyDateFilterButton = new Button("Применить", VaadinIcon.CALENDAR.create());
 
     @Autowired
     public CreateOrderView(ViewService viewService, CashListener cashListener) {
@@ -81,6 +92,8 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         this.menuItemCombos = viewService.getAllCombos();
         this.menuExtras = viewService.getAllExtras();
 
+        datePicker.setId("order-create-picker");
+        datePicker.setWidth("300px"); // Устанавливаем явную ширину для видимости
         finishPicker.setLocale(Locale.of("ru", "RU"));
 
         // ЛЕВАЯ ЧАСТЬ
@@ -181,7 +194,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         HorizontalLayout extrasColumns = new HorizontalLayout(extrasListLeft, extrasListRight);
         extrasColumns.setWidthFull();
         extrasColumns.setSpacing(true);
-        updateExtrasList(extrasListLeft, extrasListRight, menuExtras); // Инициализируем список допов
+        updateExtrasList(extrasListLeft, extrasListRight, menuExtras);
 
         extrasLayout.add(new H4("Допы"), extrasColumns);
 
@@ -213,7 +226,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             } else {
                 cartLayout.setVisible(false);
                 allOrdersLayout.setVisible(true);
-                refreshOrdersGrid();
+                refreshOrdersGrid(null, null);
             }
         });
 
@@ -456,9 +469,45 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         Div ordersLayout = new Div();
         ordersLayout.setWidthFull();
 
-        ordersGrid.removeAllColumns();
+        // Фильтр по датам
+        datePicker.setValue(new DateRange(LocalDate.now(), null));
+        datePicker.setWidth("300px");
+        datePicker.getStyle().set("display", "inline-block");
 
-        ordersGrid.addColumn(OrderShortDto::getName).setHeader("ID").setAutoWidth(true);
+        statusFilter.setItems(OrderStatus.values());
+        statusFilter.setItemLabelGenerator(status -> switch (status) {
+            case CREATED -> "Создан";
+            case COOKING -> "Готовится";
+            case COLLECTING -> "Сборка";
+            case READY -> "Выполнен";
+            case CANCELED -> "Отменён";
+        });
+        statusFilter.setPlaceholder("Все статусы");
+
+        Span ordersCountLabel = new Span("Заказов: 0");
+
+        // Кнопка применения фильтров
+        applyDateFilterButton.addClickListener(e -> refreshOrdersGrid(statusFilter.getValue(), ordersCountLabel));
+
+        HorizontalLayout filterLayout = new HorizontalLayout(statusFilter, datePicker, applyDateFilterButton);
+        filterLayout.setAlignItems(Alignment.BASELINE);
+        filterLayout.setWidthFull();
+        filterLayout.setSpacing(true);
+
+        ordersGrid.removeAllColumns();
+        ordersGrid.addColumn(new ComponentRenderer<>(orderDto -> {
+            HorizontalLayout layout = new HorizontalLayout();
+            layout.setAlignItems(Alignment.CENTER);
+            if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
+                Icon icon = VaadinIcon.EXCLAMATION.create();
+                icon.setColor("var(--lumo-error-color)");
+                icon.setSize("var(--lumo-icon-size-s)");
+                layout.add(icon);
+            }
+            layout.add(new Span(orderDto.getName()));
+            return layout;
+        })).setHeader("Номер").setAutoWidth(true);
+
         ordersGrid.addColumn(dto -> dto.getItems() == null ? 0 : dto.getItems().stream()
                 .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
                 .count()).setHeader("Кол-во").setAutoWidth(true);
@@ -468,7 +517,6 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
             case COLLECTING -> "Сборка";
             case READY -> "Выполнен";
             case CANCELED -> "Отменён";
-            default -> "";
         }).setHeader("Статус").setAutoWidth(true);
         ordersGrid.addColumn(order -> order.getKitchenShouldGetOrderAt()
                         .atZone(ZoneId.systemDefault())
@@ -496,14 +544,16 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 cancelBtn.addClickListener(e -> {
                     viewService.cancelOrder(orderDto.getId());
                     Notification.show("Заказ " + orderDto.getName() + " отменён!");
-                    refreshOrdersGrid();
+                    refreshOrdersGrid(statusFilter.getValue(), ordersCountLabel);
                 });
                 layout.add(cancelBtn);
             }
             return layout;
         }).setHeader("Действие").setAutoWidth(true);
 
-        ordersLayout.add(new H3("Список всех заказов:"), ordersGrid);
+        ordersLayout.add(new H3("Список всех заказов:"), filterLayout, ordersGrid, ordersCountLabel);
+        refreshOrdersGrid(statusFilter.getValue(), ordersCountLabel);
+
         return ordersLayout;
     }
 
@@ -523,7 +573,7 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
                 viewService.updateKitchenShouldGetOrderAt(orderDto.getId(), newInstant);
                 Notification.show("Время начала приготовления обновлено");
                 editDialog.close();
-                refreshOrdersGrid();
+                refreshOrdersGrid(null, null);
             } else {
                 Notification.show("Пожалуйста, укажите время");
             }
@@ -536,12 +586,37 @@ public class CreateOrderView extends HorizontalLayout implements BroadcastListen
         editDialog.open();
     }
 
-    private void refreshOrdersGrid() {
-        List<OrderShortDto> allOrders = viewService.getAllOrdersWithItems();
-        List<OrderShortDto> notCanceled = allOrders.stream()
-                .filter(dto -> !OrderStatus.CANCELED.equals(dto.getStatus()))
-                .collect(Collectors.toList());
-        ordersGrid.setItems(notCanceled);
+    private void refreshOrdersGrid(OrderStatus statusFilter, Span ordersCountLabel) {
+        LocalDate from = datePicker.getValue() != null ? datePicker.getValue().getStartDate() : LocalDate.now();
+        LocalDate to = datePicker.getValue() != null ? datePicker.getValue().getEndDate() : LocalDate.now();
+
+        if (to == null) {
+            to = from;
+        }
+
+        if (from.isAfter(to)) {
+            Notification.show("Дата 'С' не может быть позже даты 'По'");
+            return;
+        }
+
+        List<OrderShortDto> allOrders = viewService.getAllOrdersWithItemsBetweenDates(
+                from.atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                to.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
+        );
+
+        // Применяем фильтр по статусу, если он выбран
+        if (statusFilter != null) {
+            allOrders = allOrders.stream()
+                    .filter(order -> order.getStatus() == statusFilter)
+                    .collect(Collectors.toList());
+        }
+
+        // Обновляем таблицу
+        ordersGrid.setItems(allOrders);
+
+        if (ordersCountLabel != null) {
+            ordersCountLabel.setText("Заказов: " + allOrders.size());
+        }
     }
 
     private void openOrderItemsDialog(OrderShortDto orderDto) {
