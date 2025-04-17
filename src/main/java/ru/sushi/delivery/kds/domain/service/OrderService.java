@@ -27,9 +27,11 @@ import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 import ru.sushi.delivery.kds.websocket.WSMessageSender;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Log4j2
 @Service
@@ -77,15 +79,13 @@ public class OrderService {
     }
 
     public List<OrderShortDto> getAllItemsByStationId(Screen screen) {
-        Long screenId = screen.getId();
-        return orderRepository.findAllByStationId(screen.getStation().getId())
-                .stream()
-                //todo remove this shit
+        Long stationId = screen.getStation().getId();
+        return orderRepository.findAllByStationId(screen.getStation().getId()).stream()
                 .map(order -> OrderShortDto.of(order, this.getOrderFullItemData(order).stream()
                         .map(orderItemDto -> orderItemDto.toBuilder()
                                 .ingredients(
                                         orderItemDto.getIngredients().stream()
-                                                .filter(ingredient -> ingredient.getStationId().equals(screenId))
+                                                .filter(ingredient -> stationId.equals(ingredient.getStationId()))
                                                 .toList()
                                 )
                                 .build()
