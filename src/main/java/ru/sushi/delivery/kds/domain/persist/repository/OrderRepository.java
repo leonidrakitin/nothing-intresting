@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -26,8 +25,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         select o from Order o
         left join fetch o.orderItems oi
         where o.createdAt >= :startOfDay and o.createdAt < :startOfTomorrow
-        order by o.kitchenShouldGetOrderAt asc,
-            (select max(oi2.stationChangedAt) from OrderItem oi2 where oi2.order = o) desc
+        order by o.kitchenShouldGetOrderAt
     """)
     List<Order> findAllBetweenDates(
             @Param("startOfDay") Instant startOfDay,

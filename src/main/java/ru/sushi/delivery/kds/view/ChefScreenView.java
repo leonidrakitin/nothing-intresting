@@ -151,7 +151,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
         // Заголовок: "Заказ #id: <имя>"
         // TODO Переделать передачу номера заказа
         // TODO Переделать обновление объектов раз в секунду
-        Div title = new Div(new Text("Заказ #" + item.getOrderId() + ": " + item.getName()));
+        Div title = new Div(new Text("Заказ #" + item.getOrderName() + ": " + item.getName()));
         Div details = new Div();
         for (var ingredient : item.getIngredients()) {
             if (Objects.equals(ingredient.getStationId(), stationId) || ingredient.getStationId() == null) {
