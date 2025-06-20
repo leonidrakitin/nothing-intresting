@@ -104,27 +104,27 @@ public class OrderService {
         order = order.toBuilder().status(OrderStatus.READY).build();
         this.orderRepository.save(order);
 
-        List<OrderItem> orderItems = new ArrayList<>();
-        Integer doneStepOrder = null;
-        for (OrderItem orderItem : this.getOrderItems(orderId)) {
-            FlowStep step = this.flowCacheService.getStep(
-                    orderItem.getMenuItem().getFlow().getId(),
-                    orderItem.getCurrentFlowStep()
-            );
-
-            if (doneStepOrder == null) {
-                doneStepOrder = this.flowCacheService.getDoneStep(orderItem.getMenuItem().getFlow().getId()).getStepOrder();
-            }
-
-            if (step.getStepType() != FlowStepType.FINAL_STEP) {
-                orderItem = orderItem.toBuilder()
-                        .currentFlowStep(doneStepOrder)
-                        .status(OrderItemStationStatus.COMPLETED)
-                        .build();
-                orderItems.add(orderItem);
-            }
-        }
-        this.orderItemRepository.saveAll(orderItems);
+//        List<OrderItem> orderItems = new ArrayList<>();
+//        Integer doneStepOrder = null;
+//        for (OrderItem orderItem : this.getOrderItems(orderId)) {
+//            FlowStep step = this.flowCacheService.getStep(
+//                    orderItem.getMenuItem().getFlow().getId(),
+//                    orderItem.getCurrentFlowStep()
+//            );
+//
+//            if (doneStepOrder == null) {
+//                doneStepOrder = this.flowCacheService.getDoneStep(orderItem.getMenuItem().getFlow().getId()).getStepOrder();
+//            }
+//
+//            if (step.getStepType() != FlowStepType.FINAL_STEP) {
+//                orderItem = orderItem.toBuilder()
+//                        .currentFlowStep(doneStepOrder)
+//                        .status(OrderItemStationStatus.COMPLETED)
+//                        .build();
+//                orderItems.add(orderItem);
+//            }
+//        }
+//        this.orderItemRepository.saveAll(orderItems);
 
         this.wsMessageSender.sendRefreshAll();
     }
