@@ -27,9 +27,11 @@ import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 import ru.sushi.delivery.kds.websocket.WSMessageSender;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Log4j2
 @Service
@@ -97,6 +99,11 @@ public class OrderService {
 
     @Transactional
     public void updateAllOrderItemsToDone(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
+        order = order.toBuilder().status(OrderStatus.READY).build();
+        this.orderRepository.save(order);
+
         List<OrderItem> orderItems = new ArrayList<>();
         Integer doneStepOrder = null;
         for (OrderItem orderItem : this.getOrderItems(orderId)) {
@@ -118,11 +125,6 @@ public class OrderService {
             }
         }
         this.orderItemRepository.saveAll(orderItems);
-
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
-        order = order.toBuilder().status(OrderStatus.READY).build();
-        this.orderRepository.save(order);
 
         this.wsMessageSender.sendRefreshAll();
     }
