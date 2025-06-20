@@ -109,7 +109,7 @@ public class CollectorView extends VerticalLayout implements BroadcastListener {
         removeAll();
         itemClickedState.clear();
 
-        List<OrderShortDto> allOrders = viewService.getAllOrdersWithItems();
+        List<OrderShortDto> allOrders = viewService.getAllActiveCollectorOrdersWithItems();
         if (allOrders.isEmpty()) {
             add(new H2("Нет заказов в системе"));
             return;

@@ -8,14 +8,17 @@ import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
-import ru.sushi.delivery.kds.domain.service.*;
+import ru.sushi.delivery.kds.domain.service.FlowCacheService;
+import ru.sushi.delivery.kds.domain.service.IngredientService;
+import ru.sushi.delivery.kds.domain.service.ItemComboService;
+import ru.sushi.delivery.kds.domain.service.MenuItemService;
+import ru.sushi.delivery.kds.domain.service.OrderService;
+import ru.sushi.delivery.kds.domain.service.ScreenService;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -80,6 +83,10 @@ public class ViewService {
 
     public List<OrderShortDto> getAllOrdersWithItems() {
         return this.orderService.getAllActiveOrdersWithItems();
+    }
+
+    public List<OrderShortDto> getAllActiveCollectorOrdersWithItems() {
+        return this.orderService.getAllActiveCollectorOrdersWithItems();
     }
 
     public List<OrderShortDto> getAllOrdersWithItemsBetweenDates(Instant from, Instant to) {

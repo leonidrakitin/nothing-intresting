@@ -213,6 +213,12 @@ public class OrderService {
                 .toList();
     }
 
+    public List<OrderShortDto> getAllActiveCollectorOrdersWithItems() {
+        return orderRepository.findAllActive().stream()
+                .map(order -> OrderShortDto.of(order, this.getOrderFullCollectorItemData(order)))
+                .toList();
+    }
+
     public List<OrderShortDto> getAllOrdersWithItemsBetweenDates(Instant from, Instant to) {
         return orderRepository.findAllBetweenDates(from, to).stream()
                 .map(order -> OrderShortDto.of(order, this.getOrderFullItemData(order)))
@@ -258,6 +264,28 @@ public class OrderService {
                         .orderName(order.getName())
                         .name(orderItem.getMenuItem().getName())
                         .ingredients(this.ingredientService.getMenuItemIngredients(orderItem.getMenuItem().getId()))
+                        .status(orderItem.getStatus())
+                        .currentStation(this.getStationFromOrderItem(orderItem))
+                        .flowStepType(this.getStepTypeFromOrderItem(orderItem))
+                        .statusUpdatedAt(orderItem.getStatusUpdatedAt())
+                        .createdAt(orderItem.getStatusUpdatedAt())
+                        .extra(orderItem.getMenuItem().getProductType().isExtra())
+                        .build()
+                )
+                .toList();
+    }
+
+    private List<OrderItemDto> getOrderFullCollectorItemData(Order order) {
+        return order.getOrderItems()
+                .stream()
+                .sorted(Comparator.<OrderItem>comparingInt(item -> item.getMenuItem().getProductType().getPriority())
+                        .thenComparingLong(OrderItem::getId))
+                .map(orderItem -> OrderItemDto.builder()
+                        .id(orderItem.getId())
+                        .orderId(order.getId())
+                        .orderName(order.getName())
+                        .name(orderItem.getMenuItem().getName())
+                        .ingredients(List.of())
                         .status(orderItem.getStatus())
                         .currentStation(this.getStationFromOrderItem(orderItem))
                         .flowStepType(this.getStepTypeFromOrderItem(orderItem))
