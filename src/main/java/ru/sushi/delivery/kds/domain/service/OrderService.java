@@ -79,7 +79,7 @@ public class OrderService {
     }
 
     public List<OrderShortDto> getAllItemsByStationId(Screen screen) {
-        Long screenId = screen.getId();
+        Long stationId = screen.getStation().getId();
         return orderRepository.findAllByStationId(screen.getStation().getId())
                 .stream()
                 //todo remove this shit
@@ -87,7 +87,7 @@ public class OrderService {
                         .map(orderItemDto -> orderItemDto.toBuilder()
                                 .ingredients(
                                         orderItemDto.getIngredients().stream()
-                                                .filter(ingredient -> ingredient.getStationId().equals(screenId))
+                                            .filter(ingredient -> ingredient.getStationId().equals(stationId))
                                                 .toList()
                                 )
                                 .build()
