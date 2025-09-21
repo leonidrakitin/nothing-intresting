@@ -14,6 +14,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.ScreenRepository;
+import ru.sushi.delivery.kds.dto.IngredientCompactDTO;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.dto.PackageDto;
@@ -32,6 +33,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Log4j2
 @Service
@@ -258,19 +260,27 @@ public class OrderService {
                 .stream()
                 .sorted(Comparator.<OrderItem>comparingInt(item -> item.getMenuItem().getProductType().getPriority())
                         .thenComparingLong(OrderItem::getId))
-                .map(orderItem -> OrderItemDto.builder()
-                        .id(orderItem.getId())
-                        .orderId(order.getId())
-                        .orderName(order.getName())
-                        .name(orderItem.getMenuItem().getName())
-                        .ingredients(this.ingredientService.getMenuItemIngredients(orderItem.getMenuItem().getId()))
-                        .status(orderItem.getStatus())
-                        .currentStation(this.getStationFromOrderItem(orderItem))
-                        .flowStepType(this.getStepTypeFromOrderItem(orderItem))
-                        .statusUpdatedAt(orderItem.getStatusUpdatedAt())
-                        .createdAt(orderItem.getStatusUpdatedAt())
-                        .extra(orderItem.getMenuItem().getProductType().isExtra())
-                        .build()
+                .map(orderItem -> {
+                    List<IngredientCompactDTO> ingredients =
+                            this.ingredientService.getMenuItemIngredients(orderItem.getMenuItem().getId());
+                    AtomicReference<Double> sum = new AtomicReference<>((double) 0);
+                    ingredients.stream()
+                            .map(IngredientCompactDTO::getAmount)
+                            .forEach(amount -> sum.updateAndGet(v -> v + amount));
+                    return OrderItemDto.builder()
+                                    .id(orderItem.getId())
+                                    .orderId(order.getId())
+                                    .orderName(order.getName())
+                                    .name(orderItem.getMenuItem().getName() + sum)
+                                    .ingredients(ingredients)
+                                    .status(orderItem.getStatus())
+                                    .currentStation(this.getStationFromOrderItem(orderItem))
+                                    .flowStepType(this.getStepTypeFromOrderItem(orderItem))
+                                    .statusUpdatedAt(orderItem.getStatusUpdatedAt())
+                                    .createdAt(orderItem.getStatusUpdatedAt())
+                                    .extra(orderItem.getMenuItem().getProductType().isExtra())
+                                    .build();
+                        }
                 )
                 .toList();
     }

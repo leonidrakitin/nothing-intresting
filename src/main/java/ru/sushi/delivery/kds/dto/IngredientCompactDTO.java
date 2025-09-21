@@ -8,6 +8,7 @@ import ru.sushi.delivery.kds.domain.controller.dto.MenuItemRecipeDto;
 @Builder
 public class IngredientCompactDTO {
     private final String name;
+    private final Double amount;
     private final Long stationId;
 
     public static IngredientCompactDTO of(MenuItemRecipeDto ingredientData) {
@@ -18,6 +19,7 @@ public class IngredientCompactDTO {
         );
         return IngredientCompactDTO.builder()
                 .name(name)
+                .amount(ingredientData.getFinalAmount())
                 .stationId(ingredientData.getStationId())
                 .build();
     }
