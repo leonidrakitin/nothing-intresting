@@ -271,7 +271,7 @@ public class OrderService {
                                     .id(orderItem.getId())
                                     .orderId(order.getId())
                                     .orderName(order.getName())
-                                    .name(orderItem.getMenuItem().getName() + sum)
+                                    .name(orderItem.getMenuItem().getName() + " - " + sum + "г.")
                                     .ingredients(ingredients)
                                     .status(orderItem.getStatus())
                                     .currentStation(this.getStationFromOrderItem(orderItem))
