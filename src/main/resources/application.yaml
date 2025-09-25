@@ -1,6 +1,7 @@
 application:
   version: '0.0.1'
   name: 'kds-system'
+  city: '${CITY_NAME:Москва}'
 vaadin:
   launch-browser: true
   productionMode: true
