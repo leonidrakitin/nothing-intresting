@@ -98,7 +98,7 @@ public class OrderService {
                                 .build()
                         )
                 )
-                .limit(15)
+                .limit(16)
                 .toList();
         
         // Группируем orderItemDto по заказам
