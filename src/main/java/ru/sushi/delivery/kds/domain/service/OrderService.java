@@ -94,6 +94,7 @@ public class OrderService {
                                 )
                                 .build()
                         )
+                        .limit(15)
                         .toList()
                 ))
                 .toList();
