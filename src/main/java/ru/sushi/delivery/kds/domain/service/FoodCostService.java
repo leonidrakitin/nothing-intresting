@@ -42,6 +42,11 @@ public class FoodCostService {
         List<Ingredient> ingredients = this.ingredientRepository.findAll();
         List<Prepack> prepacks = this.prepackRepository.findAll();
         List<MenuItem> menuItems = this.menuItemService.getAllMenuItems();
+        
+        // Создаем кеш для всех prepacks
+        Map<Long, Prepack> prepacksMap = prepacks.stream()
+                .collect(Collectors.toUnmodifiableMap(Prepack::getId, Function.identity()));
+        
         Map<Long, Ingredient> ingredientsMap = ingredients.stream()
                 .collect(Collectors.toUnmodifiableMap(Ingredient::getId, Function.identity()));
 
@@ -55,7 +60,7 @@ public class FoodCostService {
         for (Prepack prepack : prepacks) {
             double prepackPrice = 0;
             try {
-                prepackPrice = this.calculatePrepackFoodCost(prepack, prepackPriceCache, ingredientPriceCache, 0);
+                prepackPrice = this.calculatePrepackFoodCost(prepack, prepackPriceCache, ingredientPriceCache, prepacksMap, 0);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 prepackPrice = 0;
@@ -89,6 +94,8 @@ public class FoodCostService {
             }
             menuItem.setFcPrice(fcPrice);
         }
+        
+        // Batch сохранение для лучшей производительности
         this.prepackRepository.saveAll(prepacks);
         this.menuItemRepository.saveAll(menuItems);
     }
@@ -97,6 +104,7 @@ public class FoodCostService {
             Prepack prepack,
             Map<Long, Double> prepackPriceCache,
             Map<Long, Double> ingredientPriceCache,
+            Map<Long, Prepack> prepacksMap,
             int cycle
     ) {
         if (cycle > 100) {
@@ -122,10 +130,16 @@ public class FoodCostService {
         double price = 0;
         for (PrepackRecipe prepackRecipe : prepackRecipeList) {
             if (prepackRecipe.getSourceType() == SourceType.PREPACK) {
+                Prepack sourcePrepack = prepacksMap.get(prepackRecipe.getSourceId());
+                if (sourcePrepack == null) {
+                    log.warn("Prepack with id {} not found in cache", prepackRecipe.getSourceId());
+                    continue;
+                }
                 double prepackPriceInit = this.calculatePrepackFoodCost(
-                        this.prepackRepository.findById(prepackRecipe.getSourceId()).get(),
+                        sourcePrepack,
                         prepackPriceCache,
                         ingredientPriceCache,
+                        prepacksMap,
                         cycle+1
                 );
                 prepackPriceInit = prepackPriceInit * (1 + prepackRecipe.getLossesPercentage());

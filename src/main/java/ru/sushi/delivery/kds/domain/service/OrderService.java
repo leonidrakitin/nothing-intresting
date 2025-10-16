@@ -84,10 +84,13 @@ public class OrderService {
 
     public List<OrderShortDto> getAllItemsByStationId(Screen screen) {
         Long screenId = screen.getId();
+        Long stationId = screen.getStation().getId();
+        
+        // Получаем заказы один раз
+        List<Order> orders = orderRepository.findAllByStationId(stationId);
         
         // Собираем все orderItemDto из всех заказов
-        List<OrderItemDto> allOrderItems = orderRepository.findAllByStationId(screen.getStation().getId())
-                .stream()
+        List<OrderItemDto> allOrderItems = orders.stream()
                 .flatMap(order -> this.getOrderFullItemData(order).stream()
                         .map(orderItemDto -> orderItemDto.toBuilder()
                                 .ingredients(
@@ -106,8 +109,7 @@ public class OrderService {
                 .collect(Collectors.groupingBy(OrderItemDto::getOrderId));
         
         // Создаем OrderShortDto для каждого заказа
-        return orderRepository.findAllByStationId(screen.getStation().getId())
-                .stream()
+        return orders.stream()
                 .filter(order -> orderItemsByOrderId.containsKey(order.getId()))
                 .map(order -> OrderShortDto.of(order, orderItemsByOrderId.get(order.getId())))
                 .toList();
@@ -199,7 +201,11 @@ public class OrderService {
             return;
         }
 
-        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
+        // Используем уже загруженные orderItems из order, если они есть
+        List<OrderItem> orderItems = order.getOrderItems().isEmpty() 
+            ? orderItemRepository.findByOrderId(order.getId())
+            : order.getOrderItems();
+            
         int minimumStatus = this.definePriorityByOrderStatus(OrderStatus.READY);
 
         for (OrderItem orderItem : orderItems) {
