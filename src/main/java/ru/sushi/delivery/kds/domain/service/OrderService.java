@@ -399,4 +399,15 @@ public class OrderService {
         });
         this.wsMessageSender.sendRefreshAll();
     }
+
+    @Transactional
+    public void updateOrderName(Long orderId, String newName) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
+        
+        order.setName(newName);
+        orderRepository.save(order);
+        
+        log.info("Order name updated: orderId={}, newName={}", orderId, newName);
+    }
 }
