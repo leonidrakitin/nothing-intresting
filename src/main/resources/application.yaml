@@ -11,7 +11,7 @@ vaadin:
     hotdeploy: false
     compatibilityMode: false
 server:
-  port: 8000
+  port: ${SERVER_PORT:8000}
   servlet:
     encoding:
       charset: UTF-8
