@@ -20,7 +20,6 @@ import ru.sushi.delivery.kds.dto.OrderShortDto;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -149,16 +148,7 @@ public class ViewService {
         orderService.updateOrderName(orderId, newName);
     }
 
-    public void setPriorityForOrder(Long orderId) {
-        // Получаем все активные заказы
-        List<OrderShortDto> allOrders = orderService.getAllActiveOrdersWithItems();
-        
-        // Находим самый первый заказ в статусе "Готовится" по времени начала приготовления
-        OrderShortDto firstCookingOrder = allOrders.stream()
-                .filter(order -> order.getStatus() == ru.sushi.delivery.kds.model.OrderStatus.COOKING)
-                .min(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
-                .orElse(null);
-        
+    public void setPriorityForOrder(Long orderId, OrderShortDto firstCookingOrder) {
         if (firstCookingOrder != null) {
             // Устанавливаем время начала приготовления чуть раньше найденного заказа
             Instant priorityTime = firstCookingOrder.getKitchenShouldGetOrderAt().minusSeconds(30); // на 30 секунд раньше

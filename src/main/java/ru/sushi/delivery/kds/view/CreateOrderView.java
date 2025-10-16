@@ -51,7 +51,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Route("create")
@@ -407,9 +406,7 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
 
         Button createOrderButton = new Button("Создать заказ");
         Button clearCartButton = new Button("Очистить корзину");
-        Button priorityButton = new Button("Приоритет", VaadinIcon.ARROW_DOWN.create());
-        Button editOrderButton = new Button("Редактировать", VaadinIcon.EDIT.create());
-        HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, clearCartButton, priorityButton, editOrderButton);
+        HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, clearCartButton);
 
         createOrderButton.addClickListener(e -> {
             if (cartItems.isEmpty()) {
@@ -481,21 +478,6 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
             isYandexOrder.setValue(false); // Сбрасываем чекбокс при очистке
         });
 
-        priorityButton.addClickListener(e -> {
-            if (cartItems.isEmpty()) {
-                Notification.show("Корзина пуста, нельзя установить приоритет");
-                return;
-            }
-            setPriorityTime();
-        });
-
-        editOrderButton.addClickListener(e -> {
-            if (cartItems.isEmpty()) {
-                Notification.show("Корзина пуста, нечего редактировать");
-                return;
-            }
-            openEditOrderNumberDialog();
-        });
 
         cartLayout.add(chosenTitle, chosenGrid, kitchenStartLayout, finishLayout, totalPay, totalTime, buttonBar);
         return cartLayout;
@@ -914,71 +896,6 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
         dialog.open();
     }
 
-    private void setPriorityTime() {
-        try {
-            // Получаем все активные заказы
-            Set<OrderShortDto> allOrders = ordersGrid.getSelectedItems();
-            
-            // Находим самый первый заказ в статусе "Готовится" по времени начала приготовления
-            OrderShortDto firstCookingOrder = allOrders.stream()
-                    .filter(order -> order.getStatus() == OrderStatus.COOKING)
-                    .min(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
-                    .orElse(null);
-            
-            if (firstCookingOrder != null) {
-                // Устанавливаем время начала приготовления чуть раньше найденного заказа
-                Instant priorityTime = firstCookingOrder.getKitchenShouldGetOrderAt().minusSeconds(30); // на 30 секунд раньше
-                selectedKitchenStart = priorityTime;
-                
-                LocalDateTime priorityDateTime = priorityTime.atZone(ZoneId.systemDefault()).toLocalDateTime();
-                kitchenStartDisplay.setText("Время начала приготовления: " + 
-                    priorityDateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
-                
-                // Обновляем время готовности
-                updateTotalTime();
-                
-                Notification.show("Приоритет установлен! Время начала: " + 
-                    priorityDateTime.format(DateTimeFormatter.ofPattern("HH:mm")));
-            } else {
-                Notification.show("Нет заказов в статусе 'Готовится' для установки приоритета");
-            }
-        } catch (Exception e) {
-            Notification.show("Ошибка при установке приоритета: " + e.getMessage());
-        }
-    }
-
-    private void openEditOrderNumberDialog() {
-        Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Редактировать номер заказа");
-
-        TextField orderNumberField = new TextField("Номер заказа");
-        orderNumberField.setValue(this.orderNumberField.getValue());
-        orderNumberField.setWidthFull();
-        orderNumberField.setPlaceholder("Введите номер заказа...");
-
-        Button saveBtn = new Button("Сохранить", ev -> {
-            String newOrderNumber = orderNumberField.getValue().trim();
-            if (newOrderNumber.isEmpty()) {
-                Notification.show("Номер заказа не может быть пустым");
-                return;
-            }
-            
-            this.orderNumberField.setValue(newOrderNumber);
-            Notification.show("Номер заказа обновлен: " + newOrderNumber);
-            dialog.close();
-        });
-
-        Button cancelBtn = new Button("Отмена", ev -> dialog.close());
-
-        VerticalLayout layout = new VerticalLayout(orderNumberField);
-        layout.setPadding(false);
-        layout.setSpacing(true);
-        
-        dialog.add(layout);
-        dialog.getFooter().add(saveBtn, cancelBtn);
-        dialog.open();
-    }
-
     private void openEditOrderNameDialog(OrderShortDto orderDto) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Редактировать номер заказа: " + orderDto.getName());
@@ -1018,8 +935,11 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
 
     private void setPriorityTimeForOrder(OrderShortDto orderDto) {
         try {
-            // Используем новый метод из ViewService для установки приоритета
-            viewService.setPriorityForOrder(orderDto.getId());
+            OrderShortDto firstCookingOrder = ordersGrid.getSelectedItems().stream()
+                    .filter(order -> order.getStatus() == OrderStatus.CREATED || order.getStatus() == OrderStatus.COOKING)
+                    .min(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
+                    .orElse(null);
+            viewService.setPriorityForOrder(orderDto.getId(), firstCookingOrder);
             
             Notification.show("Приоритет установлен для заказа " + orderDto.getName() + "!");
             
