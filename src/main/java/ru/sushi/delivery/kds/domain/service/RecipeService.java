@@ -3,6 +3,7 @@ package ru.sushi.delivery.kds.domain.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.controller.dto.AbstractProductData;
 import ru.sushi.delivery.kds.domain.controller.dto.MeasurementUnitDto;
@@ -164,6 +165,7 @@ public class RecipeService {
         this.prepackRecipeRepository.deleteById(prepackRecipeData.getId());
     }
 
+    @Cacheable(value = "menuRecipes", key = "#menuId", unless = "#result.isEmpty()")
     public List<MenuItemRecipeDto> getMenuRecipeByMenuId(Long menuId) {
         List<MenuItemRecipe> menuItemRecipes = this.menuItemRecipeRepository.findByMenuItemId(menuId);
         return menuItemRecipes.stream().map(menuItemRecipe -> MenuItemRecipeDto.of(

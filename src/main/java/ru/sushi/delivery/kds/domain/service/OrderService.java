@@ -32,8 +32,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Log4j2
 @Service
@@ -82,10 +84,11 @@ public class OrderService {
 
     public List<OrderShortDto> getAllItemsByStationId(Screen screen) {
         Long screenId = screen.getId();
-        return orderRepository.findAllByStationId(screen.getStation().getId())
+        
+        // Собираем все orderItemDto из всех заказов
+        List<OrderItemDto> allOrderItems = orderRepository.findAllByStationId(screen.getStation().getId())
                 .stream()
-                //todo remove this shit
-                .map(order -> OrderShortDto.of(order, this.getOrderFullItemData(order).stream()
+                .flatMap(order -> this.getOrderFullItemData(order).stream()
                         .map(orderItemDto -> orderItemDto.toBuilder()
                                 .ingredients(
                                         orderItemDto.getIngredients().stream()
@@ -94,9 +97,19 @@ public class OrderService {
                                 )
                                 .build()
                         )
-                        .limit(15)
-                        .toList()
-                ))
+                )
+                .limit(15)
+                .toList();
+        
+        // Группируем orderItemDto по заказам
+        Map<Long, List<OrderItemDto>> orderItemsByOrderId = allOrderItems.stream()
+                .collect(Collectors.groupingBy(OrderItemDto::getOrderId));
+        
+        // Создаем OrderShortDto для каждого заказа
+        return orderRepository.findAllByStationId(screen.getStation().getId())
+                .stream()
+                .filter(order -> orderItemsByOrderId.containsKey(order.getId()))
+                .map(order -> OrderShortDto.of(order, orderItemsByOrderId.get(order.getId())))
                 .toList();
     }
 
