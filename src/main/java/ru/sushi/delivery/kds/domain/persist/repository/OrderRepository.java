@@ -42,7 +42,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         select o from Order o
         left join fetch o.orderItems oi
         where o.status != 'READY' and o.status != 'CANCELED' and o.kitchenGotOrderAt != null 
-        order by o.shouldBeFinishedAt
+        order by o.kitchenShouldGetOrderAt asc
     """)
     List<Order> findAllActiveKitchen();
 
