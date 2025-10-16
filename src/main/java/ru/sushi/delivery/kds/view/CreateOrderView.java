@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Route("create")
@@ -916,7 +917,7 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
     private void setPriorityTime() {
         try {
             // Получаем все активные заказы
-            List<OrderShortDto> allOrders = viewService.getAllActiveOrdersWithItems();
+            Set<OrderShortDto> allOrders = ordersGrid.getSelectedItems();
             
             // Находим самый первый заказ в статусе "Готовится" по времени начала приготовления
             OrderShortDto firstCookingOrder = allOrders.stream()
