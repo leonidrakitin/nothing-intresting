@@ -53,6 +53,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         left join FlowStep step on step.flow.id = mi.flow.id and step.stepOrder = oi.currentFlowStep
         where step.station.id = :stationId and oi.order.kitchenGotOrderAt is not null 
         order by o.kitchenShouldGetOrderAt
+        limit 15
     """)
     List<Order> findAllByStationId(Long stationId);
 }
