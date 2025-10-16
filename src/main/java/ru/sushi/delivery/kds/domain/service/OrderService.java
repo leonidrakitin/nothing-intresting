@@ -47,6 +47,7 @@ public class OrderService {
     private final FlowCacheService flowCacheService;
     private final OrderItemRepository orderItemRepository;
     private final OrderChangesListener orderChangesListener;
+    private final AsyncOrderService asyncOrderService;
     private final OrderRepository orderRepository;
     private final RecipeService recipeService;
     private final ScreenRepository screenRepository; //todo to service
@@ -189,45 +190,11 @@ public class OrderService {
             }
         }
         this.orderItemRepository.saveAndFlush(orderItem);
-        this.updateOrderStatus(orderItem.getOrder());
+        this.asyncOrderService.updateOrderStatus(orderItem.getOrder());
 
         this.wsMessageSender.sendRefreshAll();
     }
 
-    @Transactional
-    public void updateOrderStatus(Order order) {
-
-        if (OrderStatus.READY == order.getStatus()) {
-            return;
-        }
-
-        // Используем уже загруженные orderItems из order, если они есть
-        List<OrderItem> orderItems = order.getOrderItems().isEmpty() 
-            ? orderItemRepository.findByOrderId(order.getId())
-            : order.getOrderItems();
-            
-        int minimumStatus = this.definePriorityByOrderStatus(OrderStatus.READY);
-
-        for (OrderItem orderItem : orderItems) {
-            Station currentStation = this.getStationFromOrderItem(orderItem);
-            int currentPriorityStatus = this.definePriorityByOrderStatus(currentStation.getOrderStatusAtStation());
-            if (currentPriorityStatus > 0 && minimumStatus == 0) {
-                minimumStatus = 1;
-            }
-            else {
-                minimumStatus = Math.min(minimumStatus, currentPriorityStatus);
-            }
-        }
-
-        OrderStatus newOrderStatus = this.defineOrderStatusByPriority(minimumStatus);
-
-        if (newOrderStatus != order.getStatus()) {
-            orderRepository.save(order.toBuilder()
-                    .status(newOrderStatus)
-                    .build()
-            );
-        }
-    }
 
     public List<OrderShortDto> getAllActiveOrdersWithItems() {
         return orderRepository.findAllActive().stream()
@@ -419,25 +386,6 @@ public class OrderService {
         notificateAllScreens(flowSteps);
     }
 
-    private int definePriorityByOrderStatus(OrderStatus orderStatus) {
-        return switch (orderStatus) {
-            case CREATED -> 0;
-            case COOKING -> 1;
-            case COLLECTING -> 2;
-            case READY -> 3;
-            case CANCELED -> 4;
-        };
-    }
-
-    private OrderStatus defineOrderStatusByPriority(int priority) {
-        return switch (priority) {
-            case 0 -> OrderStatus.CREATED;
-            case 1 -> OrderStatus.COOKING;
-            case 2 -> OrderStatus.COLLECTING;
-            case 3 -> OrderStatus.READY;
-            default -> throw new IllegalStateException("Unexpected value: " + priority);
-        };
-    }
 
     private void notificateAllScreens(Set<FlowStep> flowSteps) {
         flowSteps.forEach(flowStep -> {
