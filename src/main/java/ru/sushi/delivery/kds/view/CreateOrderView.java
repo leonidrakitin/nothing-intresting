@@ -395,6 +395,10 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
         changeKitchenStartButton.addClickListener(e -> openKitchenStartDialog());
 
         finishPicker.setValue(LocalDateTime.now().plusMinutes(15));
+        
+        // Инициализируем время начала приготовления актуальным временем
+        updateKitchenStartTime();
+        
         HorizontalLayout finishLayout = new HorizontalLayout(finishPicker, isYandexOrder); // Чекбокс рядом с временем готовности
         finishLayout.setAlignItems(Alignment.CENTER);
         finishLayout.setWidthFull();
@@ -452,8 +456,7 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
             );
             orderNumberField.clear();
 
-            selectedKitchenStart = null;
-            kitchenStartDisplay.setText("Время начала приготовления: Сейчас");
+            updateKitchenStartTime();
             finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
             isYandexOrder.setValue(false); // Сбрасываем чекбокс после создания заказа
         });
@@ -470,8 +473,7 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
             );
             Notification.show("Корзина очищена");
 
-            selectedKitchenStart = null;
-            kitchenStartDisplay.setText("Время начала приготовления: Сейчас");
+            updateKitchenStartTime();
             isYandexOrder.setValue(false); // Сбрасываем чекбокс при очистке
         });
 
@@ -814,25 +816,45 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
     }
 
     private void updateTotalTime() {
-        int totalSeconds = cartItems.stream()
+        // Подсчитываем количество позиций, исключая ProductType с id 7, 8, 9
+        int mainItemsCount = cartItems.stream()
                 .mapToInt(cartItem -> {
-                    if (cartItem.getMenuItem().getTimeToCook() == null) {
+                    Long productTypeId = cartItem.getMenuItem().getProductType().getId();
+                    // Исключаем ProductType с id 7, 8, 9
+                    if (productTypeId == 7 || productTypeId == 8 || productTypeId == 9) {
                         return 0;
                     }
-                    return Math.toIntExact(cartItem.getMenuItem().getTimeToCook().toSeconds()) * cartItem.getQuantity();
+                    return cartItem.getQuantity();
                 })
                 .sum();
 
-        String formattedTime = (totalSeconds >= 60)
-                ? String.format("%d мин : %02d сек", totalSeconds / 60, totalSeconds % 60)
-                : String.format("%d сек", totalSeconds);
+        // Определяем время приготовления по новым правилам
+        int totalMinutes;
+        if (mainItemsCount <= 2) {
+            totalMinutes = 10;
+        } else if (mainItemsCount <= 4) {
+            totalMinutes = 15;
+        } else {
+            totalMinutes = 20;
+        }
 
+        String formattedTime = String.format("%d мин", totalMinutes);
         totalTime.setText("Общее время приготовления: " + formattedTime);
 
-        if (totalSeconds > 0) {
-            Instant startTime = (selectedKitchenStart != null) ? selectedKitchenStart : Instant.now();
-            finishPicker.setValue(startTime.atZone(ZoneId.systemDefault()).toLocalDateTime().plusSeconds(totalSeconds));
-        }
+        // Обновляем время начала приготовления на текущее время
+        updateKitchenStartTime();
+        
+        // Обновляем время готовности
+        Instant startTime = (selectedKitchenStart != null) ? selectedKitchenStart : Instant.now();
+        finishPicker.setValue(startTime.atZone(ZoneId.systemDefault()).toLocalDateTime().plusMinutes(totalMinutes));
+    }
+
+    private void updateKitchenStartTime() {
+        // Обновляем время начала приготовления на текущее время
+        selectedKitchenStart = Instant.now();
+        LocalDateTime currentTime = selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime();
+        kitchenStartDisplay.setText("Время начала приготовления: " + 
+            currentTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
     }
 
     private void openKitchenStartDialog() {
