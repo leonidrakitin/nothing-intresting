@@ -188,7 +188,7 @@ public class OrderService {
                 ));
             }
         }
-        this.orderItemRepository.save(orderItem);
+        this.orderItemRepository.saveAndFlush(orderItem);
         this.updateOrderStatus(orderItem.getOrder());
 
         this.wsMessageSender.sendRefreshAll();
