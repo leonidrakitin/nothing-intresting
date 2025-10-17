@@ -935,7 +935,7 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
 
     private void setPriorityTimeForOrder(OrderShortDto orderDto) {
         try {
-            OrderShortDto firstCookingOrder = ordersGrid.getSelectedItems().stream()
+            OrderShortDto firstCookingOrder = viewService.getAllActiveCollectorOrdersWithItems().stream()
                     .filter(order -> order.getStatus() == OrderStatus.CREATED || order.getStatus() == OrderStatus.COOKING)
                     .min(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
                     .orElse(null);
