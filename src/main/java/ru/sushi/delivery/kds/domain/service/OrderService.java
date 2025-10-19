@@ -191,7 +191,6 @@ public class OrderService {
         }
         this.orderItemRepository.saveAndFlush(orderItem);
         this.asyncOrderService.updateOrderStatus(orderItem.getOrder());
-
         this.wsMessageSender.sendRefreshAll();
     }
 

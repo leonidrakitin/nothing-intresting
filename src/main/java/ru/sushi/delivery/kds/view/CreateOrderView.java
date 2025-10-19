@@ -36,9 +36,6 @@ import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
 import ru.sushi.delivery.kds.service.ViewService;
-import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
-import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
-import ru.sushi.delivery.kds.service.listeners.BroadcastListener;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
 import ru.sushi.delivery.kds.view.dto.CartItem;
 
@@ -54,7 +51,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Route("create")
-public class CreateOrderView extends VerticalLayout implements BroadcastListener {
+public class CreateOrderView extends VerticalLayout {
 
     private final List<CartItem> cartItems = new ArrayList<>();
     private final ViewService viewService;
@@ -809,21 +806,27 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        this.cashListener.register(this);
+//        this.cashListener.register(this);
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
-        this.cashListener.unregister(this);
+//        this.cashListener.unregister(this);
         super.onDetach(detachEvent);
     }
 
-    @Override
-    public void receiveBroadcast(BroadcastMessage message) {
-        if (message.getType() == BroadcastMessageType.NOTIFICATION) {
-            Notification.show(message.getContent());
-        }
-    }
+//    @Override
+//    public void receiveBroadcast(BroadcastMessage message) {
+//        // Обрабатываем только уведомления, игнорируем REFRESH_PAGE для страницы создания заказов
+//        if (message.getType() == BroadcastMessageType.NOTIFICATION) {
+//            Notification.show(message.getContent());
+//        } else if (message.getType() == BroadcastMessageType.REFRESH_PAGE) {
+//            // Логируем получение REFRESH_PAGE сообщений для диагностики
+//            System.out.println("CreateOrderView получил REFRESH_PAGE сообщение - это не должно происходить!");
+//            // Игнорируем REFRESH_PAGE сообщения
+//        }
+//        // REFRESH_PAGE сообщения игнорируем - страница создания заказов не должна обновляться автоматически
+//    }
 
     private void updateTotalTime() {
         // Подсчитываем количество позиций, исключая ProductType с id 7, 8, 9
@@ -935,13 +938,31 @@ public class CreateOrderView extends VerticalLayout implements BroadcastListener
 
     private void setPriorityTimeForOrder(OrderShortDto orderDto) {
         try {
+            // Находим первый заказ в статусе COOKING (готовится)
             OrderShortDto firstCookingOrder = viewService.getAllActiveCollectorOrdersWithItems().stream()
-                    .filter(order -> order.getStatus() == OrderStatus.CREATED || order.getStatus() == OrderStatus.COOKING)
+                    .filter(order -> order.getStatus() == OrderStatus.COOKING)
                     .min(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
                     .orElse(null);
-            viewService.setPriorityForOrder(orderDto.getId(), firstCookingOrder);
             
-            Notification.show("Приоритет установлен для заказа " + orderDto.getName() + "!");
+            if (firstCookingOrder != null) {
+                // Устанавливаем время начала приготовления сразу после первого заказа в статусе COOKING
+                viewService.setPriorityForOrderAfterCooking(orderDto.getId(), firstCookingOrder);
+                Notification.show("Приоритет установлен для заказа " + orderDto.getName() + "! Заказ будет готовиться сразу после " + firstCookingOrder.getName());
+            } else {
+                // Если нет заказов в статусе COOKING, ищем первый заказ в статусе CREATED
+                OrderShortDto firstCreatedOrder = viewService.getAllActiveCollectorOrdersWithItems().stream()
+                        .filter(order -> order.getStatus() == OrderStatus.CREATED)
+                        .min(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
+                        .orElse(null);
+                
+                if (firstCreatedOrder != null) {
+                    viewService.setPriorityForOrderAfterCooking(orderDto.getId(), firstCreatedOrder);
+                    Notification.show("Приоритет установлен для заказа " + orderDto.getName() + "! Заказ будет готовиться сразу после " + firstCreatedOrder.getName());
+                } else {
+                    Notification.show("Нет активных заказов для установки приоритета");
+                    return;
+                }
+            }
             
             // Обновляем таблицу заказов
             refreshOrdersGrid(statusFilter.getValue(), null);

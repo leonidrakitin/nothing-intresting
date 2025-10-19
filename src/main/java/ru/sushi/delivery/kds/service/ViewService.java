@@ -17,6 +17,7 @@ import ru.sushi.delivery.kds.domain.service.ScreenService;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
+import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -157,6 +158,25 @@ public class ViewService {
             orderService.updateKitchenShouldGetOrderAt(orderId, priorityTime);
         } else {
             throw new RuntimeException("Нет заказов в статусе 'Готовится' для установки приоритета");
+        }
+    }
+
+    public void setPriorityForOrderAfterCooking(Long orderId, OrderShortDto referenceOrder) {
+        if (referenceOrder != null) {
+            Instant priorityTime;
+            
+            if (referenceOrder.getStatus() == OrderStatus.COOKING) {
+                // Если заказ уже готовится, ставим приоритетный заказ сразу после времени готовности
+                priorityTime = referenceOrder.getShouldBeFinishedAt();
+            } else {
+                // Если заказ еще не начал готовиться, ставим приоритетный заказ сразу после времени начала
+                priorityTime = referenceOrder.getKitchenShouldGetOrderAt().plusSeconds(30);
+            }
+            
+            // Обновляем время начала приготовления для выбранного заказа
+            orderService.updateKitchenShouldGetOrderAt(orderId, priorityTime);
+        } else {
+            throw new RuntimeException("Нет заказов для установки приоритета");
         }
     }
 }

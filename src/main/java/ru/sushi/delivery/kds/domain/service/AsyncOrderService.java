@@ -26,7 +26,7 @@ public class AsyncOrderService {
     @Async("taskExecutor")
     @Transactional
     public void updateOrderStatus(Order order) {
-        log.debug("Starting async updateOrderStatus for order: {}", order.getId());
+        log.info("Starting async updateOrderStatus for order: {}", order.getId());
 
         if (OrderStatus.READY == order.getStatus()) {
             log.debug("Order {} is already READY, skipping status update", order.getId());
