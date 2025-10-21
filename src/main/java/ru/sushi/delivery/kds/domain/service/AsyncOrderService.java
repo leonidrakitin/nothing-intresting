@@ -29,14 +29,11 @@ public class AsyncOrderService {
         log.info("Starting async updateOrderStatus for order: {}", order.getId());
 
         if (OrderStatus.READY == order.getStatus()) {
-            log.debug("Order {} is already READY, skipping status update", order.getId());
+            log.info("Order {} is already READY, skipping status update", order.getId());
             return;
         }
 
-        // Используем уже загруженные orderItems из order, если они есть
-        List<OrderItem> orderItems = order.getOrderItems().isEmpty() 
-            ? orderItemRepository.findByOrderId(order.getId())
-            : order.getOrderItems();
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
             
         int minimumStatus = this.definePriorityByOrderStatus(OrderStatus.READY);
 
@@ -58,12 +55,12 @@ public class AsyncOrderService {
                     .status(newOrderStatus)
                     .build()
             );
-            log.debug("Updated order {} status from {} to {}", order.getId(), order.getStatus(), newOrderStatus);
+            log.info("Updated order {} status from {} to {}", order.getId(), order.getStatus(), newOrderStatus);
         } else {
-            log.debug("Order {} status unchanged: {}", order.getId(), order.getStatus());
+            log.info("Order {} status unchanged: {}", order.getId(), order.getStatus());
         }
         
-        log.debug("Completed async updateOrderStatus for order: {}", order.getId());
+        log.info("Completed async updateOrderStatus for order: {}", order.getId());
     }
 
     private Station getStationFromOrderItem(OrderItem orderItem) {

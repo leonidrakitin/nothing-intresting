@@ -13,10 +13,9 @@ public class UpdateChefScreenViewTask {
 
     private final OrderChangesListener orderChangesListener;
 
-    @Scheduled(fixedRate = 10000) // Обновляем каждые 10 секунд вместо 1 секунды
+    @Scheduled(fixedRate = 30000) // Обновляем каждые 30 секунд для снижения нагрузки
     public void performTask() {
-        // Логируем отправку REFRESH_PAGE сообщений для диагностики
-        System.out.println("UpdateChefScreenViewTask: отправка REFRESH_PAGE сообщений всем слушателям");
+        // Отправляем REFRESH_PAGE сообщения только зарегистрированным слушателям (экраны кухни и сборщика)
         this.orderChangesListener.broadcastAll(BroadcastMessage.of(BroadcastMessageType.REFRESH_PAGE));
     }
 }
