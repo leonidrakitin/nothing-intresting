@@ -138,7 +138,7 @@ public class CreateOrderView extends VerticalLayout {
         rollsSearchField.setPlaceholder("Введите название...");
         rollsSearchField.setWidthFull();
         rollsSearchField.setValueChangeMode(ValueChangeMode.TIMEOUT);
-        rollsSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
+//        rollsSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
         rollsSearchField.addValueChangeListener(e -> {
             String searchValue = e.getValue().trim().toLowerCase();
             if (searchValue.isEmpty()) {
@@ -168,7 +168,7 @@ public class CreateOrderView extends VerticalLayout {
         setsSearchField.setPlaceholder("Введите название...");
         setsSearchField.setWidthFull();
         setsSearchField.setValueChangeMode(ValueChangeMode.TIMEOUT);
-        setsSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
+//        setsSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
         setsSearchField.addValueChangeListener(e -> {
             String searchValue = e.getValue().trim().toLowerCase();
             if (searchValue.isEmpty()) {
@@ -722,7 +722,7 @@ public class CreateOrderView extends VerticalLayout {
         TextField rollSearchField = new TextField("Поиск по роллам");
         rollSearchField.setPlaceholder("Введите название...");
         rollSearchField.setValueChangeMode(ValueChangeMode.TIMEOUT);
-        rollSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
+//        rollSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
 
         Grid<MenuItem> rollsGrid = new Grid<>(MenuItem.class, false);
         rollsGrid.setWidthFull();
@@ -758,7 +758,7 @@ public class CreateOrderView extends VerticalLayout {
         TextField setSearchField = new TextField("Поиск по сетам");
         setSearchField.setPlaceholder("Введите название...");
         setSearchField.setValueChangeMode(ValueChangeMode.TIMEOUT);
-        setSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
+//        setSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
 
         Grid<ItemCombo> setsGrid = new Grid<>(ItemCombo.class, false);
         setsGrid.setWidthFull();
