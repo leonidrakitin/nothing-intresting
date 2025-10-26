@@ -11,6 +11,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
+import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.util.List;
@@ -88,19 +89,28 @@ public class AsyncOrderService {
             return;
         }
 
-        int minimumStatus = this.definePriorityByOrderStatus(OrderStatus.READY);
+        // Инициализируем минимальный приоритет максимальным значением
+        int minimumStatus = 4;
+//        boolean hasAnyStatus = false;
 
         for (OrderItem orderItem : orderItems) {
             Station currentStation = this.getStationFromOrderItem(orderItem);
             int currentPriorityStatus = this.definePriorityByOrderStatus(currentStation.getOrderStatusAtStation());
-            if (currentPriorityStatus > 0 && minimumStatus == 0) {
-                minimumStatus = 1;
+            if (
+                currentPriorityStatus == 0
+                && orderItem.getStatus() == OrderItemStationStatus.ADDED
+                && currentStation.getId() == 2
+            ) {
+                currentPriorityStatus = 1;
             }
-            else {
+            // Учитываем только не-READY статусы
+            if (currentPriorityStatus < 4) {
+//                hasAnyStatus = true;
                 minimumStatus = Math.min(minimumStatus, currentPriorityStatus);
             }
         }
 
+        // Если все элементы в READY, оставляем READY
         OrderStatus newOrderStatus = this.defineOrderStatusByPriority(minimumStatus);
 
         if (newOrderStatus != order.getStatus()) {
@@ -121,21 +131,21 @@ public class AsyncOrderService {
 
     private int definePriorityByOrderStatus(OrderStatus orderStatus) {
         return switch (orderStatus) {
-            case READY -> 0;
-            case COLLECTING -> 1;
-            case COOKING -> 2;
-            case CREATED -> 3;
-            case CANCELED -> 4;
+            case COOKING -> 0;
+            case CREATED -> 1;
+            case COLLECTING -> 2;
+            case CANCELED -> 3;
+            default -> 4;
         };
     }
 
     private OrderStatus defineOrderStatusByPriority(int priority) {
         return switch (priority) {
-            case 0 -> OrderStatus.READY;
-            case 1 -> OrderStatus.COLLECTING;
-            case 2 -> OrderStatus.COOKING;
-            case 3 -> OrderStatus.CREATED;
-            default -> OrderStatus.CREATED;
+            case 0 -> OrderStatus.COOKING;
+            case 1 -> OrderStatus.CREATED;
+            case 2 -> OrderStatus.COLLECTING;
+            case 3 -> OrderStatus.CANCELED;
+            default -> OrderStatus.READY;
         };
     }
 }

@@ -46,8 +46,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Route("create")
@@ -74,6 +76,7 @@ public class CreateOrderView extends VerticalLayout {
 
     private final Grid<CartItem> chosenGrid = new Grid<>(CartItem.class, false);
     private final Grid<OrderShortDto> ordersGrid = new Grid<>(OrderShortDto.class, false);
+    private final Grid<OrderShortDto> activeOrdersGrid = new Grid<>(OrderShortDto.class, false);
     private final TextField orderNumberField = new TextField("Номер заказа");
     private final H3 totalPay = new H3("К оплате: 0.0 рублей");
     private final H5 totalTime = new H5("Общее время приготовления: 0 минут");
@@ -228,25 +231,35 @@ public class CreateOrderView extends VerticalLayout {
         orderNumberField.setWidthFull();
 
         Tab cartTab = new Tab("Корзина");
-        Tab ordersTab = new Tab("Все заказы");
-        Tabs rightTabs = new Tabs(cartTab, ordersTab);
+        Tab activeOrdersTab = new Tab("Активные заказы");
+        Tab allOrdersTab = new Tab("Все заказы");
+        Tabs rightTabs = new Tabs(cartTab, activeOrdersTab, allOrdersTab);
 
         Div cartLayout = buildCartLayout();
+        Div activeOrdersLayout = buildActiveOrdersLayout();
         Div allOrdersLayout = buildAllOrdersLayout();
+        activeOrdersLayout.setVisible(false);
         allOrdersLayout.setVisible(false);
 
         rightTabs.addSelectedChangeListener(event -> {
             if (event.getSelectedTab().equals(cartTab)) {
                 cartLayout.setVisible(true);
+                activeOrdersLayout.setVisible(false);
                 allOrdersLayout.setVisible(false);
+            } else if (event.getSelectedTab().equals(activeOrdersTab)) {
+                cartLayout.setVisible(false);
+                activeOrdersLayout.setVisible(true);
+                allOrdersLayout.setVisible(false);
+                refreshActiveOrdersGrid(null, null);
             } else {
                 cartLayout.setVisible(false);
+                activeOrdersLayout.setVisible(false);
                 allOrdersLayout.setVisible(true);
                 refreshOrdersGrid(null, null);
             }
         });
 
-        VerticalLayout rightLayout = new VerticalLayout(rightTabs, orderNumberField, cartLayout, allOrdersLayout);
+        VerticalLayout rightLayout = new VerticalLayout(rightTabs, orderNumberField, cartLayout, activeOrdersLayout, allOrdersLayout);
         rightLayout.setWidth("50%");
         rightLayout.setPadding(false);
         rightLayout.setSpacing(true);
@@ -423,7 +436,15 @@ public class CreateOrderView extends VerticalLayout {
 
             // Check if order with this name already exists today
             if (viewService.orderExistsByNameToday(orderNumber)) {
-                Notification.show("Такой заказ уже есть");
+                Dialog errorDialog = new Dialog();
+                errorDialog.setHeaderTitle("Ошибка");
+                errorDialog.add("Заказ с номером '" + orderNumber + "' уже существует за сегодня.");
+                
+                Button okBtn = new Button("OK", ev -> errorDialog.close());
+                Button cancelBtn = new Button("Отмена", ev -> errorDialog.close());
+                
+                errorDialog.getFooter().add(cancelBtn, okBtn);
+                errorDialog.open();
                 return;
             }
 
@@ -441,32 +462,28 @@ public class CreateOrderView extends VerticalLayout {
                 return;
             }
 
-            List<MenuItem> itemsToCreate = new ArrayList<>();
-            for (CartItem cartItem : cartItems) {
-                for (int i = 0; i < cartItem.getQuantity(); i++) {
-                    itemsToCreate.add(cartItem.getMenuItem());
-                }
+            // Проверяем наличие приборов (productType = 7)
+            boolean hasInstruments = cartItems.stream()
+                    .anyMatch(cartItem -> cartItem.getMenuItem().getProductType().getId() == 7);
+
+            if (!hasInstruments) {
+                // Показываем диалог подтверждения
+                Dialog confirmDialog = new Dialog();
+                confirmDialog.setHeaderTitle("Точно без приборов?");
+                confirmDialog.add("В корзине нет приборов. Продолжить создание заказа?");
+                
+                Button yesBtn = new Button("Да", ev -> {
+                    confirmDialog.close();
+                    createOrder(orderNumber, kitchenShouldGetOrderAt, shouldBeFinishedAt);
+                });
+                
+                Button noBtn = new Button("Нет", ev -> confirmDialog.close());
+                
+                confirmDialog.getFooter().add(noBtn, yesBtn);
+                confirmDialog.open();
+            } else {
+                createOrder(orderNumber, kitchenShouldGetOrderAt, shouldBeFinishedAt);
             }
-
-            boolean yandexOrder = isYandexOrder.getValue(); // Получаем значение чекбокса
-            viewService.createOrder(orderNumber, itemsToCreate, shouldBeFinishedAt, kitchenShouldGetOrderAt);
-            Notification.show("Заказ создан! Номер: " + orderNumber + ", Позиции: " + itemsToCreate.size() +
-                    (yandexOrder ? ", Яндекс заказ" : ""));
-
-            cartItems.clear();
-            updateTotalPay();
-            updateTotalTime();
-            chosenGrid.getDataProvider().refreshAll();
-            updateExtrasList(
-                    (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
-                    (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
-                    menuExtras
-            );
-            orderNumberField.clear();
-
-            updateKitchenStartTime();
-            finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
-            isYandexOrder.setValue(false); // Сбрасываем чекбокс после создания заказа
         });
 
         clearCartButton.addClickListener(e -> {
@@ -497,6 +514,93 @@ public class CreateOrderView extends VerticalLayout {
         totalPay.setText("К оплате: " + total + " рублей");
     }
 
+    private Div buildActiveOrdersLayout() {
+        Div ordersLayout = new Div();
+        ordersLayout.setWidthFull();
+
+        Span ordersCountLabel = new Span("");
+
+        activeOrdersGrid.removeAllColumns();
+        activeOrdersGrid.addColumn(new ComponentRenderer<>(orderDto -> {
+            HorizontalLayout layout = new HorizontalLayout();
+            layout.setAlignItems(Alignment.CENTER);
+            if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
+                Icon icon = VaadinIcon.EXCLAMATION.create();
+                icon.setColor("var(--lumo-error-color)");
+                icon.setSize("var(--lumo-icon-size-s)");
+                layout.add(icon);
+            }
+            layout.add(new Span(orderDto.getName()));
+            return layout;
+        })).setHeader("Номер").setAutoWidth(true);
+
+        activeOrdersGrid.addColumn(dto -> dto.getItems() == null ? 0 : dto.getItems().stream()
+                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+                .count()).setHeader("Кол-во").setAutoWidth(true);
+        activeOrdersGrid.addColumn(orderDto -> {
+            String baseStatus = switch (orderDto.getStatus()) {
+                case CREATED -> "Создан";
+                case COOKING -> "Готовится";
+                case COLLECTING -> "Сборка";
+                case READY -> "Выполнен";
+                case CANCELED -> "Отменён";
+            };
+            
+            // Добавляем процент готовности для статуса "Готовится"
+            if (orderDto.getStatus() == OrderStatus.COOKING) {
+                int progressPercent = calculateOrderProgress(orderDto);
+                return baseStatus + " (" + progressPercent + "%)";
+            }
+            
+            return baseStatus;
+        }).setHeader("Статус").setAutoWidth(true);
+        activeOrdersGrid.addColumn(order -> order.getKitchenShouldGetOrderAt()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalTime()
+                        .format(DateTimeFormatter.ofPattern("HH:mm")))
+                .setHeader("Начало").setAutoWidth(true);
+        activeOrdersGrid.addColumn(order -> order.getShouldBeFinishedAt()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalTime()
+                        .format(DateTimeFormatter.ofPattern("HH:mm")))
+                .setHeader("Готов к").setAutoWidth(true);
+        activeOrdersGrid.addComponentColumn(orderDto -> {
+            HorizontalLayout layout = new HorizontalLayout();
+
+            Button detailsBtn = new Button(VaadinIcon.LIST_OL.create());
+            detailsBtn.addClickListener(e -> openOrderItemsDialog(orderDto));
+            layout.add(detailsBtn);
+
+            if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
+                Button editTimeBtn = new Button(VaadinIcon.CLOCK.create());
+                editTimeBtn.addClickListener(e -> openEditDialog(orderDto));
+                layout.add(editTimeBtn);
+
+                Button editNameBtn = new Button(VaadinIcon.EDIT.create());
+                editNameBtn.addClickListener(e -> openEditOrderNameDialog(orderDto));
+                layout.add(editNameBtn);
+
+                Button priorityBtn = new Button(VaadinIcon.ARROW_UP.create());
+                priorityBtn.addClickListener(e -> setPriorityTimeForOrder(orderDto));
+                layout.add(priorityBtn);
+
+                Button cancelBtn = new Button(VaadinIcon.CLOSE.create());
+                cancelBtn.addClickListener(e -> {
+                    viewService.cancelOrder(orderDto.getId());
+                    Notification.show("Заказ " + orderDto.getName() + " отменён!");
+                    refreshActiveOrdersGrid(null, ordersCountLabel);
+                });
+                layout.add(cancelBtn);
+            }
+            return layout;
+        }).setHeader("Действие").setAutoWidth(true);
+
+        ordersLayout.add(new H3("Активные заказы:"), activeOrdersGrid, ordersCountLabel);
+        refreshActiveOrdersGrid(null, ordersCountLabel);
+
+        return ordersLayout;
+    }
+
     private Div buildAllOrdersLayout() {
         Div ordersLayout = new Div();
         ordersLayout.setWidthFull();
@@ -516,7 +620,7 @@ public class CreateOrderView extends VerticalLayout {
         });
         statusFilter.setPlaceholder("Все статусы");
 
-        Span ordersCountLabel = new Span("Заказов: 0");
+        Span ordersCountLabel = new Span("");
 
         // Кнопка применения фильтров
         applyDateFilterButton.addClickListener(e -> refreshOrdersGrid(statusFilter.getValue(), ordersCountLabel));
@@ -543,12 +647,22 @@ public class CreateOrderView extends VerticalLayout {
         ordersGrid.addColumn(dto -> dto.getItems() == null ? 0 : dto.getItems().stream()
                 .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
                 .count()).setHeader("Кол-во").setAutoWidth(true);
-        ordersGrid.addColumn(orderDto -> switch (orderDto.getStatus()) {
-            case CREATED -> "Создан";
-            case COOKING -> "Готовится";
-            case COLLECTING -> "Сборка";
-            case READY -> "Выполнен";
-            case CANCELED -> "Отменён";
+        ordersGrid.addColumn(orderDto -> {
+            String baseStatus = switch (orderDto.getStatus()) {
+                case CREATED -> "Создан";
+                case COOKING -> "Готовится";
+                case COLLECTING -> "Сборка";
+                case READY -> "Выполнен";
+                case CANCELED -> "Отменён";
+            };
+            
+            // Добавляем процент готовности для статуса "Готовится"
+            if (orderDto.getStatus() == OrderStatus.COOKING) {
+                int progressPercent = calculateOrderProgress(orderDto);
+                return baseStatus + " (" + progressPercent + "%)";
+            }
+            
+            return baseStatus;
         }).setHeader("Статус").setAutoWidth(true);
         ordersGrid.addColumn(order -> order.getKitchenShouldGetOrderAt()
                         .atZone(ZoneId.systemDefault())
@@ -576,17 +690,26 @@ public class CreateOrderView extends VerticalLayout {
                 editNameBtn.addClickListener(e -> openEditOrderNameDialog(orderDto));
                 layout.add(editNameBtn);
 
-                Button priorityBtn = new Button(VaadinIcon.ARROW_DOWN.create());
+                Button priorityBtn = new Button(VaadinIcon.ARROW_UP.create());
                 priorityBtn.addClickListener(e -> setPriorityTimeForOrder(orderDto));
                 layout.add(priorityBtn);
 
                 Button cancelBtn = new Button(VaadinIcon.CLOSE.create());
                 cancelBtn.addClickListener(e -> {
-                    viewService.cancelOrder(orderDto.getId());
-                    Notification.show("Заказ " + orderDto.getName() + " отменён!");
-                    refreshOrdersGrid(statusFilter.getValue(), ordersCountLabel);
+                viewService.cancelOrder(orderDto.getId());
+                Notification.show("Заказ " + orderDto.getName() + " отменён!");
+                refreshAllOrdersTables();
                 });
                 layout.add(cancelBtn);
+            } else if (orderDto.getStatus() == OrderStatus.READY) {
+                // Для выполненных заказов показываем кнопки редактирования и возврата
+                Button editNameBtn = new Button(VaadinIcon.EDIT.create());
+                editNameBtn.addClickListener(e -> openEditOrderNameDialog(orderDto));
+                layout.add(editNameBtn);
+
+                Button returnBtn = new Button("Вернуть");
+                returnBtn.addClickListener(e -> openReturnItemsDialog(orderDto));
+                layout.add(returnBtn);
             }
             return layout;
         }).setHeader("Действие").setAutoWidth(true);
@@ -613,7 +736,7 @@ public class CreateOrderView extends VerticalLayout {
                 viewService.updateKitchenShouldGetOrderAt(orderDto.getId(), newInstant);
                 Notification.show("Время начала приготовления обновлено");
                 editDialog.close();
-                refreshOrdersGrid(null, null);
+                refreshAllOrdersTables();
             } else {
                 Notification.show("Пожалуйста, укажите время");
             }
@@ -624,6 +747,28 @@ public class CreateOrderView extends VerticalLayout {
         editDialog.add(picker);
         editDialog.getFooter().add(saveBtn, cancelBtn);
         editDialog.open();
+    }
+
+    private void refreshActiveOrdersGrid(OrderStatus statusFilter, Span ordersCountLabel) {
+        List<OrderShortDto> allOrders = viewService.getAllOrdersWithItems();
+
+        // Обновляем таблицу
+        activeOrdersGrid.setItems(allOrders);
+
+        if (ordersCountLabel != null) {
+            ordersCountLabel.setText("Заказов: " + allOrders.size());
+        }
+    }
+
+    private void refreshAllOrdersTables() {
+        // Обновляем активные заказы если видима их вкладка
+        if (activeOrdersGrid.isAttached()) {
+            refreshActiveOrdersGrid(null, null);
+        }
+        // Обновляем все заказы если видима их вкладка
+        if (ordersGrid.isAttached()) {
+            refreshOrdersGrid(null, null);
+        }
     }
 
     private void refreshOrdersGrid(OrderStatus statusFilter, Span ordersCountLabel) {
@@ -666,6 +811,18 @@ public class CreateOrderView extends VerticalLayout {
 
         Grid<OrderItemDto> itemsGrid = new Grid<>(OrderItemDto.class, false);
         itemsGrid.addColumn(OrderItemDto::getName).setHeader("Наименование");
+        
+        // Добавляем столбцы станции и статуса для незавершенных заказов
+        if (!OrderStatus.READY.name().equalsIgnoreCase(orderDto.getStatus().toString())) {
+            itemsGrid.addColumn(itemDto -> itemDto.getCurrentStation() != null ? itemDto.getCurrentStation().getName() : "")
+                    .setHeader("Станция").setAutoWidth(true);
+            itemsGrid.addColumn(itemDto -> switch (itemDto.getStatus()) {
+                        case ADDED -> "Ожидает";
+                        case STARTED -> "Начато";
+                        case COMPLETED -> "Завершено";
+                        case CANCELED -> "Отменено";
+                    }).setHeader("Статус").setAutoWidth(true);
+        }
 
         if (!OrderStatus.READY.name().equalsIgnoreCase(orderDto.getStatus().toString())) {
             itemsGrid.addComponentColumn(itemDto -> {
@@ -879,6 +1036,35 @@ public class CreateOrderView extends VerticalLayout {
             currentTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
     }
 
+    private void createOrder(String orderNumber, Instant kitchenShouldGetOrderAt, Instant shouldBeFinishedAt) {
+        List<MenuItem> itemsToCreate = new ArrayList<>();
+        for (CartItem cartItem : cartItems) {
+            for (int i = 0; i < cartItem.getQuantity(); i++) {
+                itemsToCreate.add(cartItem.getMenuItem());
+            }
+        }
+
+        boolean yandexOrder = isYandexOrder.getValue();
+        viewService.createOrder(orderNumber, itemsToCreate, shouldBeFinishedAt, kitchenShouldGetOrderAt);
+        Notification.show("Заказ создан! Номер: " + orderNumber + ", Позиции: " + itemsToCreate.size() +
+                (yandexOrder ? ", Яндекс заказ" : ""));
+
+        cartItems.clear();
+        updateTotalPay();
+        updateTotalTime();
+        chosenGrid.getDataProvider().refreshAll();
+        updateExtrasList(
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+                menuExtras
+        );
+        orderNumberField.clear();
+
+        updateKitchenStartTime();
+        finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
+        isYandexOrder.setValue(false);
+    }
+
     private void openKitchenStartDialog() {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Выберите время начала приготовления");
@@ -928,7 +1114,7 @@ public class CreateOrderView extends VerticalLayout {
                 viewService.updateOrderName(orderDto.getId(), newOrderName);
                 Notification.show("Номер заказа обновлен: " + newOrderName);
                 dialog.close();
-                refreshOrdersGrid(statusFilter.getValue(), null);
+                refreshAllOrdersTables();
             } catch (Exception e) {
                 Notification.show("Ошибка при обновлении номера заказа: " + e.getMessage());
             }
@@ -945,6 +1131,70 @@ public class CreateOrderView extends VerticalLayout {
         dialog.open();
     }
 
+    private void openReturnItemsDialog(OrderShortDto orderDto) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Вернуть блюда из заказа #" + orderDto.getName());
+
+        // Получаем все позиции заказа
+        List<OrderItemDto> items = viewService.getOrderItems(orderDto.getId());
+        
+        // Фильтруем только основные блюда (исключаем допы и отмененные)
+        List<OrderItemDto> itemsToShow = items.stream()
+                .filter(item -> !item.isExtra() && item.getStatus() != OrderItemStationStatus.CANCELED)
+                .collect(Collectors.toList());
+        
+        if (itemsToShow.isEmpty()) {
+            Notification.show("Нет позиций для возврата");
+            return;
+        }
+
+        // Создаем чекбоксы для каждой позиции (по умолчанию все выбраны)
+        Map<Long, Boolean> selectedItems = new HashMap<>();
+        itemsToShow.forEach(item -> selectedItems.put(item.getId(), true));
+
+        VerticalLayout contentLayout = new VerticalLayout();
+        
+        Grid<OrderItemDto> itemsGrid = new Grid<>(OrderItemDto.class, false);
+        itemsGrid.addColumn(OrderItemDto::getName).setHeader("Наименование");
+        itemsGrid.addComponentColumn(item -> {
+            Checkbox checkbox = new Checkbox(
+                    item.getName(),
+                    selectedItems.get(item.getId()),
+                    e -> selectedItems.put(item.getId(), e.getValue()));
+            return checkbox;
+        }).setHeader("Выбрать");
+
+        itemsGrid.setItems(itemsToShow);
+        contentLayout.add(itemsGrid);
+
+        dialog.add(contentLayout);
+
+        Button returnBtn = new Button("Вернуть", ev -> {
+            List<Long> selectedIds = selectedItems.entrySet().stream()
+                    .filter(Map.Entry::getValue)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+
+            if (selectedIds.isEmpty()) {
+                Notification.show("Выберите хотя бы одну позицию");
+                return;
+            }
+
+            try {
+                viewService.returnOrderItems(orderDto.getId(), selectedIds);
+                Notification.show("Позиции возвращены");
+                dialog.close();
+                refreshAllOrdersTables();
+            } catch (Exception ex) {
+                Notification.show("Ошибка при возврате позиций: " + ex.getMessage());
+            }
+        });
+
+        Button cancelBtn = new Button("Отмена", ev -> dialog.close());
+        dialog.getFooter().add(cancelBtn, returnBtn);
+        dialog.open();
+    }
+
     private void setPriorityTimeForOrder(OrderShortDto orderDto) {
         try {
             // Находим первый заказ в статусе COOKING (готовится)
@@ -955,7 +1205,7 @@ public class CreateOrderView extends VerticalLayout {
             
             if (firstCookingOrder != null) {
                 // Устанавливаем время начала приготовления сразу после первого заказа в статусе COOKING
-                viewService.setPriorityForOrderAfterCooking(orderDto.getId(), firstCookingOrder);
+                viewService.setPriorityForOrderAfterCooking(orderDto.getId());
                 Notification.show("Приоритет установлен для заказа " + orderDto.getName() + "! Заказ будет готовиться сразу после " + firstCookingOrder.getName());
             } else {
                 // Если нет заказов в статусе COOKING, ищем первый заказ в статусе CREATED
@@ -965,7 +1215,7 @@ public class CreateOrderView extends VerticalLayout {
                         .orElse(null);
                 
                 if (firstCreatedOrder != null) {
-                    viewService.setPriorityForOrderAfterCooking(orderDto.getId(), firstCreatedOrder);
+                    viewService.setPriorityForOrderAfterCooking(orderDto.getId());
                     Notification.show("Приоритет установлен для заказа " + orderDto.getName() + "! Заказ будет готовиться сразу после " + firstCreatedOrder.getName());
                 } else {
                     Notification.show("Нет активных заказов для установки приоритета");
@@ -974,9 +1224,61 @@ public class CreateOrderView extends VerticalLayout {
             }
             
             // Обновляем таблицу заказов
-            refreshOrdersGrid(statusFilter.getValue(), null);
+            refreshAllOrdersTables();
         } catch (Exception e) {
             Notification.show("Ошибка при установке приоритета: " + e.getMessage());
         }
+    }
+
+    private int calculateOrderProgress(OrderShortDto orderDto) {
+        if (orderDto.getItems() == null || orderDto.getItems().isEmpty()) {
+            return 0;
+        }
+
+        long totalItems = orderDto.getItems().stream()
+                .filter(item -> !item.isExtra())
+                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+                .count();
+
+        if (totalItems == 0) {
+            return 0;
+        }
+
+        double totalCoefficient = orderDto.getItems().stream()
+                .filter(item -> !item.isExtra())
+                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+                .mapToDouble(item -> {
+                    if (item.getCurrentStation() == null) {
+                        return 0.0;
+                    } 
+                    // Коэффициент = 1 если станция ID >= 4
+                    if (item.getCurrentStation().getId() >= 4) {
+                        return 1.0;
+                    }
+                    // Коэффициент = 0.5 если станция ID > 2 ИЛИ статус == STARTED
+                    else if (item.getCurrentStation().getId() == 2 && item.getStatus() == OrderItemStationStatus.STARTED) {
+                        return 0.3;
+                    }
+                    // Коэффициент = 0.5 если станция ID > 2 ИЛИ статус == STARTED
+                    else if (item.getCurrentStation().getId() == 3 && item.getStatus() == OrderItemStationStatus.ADDED) {
+                        if (item.getFlowId() == 3) {
+                            return 0.0;
+                        }
+                        return 0.6;
+                    }
+                    // Коэффициент = 0.5 если станция ID > 2 ИЛИ статус == STARTED
+                    else if (item.getCurrentStation().getId() == 3 && item.getStatus() == OrderItemStationStatus.STARTED) {
+                        if (item.getFlowId() == 3) {
+                            return 0.5;
+                        }
+                        return 0.8;
+                    }
+                    // Иначе коэффициент = 0
+                    return 0.0;
+                })
+                .sum();
+
+        // Процент = (сумма коэффициентов / количество items) * 100, округляем
+        return (int) Math.round((totalCoefficient / totalItems) * 100);
     }
 }

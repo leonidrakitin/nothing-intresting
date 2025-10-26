@@ -22,9 +22,9 @@ public class WebSocketController {
         return new WSOrders(WSMessageType.GET_ALL_ORDER_ITEMS, viewService.getScreenOrderItems(screenId));
     }
 
-    @MessageMapping("/topic/screen.getAllOrdersWithItems")
-    @SendTo("/topic/screen.orders/3") //todo ???
-    public WSOrders getAllOrdersWithItems() {
+    @MessageMapping("/topic/screen.getAllOrdersWithItems/{screenId}")
+    @SendTo("/topic/screen.orders/{screenId}")
+    public WSOrders getAllOrdersWithItems(@DestinationVariable("screenId") String screenId) {
         return new WSOrders(WSMessageType.GET_ALL_ORDERS, viewService.getAllKitchenOrdersWithItems());
     }
 

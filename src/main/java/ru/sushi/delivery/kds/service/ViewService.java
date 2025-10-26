@@ -17,10 +17,10 @@ import ru.sushi.delivery.kds.domain.service.ScreenService;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
-import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -127,6 +127,7 @@ public class ViewService {
     private OrderItemDto buildOrderItemDto(OrderItem item) {
         return OrderItemDto.builder()
                 .id(item.getId())
+                .flowId(item.getMenuItem().getFlow().getId())
                 .orderName(item.getOrder().getName())
                 .orderId(item.getOrder().getId())
                 .name(item.getMenuItem().getName())
@@ -165,23 +166,36 @@ public class ViewService {
         }
     }
 
-    public void setPriorityForOrderAfterCooking(Long orderId, OrderShortDto referenceOrder) {
-        if (referenceOrder != null) {
-            Instant priorityTime;
-            
-            if (referenceOrder.getStatus() == OrderStatus.COOKING) {
-                // Если заказ уже готовится, ставим приоритетный заказ сразу после времени готовности
-                priorityTime = referenceOrder.getShouldBeFinishedAt();
-            } else {
-                // Если заказ еще не начал готовиться, ставим приоритетный заказ сразу после времени начала
-                priorityTime = referenceOrder.getKitchenShouldGetOrderAt().plusSeconds(30);
-            }
-            
-            // Обновляем время начала приготовления для выбранного заказа
-            orderService.updateKitchenShouldGetOrderAt(orderId, priorityTime);
-        } else {
-            throw new RuntimeException("Нет заказов для установки приоритета");
+    public void setPriorityForOrderAfterCooking(Long orderId) {
+        // Получаем все активные заказы, исключая текущий, и сортируем по времени
+        List<OrderShortDto> activeOrders = getAllOrdersWithItems().stream()
+                .filter(order -> !order.getId().equals(orderId)) // Исключаем текущий заказ
+                .sorted(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
+                .toList();
+        
+        if (activeOrders.isEmpty()) {
+            // Если нет заказов - ничего не делаем
+            return;
         }
+        
+        OrderShortDto firstOrder = activeOrders.get(0);
+        Instant priorityTime;
+        
+        if (activeOrders.size() >= 2) {
+            // Есть второй заказ - находим середину между ними
+            OrderShortDto secondOrder = activeOrders.get(1);
+            Instant firstTime = firstOrder.getKitchenShouldGetOrderAt();
+            Instant secondTime = secondOrder.getKitchenShouldGetOrderAt();
+            
+            // Вычисляем разницу и делим пополам
+            long timeDiff = secondTime.getEpochSecond() - firstTime.getEpochSecond();
+            priorityTime = firstTime.plusSeconds(timeDiff / 2);
+        } else {
+            // Нет второго заказа - добавляем 1 минуту к первому
+            priorityTime = firstOrder.getKitchenShouldGetOrderAt().plusSeconds(65);
+        }
+        
+        orderService.updateKitchenShouldGetOrderAt(orderId, priorityTime);
     }
 
     public List<OrderShortDto> getAllHistoryOrdersWithItemsToday() {
@@ -190,5 +204,9 @@ public class ViewService {
 
     public void returnOrderItems(Long orderId, List<Long> orderItemIds) {
         this.orderService.returnOrderItems(orderId, orderItemIds);
+    }
+
+    public void updateItemToCollecting(Long orderItemId) {
+        this.orderService.updateItemToCollecting(orderItemId);
     }
 }

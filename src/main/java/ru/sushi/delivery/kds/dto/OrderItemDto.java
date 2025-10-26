@@ -25,5 +25,6 @@ public class OrderItemDto {
     private OrderItemStationStatus status;
     private Station currentStation;
     private FlowStepType flowStepType;
+    private final Long flowId;
     private boolean extra;
 }

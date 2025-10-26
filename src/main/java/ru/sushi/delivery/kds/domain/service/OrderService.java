@@ -129,11 +129,33 @@ public class OrderService {
     }
 
     @Transactional
+    public void updateItemToCollecting(Long itemOrderId) {
+        OrderItem orderItem = this.orderItemRepository.findById(itemOrderId)
+                .orElseThrow(() -> new NotFoundException("Not found item order " + itemOrderId));
+
+        orderItem = orderItem.toBuilder()
+                .currentFlowStep(0)
+                .status(OrderItemStationStatus.COMPLETED)
+                .statusUpdatedAt(Instant.now())
+                .stationChangedAt(Instant.now())
+                .build();
+        
+        this.orderItemRepository.save(orderItem);
+        asyncOrderService.updateOrderStatusSync(orderItem.getOrder());
+        this.wsMessageSender.sendRefreshAll();
+    }
+
+    @Transactional
     public void updateAllOrderItemsToDone(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
         order = order.toBuilder().status(OrderStatus.READY).build();
         this.orderRepository.save(order);
+
+        order.getOrderItems().forEach(
+                item -> item.setStatus(OrderItemStationStatus.COMPLETED)
+        );
+        this.orderItemRepository.saveAll(order.getOrderItems());
 
 //        List<OrderItem> orderItems = new ArrayList<>();
 //        Integer doneStepOrder = null;
@@ -239,6 +261,7 @@ public class OrderService {
                         .thenComparingLong(OrderItem::getId))
                 .map(orderItem -> OrderItemDto.builder()
                         .id(orderItem.getId())
+                        .flowId(orderItem.getMenuItem().getFlow().getId())
                         .orderId(order.getId())
                         .orderName(order.getName())
                         .name(orderItem.getMenuItem().getName())
@@ -267,6 +290,7 @@ public class OrderService {
                             .forEach(amount -> sum.updateAndGet(v -> v + amount));
                     return OrderItemDto.builder()
                                     .id(orderItem.getId())
+                                    .flowId(orderItem.getMenuItem().getFlow().getId())
                                     .orderId(order.getId())
                                     .orderName(order.getName())
                                     .name(orderItem.getMenuItem().getName() + " - " + sum + "г.")
@@ -290,6 +314,7 @@ public class OrderService {
                         .thenComparingLong(OrderItem::getId))
                 .map(orderItem -> OrderItemDto.builder()
                         .id(orderItem.getId())
+                        .flowId(orderItem.getMenuItem().getFlow().getId())
                         .orderId(order.getId())
                         .orderName(order.getName())
                         .name(orderItem.getMenuItem().getName())
@@ -459,6 +484,34 @@ public class OrderService {
         }
         
         orderItemRepository.saveAll(updatedItems);
+        
+        // Обновляем статус заказа на CREATED
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
+        
+        // Ищем первый заказ в статусе COOKING или COLLECTING
+        Order firstActiveOrder = orderRepository.findAllActive().stream()
+                .filter(o -> o.getStatus() == OrderStatus.COOKING || o.getStatus() == OrderStatus.COLLECTING)
+                .min(Comparator.comparing(Order::getKitchenShouldGetOrderAt))
+                .orElse(null);
+        
+        // Устанавливаем время начала приготовления
+        Instant kitchenShouldGetOrderAt;
+        if (firstActiveOrder != null) {
+            // Ставим через 30 секунд после первого активного заказа
+            kitchenShouldGetOrderAt = firstActiveOrder.getKitchenShouldGetOrderAt().plusSeconds(30);
+            log.info("Заказ {} будет приготовляться через 30 секунд после заказа {}", 
+                    orderId, firstActiveOrder.getId());
+        } else {
+            // Если нет активных заказов, ставим на текущее время
+            kitchenShouldGetOrderAt = Instant.now();
+        }
+        
+        order = order.toBuilder()
+                .status(OrderStatus.CREATED)
+                .kitchenShouldGetOrderAt(kitchenShouldGetOrderAt)
+                .build();
+        orderRepository.save(order);
         
         // Отправляем уведомление
         if (!orderItems.isEmpty()) {

@@ -57,4 +57,10 @@ public class OrderController {
         viewService.returnOrderItems(orderId, orderItemIds);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("{orderItemId}/updateToCollecting")
+    public ResponseEntity<Void> updateItemToCollecting(@PathVariable Long orderItemId) {
+        viewService.updateItemToCollecting(orderItemId);
+        return ResponseEntity.ok().build();
+    }
 }
