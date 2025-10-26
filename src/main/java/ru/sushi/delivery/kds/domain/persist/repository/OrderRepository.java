@@ -55,7 +55,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         left join FlowStep step on step.flow.id = mi.flow.id and step.stepOrder = oi.currentFlowStep
         where step.station.id = :stationId and oi.order.kitchenGotOrderAt is not null 
         order by o.kitchenShouldGetOrderAt
-        limit 3
+        limit 5
     """)
     List<Order> findAllByStationId(Long stationId);
+
+    @Query("""
+        select o from Order o
+        where o.name = :name 
+        and o.createdAt >= :startOfDay 
+        and o.createdAt < :startOfTomorrow
+    """)
+    List<Order> findByNameForToday(
+            @Param("name") String name,
+            @Param("startOfDay") Instant startOfDay,
+            @Param("startOfTomorrow") Instant startOfTomorrow
+    );
 }

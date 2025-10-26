@@ -36,6 +36,10 @@ public class ViewService {
     private final FlowCacheService flowCacheService; //todo remove
     private final ItemComboService itemComboService;
 
+    public boolean orderExistsByNameToday(String name) {
+        return this.orderService.orderExistsByNameToday(name);
+    }
+
     public void createOrder(
             String name,
             List<MenuItem> menuItems,
@@ -178,5 +182,13 @@ public class ViewService {
         } else {
             throw new RuntimeException("Нет заказов для установки приоритета");
         }
+    }
+
+    public List<OrderShortDto> getAllHistoryOrdersWithItemsToday() {
+        return this.orderService.getAllHistoryOrdersWithItemsToday();
+    }
+
+    public void returnOrderItems(Long orderId, List<Long> orderItemIds) {
+        this.orderService.returnOrderItems(orderId, orderItemIds);
     }
 }

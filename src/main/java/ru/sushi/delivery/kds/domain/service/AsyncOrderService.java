@@ -3,6 +3,7 @@ package ru.sushi.delivery.kds.domain.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
@@ -13,6 +14,8 @@ import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
 import ru.sushi.delivery.kds.model.OrderStatus;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Log4j2
 @Service
@@ -27,14 +30,64 @@ public class AsyncOrderService {
     @Transactional
     public void updateOrderStatus(Order order) {
         log.info("Starting async updateOrderStatus for order: {}", order.getId());
+        
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
+        updateOrderStatusWithItems(order, orderItems);
+        
+        log.info("Completed async updateOrderStatus for order: {}", order.getId());
+    }
 
+    @Scheduled(fixedRate = 20000)
+    @Transactional
+    public void updateAllActiveOrderStatuses() {
+        log.info("Starting scheduled task to update all active order statuses");
+        
+        List<Order> activeOrders = orderRepository.findAllActive();
+        log.info("Found {} active orders to update", activeOrders.size());
+        
+        if (activeOrders.isEmpty()) {
+            return;
+        }
+        
+        // Fetch order IDs
+        List<Long> orderIds = activeOrders.stream()
+                .map(Order::getId)
+                .collect(Collectors.toList());
+        
+        // Fetch all order items in bulk
+        List<OrderItem> allOrderItems = orderItemRepository.findByOrderIdIn(orderIds);
+        
+        // Group order items by order ID
+        Map<Long, List<OrderItem>> orderItemsMap = allOrderItems.stream()
+                .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+        
+        log.info("Fetched {} order items for {} orders", allOrderItems.size(), activeOrders.size());
+        
+        // Process each order with pre-fetched items
+        for (Order order : activeOrders) {
+            try {
+                List<OrderItem> orderItems = orderItemsMap.getOrDefault(order.getId(), List.of());
+                updateOrderStatusWithItems(order, orderItems);
+            } catch (Exception e) {
+                log.error("Error updating order {} status: {}", order.getId(), e.getMessage(), e);
+            }
+        }
+        
+        log.info("Completed scheduled task to update all active order statuses");
+    }
+
+    @Transactional
+    public void updateOrderStatusSync(Order order) {
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
+        updateOrderStatusWithItems(order, orderItems);
+    }
+
+    private void updateOrderStatusWithItems(Order order, List<OrderItem> orderItems) {
         if (OrderStatus.READY == order.getStatus()) {
-            log.info("Order {} is already READY, skipping status update", order.getId());
+            log.debug("Order {} is already READY, skipping status update", order.getId());
             return;
         }
 
-        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
-            
         int minimumStatus = this.definePriorityByOrderStatus(OrderStatus.READY);
 
         for (OrderItem orderItem : orderItems) {
@@ -55,12 +108,8 @@ public class AsyncOrderService {
                     .status(newOrderStatus)
                     .build()
             );
-            log.info("Updated order {} status from {} to {}", order.getId(), order.getStatus(), newOrderStatus);
-        } else {
-            log.info("Order {} status unchanged: {}", order.getId(), order.getStatus());
+            log.debug("Updated order {} status from {} to {}", order.getId(), order.getStatus(), newOrderStatus);
         }
-        
-        log.info("Completed async updateOrderStatus for order: {}", order.getId());
     }
 
     private Station getStationFromOrderItem(OrderItem orderItem) {

@@ -421,6 +421,12 @@ public class CreateOrderView extends VerticalLayout {
                 return;
             }
 
+            // Check if order with this name already exists today
+            if (viewService.orderExistsByNameToday(orderNumber)) {
+                Notification.show("Такой заказ уже есть");
+                return;
+            }
+
             LocalDateTime finishTime = finishPicker.getValue();
             if (finishTime == null) {
                 Notification.show("Пожалуйста, укажите время готовности");

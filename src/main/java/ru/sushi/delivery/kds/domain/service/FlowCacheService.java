@@ -62,5 +62,9 @@ public class FlowCacheService {
     public FlowStep getDoneStep(Long flowId) {
         return flowCache.get(flowId).get(DONE_STEP_ORDER);
     }
+
+    public Map<Long, Map<Integer, FlowStep>> getFlowCache() {
+        return flowCache;
+    }
 }
 

@@ -28,6 +28,8 @@ import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 import ru.sushi.delivery.kds.websocket.WSMessageSender;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -60,6 +62,16 @@ public class OrderService {
                 .map(MenuItem::getId)
                 .toList();
         this.recipeService.calculateMenuItemsBalance(orderMenuItemIds);
+    }
+
+    public boolean orderExistsByNameToday(String name) {
+        Instant now = Instant.now();
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(now, ZoneId.systemDefault());
+        Instant startOfDay = localDateTime.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant startOfTomorrow = localDateTime.toLocalDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        
+        List<Order> existingOrders = orderRepository.findByNameForToday(name, startOfDay, startOfTomorrow);
+        return !existingOrders.isEmpty();
     }
 
     public void createOrder(
@@ -102,7 +114,7 @@ public class OrderService {
                                 .build()
                         )
                 )
-                .limit(16)
+                .limit(20)
                 .toList();
         
         // Группируем orderItemDto по заказам
@@ -190,7 +202,7 @@ public class OrderService {
             }
         }
         this.orderItemRepository.saveAndFlush(orderItem);
-        this.asyncOrderService.updateOrderStatus(orderItem.getOrder());
+        this.asyncOrderService.updateOrderStatusSync(orderItem.getOrder());
         this.wsMessageSender.sendRefreshAll();
     }
 
@@ -408,5 +420,59 @@ public class OrderService {
         orderRepository.save(order);
         
         log.info("Order name updated: orderId={}, newName={}", orderId, newName);
+    }
+
+    public List<OrderShortDto> getAllHistoryOrdersWithItemsToday() {
+        Instant now = Instant.now();
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(now, ZoneId.systemDefault());
+        Instant startOfDay = localDateTime.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant endOfDay = localDateTime.toLocalDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        
+        return orderRepository.findAllBetweenDates(startOfDay, endOfDay).stream()
+                .filter(order -> order.getStatus() == OrderStatus.READY)
+                .map(order -> OrderShortDto.of(order, this.getOrderFullItemData(order)))
+                .toList()
+                .reversed();
+    }
+
+    @Transactional
+    public void returnOrderItems(Long orderId, List<Long> orderItemIds) {
+        List<OrderItem> orderItems = orderItemRepository.findAllById(orderItemIds);
+        List<OrderItem> updatedItems = new ArrayList<>();
+        
+        for (OrderItem orderItem : orderItems) {
+            // Находим первый шаг flow
+            Map<Integer, FlowStep> flowSteps = flowCacheService.getFlowCache().get(orderItem.getMenuItem().getFlow().getId());
+            int firstStepOrder = flowSteps.keySet().stream()
+                    .filter(stepOrder -> stepOrder > 0) // Исключаем CANCEL и DONE
+                    .min(Integer::compareTo)
+                    .orElse(1);
+            
+            OrderItem updatedItem = orderItem.toBuilder()
+                    .currentFlowStep(firstStepOrder)
+                    .status(OrderItemStationStatus.ADDED)
+                    .statusUpdatedAt(Instant.now())
+                    .stationChangedAt(Instant.now())
+                    .build();
+            
+            updatedItems.add(updatedItem);
+        }
+        
+        orderItemRepository.saveAll(updatedItems);
+        
+        // Отправляем уведомление
+        if (!orderItems.isEmpty()) {
+            OrderItem firstItem = orderItems.get(0);
+            FlowStep step = this.flowCacheService.getStep(
+                    firstItem.getMenuItem().getFlow().getId(),
+                    firstItem.getCurrentFlowStep()
+            );
+            this.orderChangesListener.broadcast(
+                    step.getStation().getId(),
+                    BroadcastMessage.of(BroadcastMessageType.NOTIFICATION, "Возвращенные позиции")
+            );
+        }
+        
+        this.wsMessageSender.sendRefreshAll();
     }
 }
