@@ -454,6 +454,7 @@ public class CreateOrderView extends VerticalLayout {
 
             if (selectedKitchenStart.isBefore(Instant.now())) {
                 selectedKitchenStart = Instant.now();
+                updateTotalTime();
             }
 
             LocalDateTime finishTime = finishPicker.getValue();
