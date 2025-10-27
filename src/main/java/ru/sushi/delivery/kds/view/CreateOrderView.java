@@ -452,17 +452,8 @@ public class CreateOrderView extends VerticalLayout {
                 return;
             }
 
-            if (viewService.orderExistsByNameToday()) {
-                Dialog errorDialog = new Dialog();
-                errorDialog.setHeaderTitle("Ошибка");
-                errorDialog.add("Заказ с номером '" + orderNumber + "' уже существует за сегодня.");
-
-                Button okBtn = new Button("OK", ev -> errorDialog.close());
-                Button cancelBtn = new Button("Отмена", ev -> errorDialog.close());
-
-                errorDialog.getFooter().add(cancelBtn, okBtn);
-                errorDialog.open();
-                return;
+            if (selectedKitchenStart.isBefore(Instant.now())) {
+                selectedKitchenStart = Instant.now();
             }
 
             LocalDateTime finishTime = finishPicker.getValue();
