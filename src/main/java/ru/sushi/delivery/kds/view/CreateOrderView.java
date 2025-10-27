@@ -452,6 +452,19 @@ public class CreateOrderView extends VerticalLayout {
                 return;
             }
 
+            if (viewService.orderExistsByNameToday()) {
+                Dialog errorDialog = new Dialog();
+                errorDialog.setHeaderTitle("Ошибка");
+                errorDialog.add("Заказ с номером '" + orderNumber + "' уже существует за сегодня.");
+
+                Button okBtn = new Button("OK", ev -> errorDialog.close());
+                Button cancelBtn = new Button("Отмена", ev -> errorDialog.close());
+
+                errorDialog.getFooter().add(cancelBtn, okBtn);
+                errorDialog.open();
+                return;
+            }
+
             LocalDateTime finishTime = finishPicker.getValue();
             if (finishTime == null) {
                 Notification.show("Пожалуйста, укажите время готовности");
@@ -1038,6 +1051,7 @@ public class CreateOrderView extends VerticalLayout {
         LocalDateTime currentTime = selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime();
         kitchenStartDisplay.setText("Время начала приготовления: " + 
             currentTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+        updateTotalTime();
     }
 
     private void createOrder(String orderNumber, Instant kitchenShouldGetOrderAt, Instant shouldBeFinishedAt) {
@@ -1085,6 +1099,7 @@ public class CreateOrderView extends VerticalLayout {
             if (selectedTime != null) {
                 selectedKitchenStart = selectedTime.atZone(ZoneId.systemDefault()).toInstant();
                 kitchenStartDisplay.setText("Время начала приготовления: " + selectedTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+                updateTotalTime();
                 dialog.close();
             } else {
                 Notification.show("Пожалуйста, выберите время");
