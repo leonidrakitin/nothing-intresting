@@ -403,9 +403,13 @@ public class CreateOrderView extends VerticalLayout {
         }).setHeader("Действие");
         chosenGrid.setItems(cartItems);
 
-        HorizontalLayout kitchenStartLayout = new HorizontalLayout(kitchenStartDisplay, changeKitchenStartButton);
+        Button updateTimeButton = new Button("Обновить", VaadinIcon.REFRESH.create());
+        updateTimeButton.addClickListener(e -> updateKitchenStartTime());
+
+        HorizontalLayout kitchenStartLayout = new HorizontalLayout(kitchenStartDisplay, updateTimeButton, changeKitchenStartButton);
         kitchenStartLayout.setAlignItems(Alignment.CENTER);
         changeKitchenStartButton.addClickListener(e -> openKitchenStartDialog());
+
 
         finishPicker.setValue(LocalDateTime.now().plusMinutes(15));
         
