@@ -74,6 +74,7 @@ public class OrderService {
         return !existingOrders.isEmpty();
     }
 
+    @Transactional
     public void createOrder(
             String name,
             List<MenuItem> menuItems,
