@@ -2,3 +2,6 @@ databaseChangeLog:
   - include:
       file: orders.NEW_FIELDS.04.03.25.04.16.yaml
       relativeToChangelogFile: true
+  - include:
+      file: orders.ADD_PREORDER.15.01.25.yaml
+      relativeToChangelogFile: true

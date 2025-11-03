@@ -62,6 +62,9 @@ public class Order {
     @Builder.Default
     private Instant createdAt = Instant.now();
 
+    @Builder.Default
+    private Boolean preorder = false;
+
     public static Order of(String name, Instant shouldBeFinishedAt, Instant kitchenShouldGetOrderAt) {
         return Order.builder()
                 .name(name)

@@ -81,7 +81,17 @@ public class OrderService {
             Instant shouldBeFinishedAt,
             Instant kitchenShouldGetOrderAt
     ) {
-        Order order = this.orderRepository.save(Order.of(name, shouldBeFinishedAt, kitchenShouldGetOrderAt));
+        // Проверяем, является ли заказ предзаказом (время начала больше чем на 15 минут от текущего времени)
+        Instant now = Instant.now();
+        boolean isPreorder = kitchenShouldGetOrderAt != null && 
+                            kitchenShouldGetOrderAt.isAfter(now.plusSeconds(15 * 60));
+        
+        Order order = Order.of(name, shouldBeFinishedAt, kitchenShouldGetOrderAt);
+        if (isPreorder) {
+            order = order.toBuilder().preorder(true).build();
+        }
+        order = this.orderRepository.save(order);
+        
         List<OrderItem> orderItems = new ArrayList<>();
         Set<FlowStep> flowSteps = new HashSet<>();
         for (MenuItem menuItem : menuItems) {
@@ -394,33 +404,96 @@ public class OrderService {
 
     @Transactional
     public void updateKitchenShouldGetOrderAt(Long orderId, Instant newInstant) {
+        Order order = this.orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
+        
+        // Проверяем, нужно ли обновить флаг preorder при изменении времени
+        Instant now = Instant.now();
+        boolean isPreorder = newInstant != null && newInstant.isAfter(now.plusSeconds(15 * 60));
+        
         this.orderRepository.save(
-                this.orderRepository.findById(orderId)
-                        .map(order -> order.toBuilder().kitchenShouldGetOrderAt(newInstant).build())
-                        .orElseThrow(() -> new NotFoundException("Not found order " + orderId))
+                order.toBuilder()
+                        .kitchenShouldGetOrderAt(newInstant)
+                        .preorder(isPreorder)
+                        .build()
         );
     }
 
     @Transactional
     public void checkAndUpdateKitchenGotOrderAt(Instant now) {
         Set<FlowStep> flowSteps = new HashSet<>();
-        orderRepository.findAllNotStarted()
+        List<Order> ordersToUpdate = orderRepository.findAllNotStarted()
                 .stream()
                 .filter(order ->
                         order.getKitchenShouldGetOrderAt() == null
                         || order.getKitchenShouldGetOrderAt().isBefore(now)
                 )
-                .forEach(order -> {
-                    order.setKitchenGotOrderAt(now);
-                    for (OrderItem orderItem : order.getOrderItems()) {
-                        FlowStep step = this.flowCacheService.getStep(
-                                orderItem.getMenuItem().getFlow().getId(),
-                                orderItem.getCurrentFlowStep()
-                        );
-                        flowSteps.add(step);
-                    }
-                });
+                .toList();
+        
+        for (Order order : ordersToUpdate) {
+            order.setKitchenGotOrderAt(now);
+            orderRepository.save(order);
+            
+            // Если заказ является предзаказом, выполняем приоритезацию
+            if (Boolean.TRUE.equals(order.getPreorder())) {
+                performPreorderPrioritization(order.getId());
+            }
+            
+            for (OrderItem orderItem : order.getOrderItems()) {
+                FlowStep step = this.flowCacheService.getStep(
+                        orderItem.getMenuItem().getFlow().getId(),
+                        orderItem.getCurrentFlowStep()
+                );
+                flowSteps.add(step);
+            }
+        }
         notificateAllScreens(flowSteps);
+    }
+    
+    private void performPreorderPrioritization(Long orderId) {
+        // Получаем первый заказ в статусе COOKING
+        OrderShortDto firstCookingOrder = getAllActiveCollectorOrdersWithItems().stream()
+                .filter(order -> order.getStatus() == OrderStatus.COOKING)
+                .min(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
+                .orElse(null);
+        
+        if (firstCookingOrder != null) {
+            // Получаем все активные заказы, исключая текущий, и сортируем по времени
+            List<OrderShortDto> activeOrders = getAllActiveCollectorOrdersWithItems().stream()
+                    .filter(order -> !order.getId().equals(orderId)) // Исключаем текущий заказ
+                    .sorted(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
+                    .toList();
+            
+            if (activeOrders.isEmpty()) {
+                // Если нет заказов - добавляем 5 минут к первому заказу в COOKING
+                Instant priorityTime = firstCookingOrder.getKitchenShouldGetOrderAt().plusSeconds(5 * 60);
+                updateKitchenShouldGetOrderAt(orderId, priorityTime);
+                return;
+            }
+            
+            OrderShortDto firstOrder = activeOrders.get(0);
+            Instant priorityTime;
+            
+            if (activeOrders.size() >= 2) {
+                // Есть второй заказ - находим середину между ними
+                OrderShortDto secondOrder = activeOrders.get(1);
+                Instant firstTime = firstOrder.getKitchenShouldGetOrderAt();
+                Instant secondTime = secondOrder.getKitchenShouldGetOrderAt();
+                
+                // Вычисляем разницу и делим пополам
+                long timeDiff = secondTime.getEpochSecond() - firstTime.getEpochSecond();
+                priorityTime = firstTime.plusSeconds(timeDiff / 2);
+            } else {
+                // Нет второго заказа - добавляем 5 минут к первому
+                priorityTime = firstOrder.getKitchenShouldGetOrderAt().plusSeconds(5 * 60);
+            }
+            
+            updateKitchenShouldGetOrderAt(orderId, priorityTime);
+        } else {
+            // Если нет заказов в статусе COOKING, просто добавляем 5 минут к текущему времени
+            Instant priorityTime = Instant.now().plusSeconds(5 * 60);
+            updateKitchenShouldGetOrderAt(orderId, priorityTime);
+        }
     }
 
 

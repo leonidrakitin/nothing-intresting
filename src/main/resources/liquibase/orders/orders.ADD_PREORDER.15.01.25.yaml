@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: orders.ADD_PREORDER.15.01.25
+      author: system
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: preorder
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+
+  - changeSet:
+      id: orders_aud.ADD_PREORDER.15.01.25
+      author: system
+      changes:
+        - addColumn:
+            tableName: orders_aud
+            columns:
+              - column:
+                  name: preorder
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+
