@@ -147,17 +147,33 @@ public class OrderTextParserService {
     private Instant parseKitchenStartTime(String text) {
         // Паттерны для времени начала
         Pattern[] patterns = {
-            // Формат "⏰Предзаказ к 15:20 – 15:40, 03.11.2025"
+            // Формат "⏰Предзаказ к 15:20 – 15:40, 03.11.2025" - вычитаем 40 минут от первого времени
             Pattern.compile("⏰Предзаказ к\\s+(\\d{1,2}:\\d{2})\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*(\\d{2})\\.(\\d{2})\\.(\\d{4})", Pattern.CASE_INSENSITIVE),
             Pattern.compile("⏰Предзаказ к\\s+(\\d{1,2}:\\d{2})", Pattern.CASE_INSENSITIVE),
+            // Формат "🕒К 20:46 – 21:06, 03.11.2025" - не устанавливаем время начала
+            Pattern.compile("🕒К\\s+\\d{1,2}:\\d{2}\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*\\d{2}\\.\\d{2}\\.\\d{4}", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Создан в\\s+(\\d{1,2}:\\d{2})\\s+(\\d{1,2})\\s+(нояб|дек|янв|фев|мар|апр|май|июн|июл|авг|сент|окт)\\.", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Принято в\\s+(\\d{1,2}:\\d{2})\\s+(\\d{1,2})\\s+(нояб|дек|янв|фев|мар|апр|май|июн|июл|авг|сент|окт)\\.", Pattern.CASE_INSENSITIVE),
             Pattern.compile("🕒К\\s+(\\d{1,2}:\\d{2})", Pattern.CASE_INSENSITIVE)
         };
         
+        // Сначала проверяем формат "🕒К" с диапазоном времени - для него НЕ устанавливаем время начала
+        Pattern noTimePattern = Pattern.compile(
+            "🕒К\\s+\\d{1,2}:\\d{2}\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*\\d{2}\\.\\d{2}\\.\\d{4}", 
+            Pattern.CASE_INSENSITIVE
+        );
+        if (noTimePattern.matcher(text).find()) {
+            return null; // Не устанавливаем время начала для формата "🕒К"
+        }
+        
         for (Pattern pattern : patterns) {
             Matcher matcher = pattern.matcher(text);
             if (matcher.find()) {
+                // Пропускаем паттерн "🕒К" с диапазоном, так как он уже обработан выше
+                if (pattern.pattern().contains("🕒К") && pattern.pattern().contains("–")) {
+                    continue;
+                }
+                
                 try {
                     String timeStr = matcher.group(1);
                     LocalTime time = LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("H:mm"));
@@ -185,6 +201,12 @@ public class OrderTextParserService {
                     }
                     
                     LocalDateTime dateTime = LocalDateTime.of(date, time);
+                    
+                    // Если это формат "⏰Предзаказ к", вычитаем 40 минут
+                    if (pattern.pattern().contains("⏰Предзаказ")) {
+                        dateTime = dateTime.minusMinutes(40);
+                    }
+                    
                     return dateTime.atZone(ZoneId.systemDefault()).toInstant();
                 } catch (DateTimeParseException e) {
                     log.debug("Error parsing kitchen start time: {}", e.getMessage());
@@ -398,10 +420,11 @@ public class OrderTextParserService {
             
             if (!alreadyAdded) {
                 ItemCombo foundCombo = findComboByName(allCombos, name);
+                // Добавляем сет в список независимо от того, найден он или нет
                 combos.add(ParsedOrderDto.ParsedCombo.builder()
                     .name(name)
                     .quantity(quantity)
-                    .combo(foundCombo)
+                    .combo(foundCombo) // Может быть null если не найдено
                     .build());
             }
         }
@@ -462,14 +485,13 @@ public class OrderTextParserService {
             // Ищем соответствующий MenuItem
             MenuItem foundItem = findMenuItemByName(allMenuItems, name);
             
-            if (foundItem != null) {
-                items.add(ParsedOrderDto.ParsedItem.builder()
-                    .name(name)
-                    .quantity(quantity)
-                    .menuItem(foundItem)
-                    .build());
-                processedPositions.add(normalizedName);
-            }
+            // Добавляем позицию в список независимо от того, найдена она или нет
+            items.add(ParsedOrderDto.ParsedItem.builder()
+                .name(name)
+                .quantity(quantity)
+                .menuItem(foundItem) // Может быть null если не найдено
+                .build());
+            processedPositions.add(normalizedName);
         }
         
         // Формат "• 1 x Сет Жар-птица" (Telegram) - только если не обработали в Starter формате
@@ -512,14 +534,13 @@ public class OrderTextParserService {
             // Ищем соответствующий MenuItem
             MenuItem foundItem = findMenuItemByName(allMenuItems, name);
             
-            if (foundItem != null) {
-                items.add(ParsedOrderDto.ParsedItem.builder()
-                    .name(name)
-                    .quantity(quantity)
-                    .menuItem(foundItem)
-                    .build());
-                processedPositions.add(normalizedName);
-            }
+            // Добавляем позицию в список независимо от того, найдена она или нет
+            items.add(ParsedOrderDto.ParsedItem.builder()
+                .name(name)
+                .quantity(quantity)
+                .menuItem(foundItem) // Может быть null если не найдено
+                .build());
+            processedPositions.add(normalizedName);
         }
         
         // Формат "Название [цена руб/балл] | цена x количество = итого" (новый формат)
@@ -549,17 +570,23 @@ public class OrderTextParserService {
             
             // Убираем лишнее
             name = name.replaceAll("\\[.*?\\]", "").trim();
+            String normalizedName = normalizeName(name);
+            
+            // Проверяем, не обрабатывали ли мы уже эту позицию
+            if (processedPositions.contains(normalizedName)) {
+                continue;
+            }
             
             // Ищем соответствующий MenuItem
             MenuItem foundItem = findMenuItemByName(allMenuItems, name);
             
-            if (foundItem != null) {
-                items.add(ParsedOrderDto.ParsedItem.builder()
-                    .name(name)
-                    .quantity(quantity)
-                    .menuItem(foundItem)
-                    .build());
-            }
+            // Добавляем позицию в список независимо от того, найдена она или нет
+            items.add(ParsedOrderDto.ParsedItem.builder()
+                .name(name)
+                .quantity(quantity)
+                .menuItem(foundItem) // Может быть null если не найдено
+                .build());
+            processedPositions.add(normalizedName);
         }
         
         // Старый формат (обычный)
@@ -591,17 +618,23 @@ public class OrderTextParserService {
             // Убираем лишнее
             name = name.replaceAll("\\s+\\d+\\s*г", "").trim();
             name = name.replaceAll("\\[.*?\\]", "").trim(); // Убираем [380 балл]
+            String normalizedName = normalizeName(name);
+            
+            // Проверяем, не обрабатывали ли мы уже эту позицию
+            if (processedPositions.contains(normalizedName)) {
+                continue;
+            }
             
             // Ищем соответствующий MenuItem
             MenuItem foundItem = findMenuItemByName(allMenuItems, name);
             
-            if (foundItem != null) {
-                items.add(ParsedOrderDto.ParsedItem.builder()
-                    .name(name)
-                    .quantity(quantity)
-                    .menuItem(foundItem)
-                    .build());
-            }
+            // Добавляем позицию в список независимо от того, найдена она или нет
+            items.add(ParsedOrderDto.ParsedItem.builder()
+                .name(name)
+                .quantity(quantity)
+                .menuItem(foundItem) // Может быть null если не найдено
+                .build());
+            processedPositions.add(normalizedName);
         }
         
         return items;
