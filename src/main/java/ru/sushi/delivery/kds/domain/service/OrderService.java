@@ -466,7 +466,7 @@ public class OrderService {
             
             if (activeOrders.isEmpty()) {
                 // Если нет заказов - добавляем 5 минут к первому заказу в COOKING
-                Instant priorityTime = firstCookingOrder.getKitchenShouldGetOrderAt().plusSeconds(5 * 60);
+                Instant priorityTime = firstCookingOrder.getKitchenShouldGetOrderAt().plusSeconds(60);
                 updateKitchenShouldGetOrderAt(orderId, priorityTime);
                 return;
             }
@@ -485,13 +485,13 @@ public class OrderService {
                 priorityTime = firstTime.plusSeconds(timeDiff / 2);
             } else {
                 // Нет второго заказа - добавляем 5 минут к первому
-                priorityTime = firstOrder.getKitchenShouldGetOrderAt().plusSeconds(5 * 60);
+                priorityTime = firstOrder.getKitchenShouldGetOrderAt().plusSeconds(60);
             }
             
             updateKitchenShouldGetOrderAt(orderId, priorityTime);
         } else {
             // Если нет заказов в статусе COOKING, просто добавляем 5 минут к текущему времени
-            Instant priorityTime = Instant.now().plusSeconds(5 * 60);
+            Instant priorityTime = Instant.now().plusSeconds(60);
             updateKitchenShouldGetOrderAt(orderId, priorityTime);
         }
     }

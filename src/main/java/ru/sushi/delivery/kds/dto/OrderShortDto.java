@@ -26,7 +26,7 @@ public class OrderShortDto {
     public static OrderShortDto of(Order order, List<OrderItemDto> orderItems) {
         return OrderShortDto.builder()
                 .id(order.getId())
-                .name(order.getName())
+                .name(order.getName() + (order.getPreorder() ? "[предзаказ]" : ""))
                 .status(order.getStatus())
                 .items(orderItems)
                 .shouldBeFinishedAt(order.getShouldBeFinishedAt())
