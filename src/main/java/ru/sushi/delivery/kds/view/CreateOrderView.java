@@ -23,6 +23,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
@@ -33,8 +34,10 @@ import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
+import ru.sushi.delivery.kds.dto.ParsedOrderDto;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
+import ru.sushi.delivery.kds.service.OrderTextParserService;
 import ru.sushi.delivery.kds.service.ViewService;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
 import ru.sushi.delivery.kds.view.dto.CartItem;
@@ -59,6 +62,7 @@ public class CreateOrderView extends VerticalLayout {
     private final ViewService viewService;
     private final CashListener cashListener;
     private final CityProperties cityProperties;
+    private final OrderTextParserService orderTextParserService;
     private Instant selectedKitchenStart = null;
     private final Span kitchenStartDisplay = new Span("Время начала приготовления: Сейчас");
     private final Button changeKitchenStartButton = new Button("изменить");
@@ -85,12 +89,13 @@ public class CreateOrderView extends VerticalLayout {
     private final Button applyDateFilterButton = new Button("Применить", VaadinIcon.CALENDAR.create());
 
     @Autowired
-    public CreateOrderView(ViewService viewService, CashListener cashListener, CityProperties cityProperties) {
+    public CreateOrderView(ViewService viewService, CashListener cashListener, CityProperties cityProperties, OrderTextParserService orderTextParserService) {
         setSizeFull();
 
         this.viewService = viewService;
         this.cashListener = cashListener;
         this.cityProperties = cityProperties;
+        this.orderTextParserService = orderTextParserService;
 
         getStyle().set("padding", "20px");
         getStyle().set("gap", "20px");
@@ -215,7 +220,31 @@ public class CreateOrderView extends VerticalLayout {
         extrasColumns.setSpacing(true);
         updateExtrasList(extrasListLeft, extrasListRight, menuExtras);
 
-        extrasLayout.add(new H4("Допы"), extrasColumns);
+        // Набор приборов
+        HorizontalLayout instrumentsSetLayout = new HorizontalLayout();
+        instrumentsSetLayout.setWidthFull();
+        instrumentsSetLayout.setAlignItems(Alignment.CENTER);
+        instrumentsSetLayout.setSpacing(true);
+
+        Span instrumentsSetName = new Span("Набор приборов (соевый/васаби/имбирь/палочки)");
+        Span instrumentsSetQuantity = new Span("0");
+        Button instrumentsSetRemoveBtn = new Button(VaadinIcon.MINUS.create());
+        Button instrumentsSetAddBtn = new Button(VaadinIcon.PLUS.create());
+
+        instrumentsSetRemoveBtn.addClickListener(e -> {
+            removeInstrumentsSet();
+            updateInstrumentsSetQuantity(instrumentsSetQuantity);
+        });
+
+        instrumentsSetAddBtn.addClickListener(e -> {
+            addInstrumentsSet();
+            updateInstrumentsSetQuantity(instrumentsSetQuantity);
+        });
+
+        instrumentsSetLayout.add(instrumentsSetName, instrumentsSetRemoveBtn, instrumentsSetQuantity, instrumentsSetAddBtn);
+        instrumentsSetLayout.setFlexGrow(1.0, instrumentsSetName);
+
+        extrasLayout.add(new H4("Допы"), extrasColumns, instrumentsSetLayout);
 
         VerticalLayout leftLayout = new VerticalLayout(tabsLeft, tabsContentLeft, extrasLayout);
         leftLayout.setWidth("50%");
@@ -423,8 +452,11 @@ public class CreateOrderView extends VerticalLayout {
         finishLayout.setWidthFull();
 
         Button createOrderButton = new Button("Создать заказ");
+        Button importButton = new Button("Импорт", VaadinIcon.UPLOAD.create());
         Button clearCartButton = new Button("Очистить корзину");
-        HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, clearCartButton);
+        HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, importButton, clearCartButton);
+
+        importButton.addClickListener(e -> openImportDialog());
 
         createOrderButton.addClickListener(e -> {
             if (cartItems.isEmpty()) {
@@ -1291,5 +1323,574 @@ public class CreateOrderView extends VerticalLayout {
 
         // Процент = (сумма коэффициентов / количество items) * 100, округляем
         return (int) Math.round((totalCoefficient / totalItems) * 100);
+    }
+
+    private void openImportDialog() {
+        Dialog importDialog = new Dialog();
+        importDialog.setHeaderTitle("Импорт заказа");
+        importDialog.setWidth("900px");
+        importDialog.setMaxHeight("80vh");
+
+        // Предупреждение о бета-версии
+        Span betaWarning = new Span("БЕТА ВЕРСИЯ\n\nЛАНЧИ НЕ ПАРСЯТСЯ");
+        betaWarning.getStyle().set("font-size", "24px");
+        betaWarning.getStyle().set("font-weight", "bold");
+        betaWarning.getStyle().set("color", "var(--lumo-error-color)");
+        betaWarning.getStyle().set("text-align", "center");
+        betaWarning.getStyle().set("white-space", "pre-line");
+        betaWarning.getStyle().set("margin-bottom", "20px");
+        betaWarning.getStyle().set("padding", "15px");
+        betaWarning.getStyle().set("background-color", "var(--lumo-error-color-10pct)");
+        betaWarning.getStyle().set("border-radius", "4px");
+        betaWarning.getStyle().set("display", "block");
+        betaWarning.getStyle().set("width", "100%");
+
+        TextArea textArea = new TextArea("Вставьте текст заказа");
+        textArea.setWidthFull();
+        textArea.setMinHeight("400px");
+        textArea.setMaxHeight("500px");
+        textArea.setPlaceholder("Вставьте текст заказа из системы...");
+        textArea.setClearButtonVisible(true);
+        textArea.setValue("");
+
+        VerticalLayout content = new VerticalLayout();
+        content.setPadding(true);
+        content.setSpacing(true);
+        content.setWidthFull();
+        content.add(betaWarning);
+        content.add(textArea);
+        content.setFlexGrow(1.0, textArea);
+
+        importDialog.add(content);
+
+        Button parseButton = new Button("Парсить", VaadinIcon.SEARCH.create());
+        Button cancelButton = new Button("Отмена", ev -> importDialog.close());
+
+        parseButton.addClickListener(e -> {
+            String text = textArea.getValue();
+            if (text == null || text.trim().isEmpty()) {
+                Notification.show("Введите текст заказа");
+                return;
+            }
+
+            try {
+                // Парсинг
+                ParsedOrderDto parsed = orderTextParserService.parseOrderText(text, menuMenuItems, menuItemCombos);
+
+                // Закрываем диалог импорта и показываем диалог подтверждения
+                importDialog.close();
+                showImportConfirmationDialog(parsed);
+            } catch (Exception ex) {
+                Notification.show("Ошибка при парсинге: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
+        importDialog.getFooter().add(cancelButton, parseButton);
+        importDialog.open();
+    }
+
+    private void showImportConfirmationDialog(ParsedOrderDto parsed) {
+        Dialog confirmDialog = new Dialog();
+        confirmDialog.setHeaderTitle("Результаты парсинга заказа");
+        confirmDialog.setWidth("700px");
+
+        VerticalLayout content = new VerticalLayout();
+
+        // Шаг 3: Номер заказа и комментарий
+        TextField orderNumberFieldDialog = new TextField("Номер заказа");
+        orderNumberFieldDialog.setValue(parsed.getOrderNumber() != null ? parsed.getOrderNumber() : "");
+        orderNumberFieldDialog.setWidthFull();
+        content.add(orderNumberFieldDialog);
+
+        if (parsed.getComment() != null && !parsed.getComment().isEmpty()) {
+            Span commentLabel = new Span("Комментарий: " + parsed.getComment());
+            content.add(commentLabel);
+        }
+
+        // Выводим найденные позиции
+        Div itemsDiv = new Div();
+        itemsDiv.getStyle().set("margin-top", "10px");
+        H4 itemsHeader = new H4("Найденные позиции:");
+        itemsDiv.add(itemsHeader);
+
+        List<String> itemsList = new ArrayList<>();
+
+        // Добавляем сеты
+        for (ParsedOrderDto.ParsedCombo combo : parsed.getCombos()) {
+            String status = combo.getCombo() != null ? "✓" : "✗";
+            itemsList.add(String.format("%s Сет: %s x%d", status, combo.getName(), combo.getQuantity()));
+        }
+
+        // Добавляем отдельные позиции
+        for (ParsedOrderDto.ParsedItem item : parsed.getItems()) {
+            String status = item.getMenuItem() != null ? "✓" : "✗";
+            itemsList.add(String.format("%s %s x%d", status, item.getName(), item.getQuantity()));
+        }
+
+        for (String itemStr : itemsList) {
+            Span itemSpan = new Span(itemStr);
+            itemSpan.getStyle().set("display", "block");
+            itemSpan.getStyle().set("margin", "5px 0");
+            itemsDiv.add(itemSpan);
+        }
+
+        content.add(itemsDiv);
+
+        // Шаг 4: Допы (productType=7)
+        Div extrasDiv = new Div();
+        extrasDiv.getStyle().set("margin-top", "10px");
+        H4 extrasHeader = new H4("Допы (предзаполнение):");
+        extrasDiv.add(extrasHeader);
+
+        Map<String, Integer> extrasToAdd = new HashMap<>();
+
+        // Обрабатываем приборы
+        if (parsed.getInstrumentsCount() != null && parsed.getInstrumentsCount() > 0) {
+            MenuItem instrumentsItem = menuExtras.stream()
+                    .filter(item -> item.getName().toLowerCase().contains("палочки") ||
+                            item.getName().toLowerCase().contains("приборы"))
+                    .findFirst()
+                    .orElse(null);
+
+            if (instrumentsItem != null) {
+                extrasToAdd.put(instrumentsItem.getName(), parsed.getInstrumentsCount());
+            }
+        }
+
+        // Обрабатываем остальные допы
+        for (Map.Entry<String, Integer> extraEntry : parsed.getExtras().entrySet()) {
+            String extraName = extraEntry.getKey();
+            Integer quantity = extraEntry.getValue();
+
+            // Ищем соответствующий MenuItem
+            MenuItem foundExtra = menuExtras.stream()
+                    .filter(item -> {
+                        String itemName = item.getName().toLowerCase();
+                        String extraNameLower = extraName.toLowerCase();
+                        return itemName.contains(extraNameLower) || extraNameLower.contains(itemName);
+                    })
+                    .findFirst()
+                    .orElse(null);
+
+            if (foundExtra != null) {
+                extrasToAdd.put(foundExtra.getName(), extrasToAdd.getOrDefault(foundExtra.getName(), 0) + quantity);
+            }
+        }
+
+        // Выводим список допов
+        for (Map.Entry<String, Integer> extraEntry : extrasToAdd.entrySet()) {
+            Span extraSpan = new Span(String.format("%s x%d", extraEntry.getKey(), extraEntry.getValue()));
+            extraSpan.getStyle().set("display", "block");
+            extraSpan.getStyle().set("margin", "5px 0");
+            extrasDiv.add(extraSpan);
+        }
+
+        content.add(extrasDiv);
+
+        // Шаг 5: Время начала
+        DateTimePicker startTimePicker = new DateTimePicker("Время начала приготовления");
+        startTimePicker.setLocale(Locale.of("ru", "RU"));
+        if (parsed.getKitchenStartTime() != null) {
+            startTimePicker.setValue(parsed.getKitchenStartTime()
+                    .atZone(ZoneId.systemDefault()).toLocalDateTime());
+        } else {
+            startTimePicker.setValue(LocalDateTime.now());
+        }
+        startTimePicker.setWidthFull();
+        content.add(startTimePicker);
+
+        // Время готовности (если есть)
+        if (parsed.getFinishTime() != null) {
+            finishPicker.setValue(parsed.getFinishTime()
+                    .atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
+
+        confirmDialog.add(content);
+
+        Button confirmButton = new Button("Добавить в корзину", VaadinIcon.CHECK.create());
+        confirmButton.addClickListener(e -> {
+            confirmDialog.close();
+
+            // Собираем список позиций, которые не удалось добавить
+            List<String> notAddedItems = new ArrayList<>();
+            for (ParsedOrderDto.ParsedCombo combo : parsed.getCombos()) {
+                if (combo.getCombo() == null) {
+                    notAddedItems.add(String.format("Сет: %s x%d", combo.getName(), combo.getQuantity()));
+                }
+            }
+            for (ParsedOrderDto.ParsedItem item : parsed.getItems()) {
+                if (item.getMenuItem() == null) {
+                    notAddedItems.add(String.format("%s x%d", item.getName(), item.getQuantity()));
+                }
+            }
+
+            // Шаг 1: Проверка комментария
+            if (parsed.getComment() != null && !parsed.getComment().isEmpty()) {
+                showCommentConfirmationDialog(parsed, orderNumberFieldDialog, startTimePicker, extrasToAdd, notAddedItems);
+            } else {
+                // Если комментария нет, сразу проверяем недобавленные позиции
+                if (!notAddedItems.isEmpty()) {
+                    showNotAddedItemsDialog(parsed, orderNumberFieldDialog, startTimePicker, extrasToAdd, notAddedItems);
+                } else {
+                    // Все ОК - добавляем в корзину
+                    addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
+                }
+            }
+        });
+
+        Button cancelButton = new Button("Отмена", ev -> confirmDialog.close());
+        confirmDialog.getFooter().add(cancelButton, confirmButton);
+        confirmDialog.open();
+    }
+
+    private void addToCartSilently(MenuItem item) {
+        CartItem existingItem = cartItems.stream()
+                .filter(cartItem -> cartItem.getMenuItem().equals(item))
+                .findFirst()
+                .orElse(null);
+
+        if (existingItem != null) {
+            existingItem.increment();
+        } else {
+            cartItems.add(new CartItem(item, 1));
+        }
+    }
+
+    private void showCommentConfirmationDialog(ParsedOrderDto parsed, TextField orderNumberFieldDialog,
+                                               DateTimePicker startTimePicker, Map<String, Integer> extrasToAdd,
+                                               List<String> notAddedItems) {
+        Dialog commentDialog = new Dialog();
+        commentDialog.setHeaderTitle("Учли комментарий?");
+        commentDialog.setWidth("500px");
+
+        VerticalLayout content = new VerticalLayout();
+        content.setPadding(true);
+        content.setSpacing(true);
+
+        Span commentText = new Span(parsed.getComment());
+        commentText.getStyle().set("white-space", "pre-wrap");
+        commentText.getStyle().set("padding", "10px");
+        commentText.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+        commentText.getStyle().set("border-radius", "4px");
+        content.add(commentText);
+
+        commentDialog.add(content);
+
+        Button backButton = new Button("Назад", e -> {
+            commentDialog.close();
+            // Возвращаемся к диалогу подтверждения
+            showImportConfirmationDialog(parsed);
+        });
+
+        Button nextButton = new Button("Дальше", e -> {
+            commentDialog.close();
+            // Проверяем недобавленные позиции
+            if (!notAddedItems.isEmpty()) {
+                showNotAddedItemsDialog(parsed, orderNumberFieldDialog, startTimePicker, extrasToAdd, notAddedItems);
+            } else {
+                // Все ОК - добавляем в корзину
+                addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
+            }
+        });
+
+        commentDialog.getFooter().add(backButton, nextButton);
+        commentDialog.open();
+    }
+
+    private void showNotAddedItemsDialog(ParsedOrderDto parsed, TextField orderNumberFieldDialog,
+                                         DateTimePicker startTimePicker, Map<String, Integer> extrasToAdd,
+                                         List<String> notAddedItems) {
+        Dialog notAddedDialog = new Dialog();
+        notAddedDialog.setHeaderTitle("Не получилось добавить");
+        notAddedDialog.setWidth("600px");
+
+        VerticalLayout content = new VerticalLayout();
+        content.setPadding(true);
+        content.setSpacing(true);
+
+        Span warningText = new Span("Не получилось добавить - сделай скриншот и добавь руками");
+        warningText.getStyle().set("font-weight", "bold");
+        warningText.getStyle().set("color", "var(--lumo-error-color)");
+        content.add(warningText);
+
+        Div itemsDiv = new Div();
+        itemsDiv.getStyle().set("margin-top", "10px");
+        H4 itemsHeader = new H4("Список позиций:");
+        itemsDiv.add(itemsHeader);
+
+        for (String itemStr : notAddedItems) {
+            Span itemSpan = new Span("✗ " + itemStr);
+            itemSpan.getStyle().set("display", "block");
+            itemSpan.getStyle().set("margin", "5px 0");
+            itemSpan.getStyle().set("color", "var(--lumo-error-color)");
+            itemsDiv.add(itemSpan);
+        }
+
+        content.add(itemsDiv);
+        notAddedDialog.add(content);
+
+        Button okButton = new Button("ОК", e -> {
+            notAddedDialog.close();
+            // Все равно добавляем то, что удалось добавить
+            addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
+        });
+
+        notAddedDialog.getFooter().add(okButton);
+        notAddedDialog.open();
+    }
+
+    private void addParsedOrderToCart(ParsedOrderDto parsed, String orderNumber, LocalDateTime kitchenStartTime,
+                                      Map<String, Integer> extrasToAdd) {
+        // Очищаем текущую корзину
+        cartItems.clear();
+
+        // Добавляем сеты
+        for (ParsedOrderDto.ParsedCombo combo : parsed.getCombos()) {
+            if (combo.getCombo() != null) {
+                for (MenuItem item : combo.getCombo().getMenuItems()) {
+                    for (int i = 0; i < combo.getQuantity(); i++) {
+                        addToCartSilently(item);
+                    }
+                }
+            }
+        }
+
+        // Добавляем отдельные позиции
+        for (ParsedOrderDto.ParsedItem item : parsed.getItems()) {
+            if (item.getMenuItem() != null) {
+                for (int i = 0; i < item.getQuantity(); i++) {
+                    addToCartSilently(item.getMenuItem());
+                }
+            }
+        }
+
+        // Добавляем допы
+        for (Map.Entry<String, Integer> extraEntry : extrasToAdd.entrySet()) {
+            MenuItem extraItem = menuExtras.stream()
+                    .filter(item -> item.getName().equals(extraEntry.getKey()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (extraItem != null) {
+                for (int i = 0; i < extraEntry.getValue(); i++) {
+                    addToCartSilently(extraItem);
+                }
+            }
+        }
+
+        // Обновляем поля
+        orderNumberField.setValue(orderNumber);
+        if (kitchenStartTime != null) {
+            selectedKitchenStart = kitchenStartTime
+                    .atZone(ZoneId.systemDefault()).toInstant();
+            kitchenStartDisplay.setText("Время начала приготовления: " +
+                    selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime()
+                            .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+        }
+
+        updateTotalPay();
+        updateTotalTime();
+        chosenGrid.getDataProvider().refreshAll();
+        updateExtrasList(
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+                menuExtras
+        );
+
+        Notification.show("Заказ импортирован в корзину");
+    }
+
+    private void addInstrumentsSet() {
+        // Находим позиции для набора приборов
+        MenuItem soya = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("соевый соус"))
+                .findFirst()
+                .orElse(null);
+        MenuItem wasabi = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("васаби"))
+                .findFirst()
+                .orElse(null);
+        MenuItem ginger = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("имбирь"))
+                .findFirst()
+                .orElse(null);
+        MenuItem sticks = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("палочки") ||
+                        item.getName().toLowerCase().contains("приборы"))
+                .findFirst()
+                .orElse(null);
+
+        // Добавляем все позиции набора
+        if (soya != null) addToCartSilently(soya);
+        if (wasabi != null) addToCartSilently(wasabi);
+        if (ginger != null) addToCartSilently(ginger);
+        if (sticks != null) addToCartSilently(sticks);
+
+        updateTotalPay();
+        updateTotalTime();
+        chosenGrid.getDataProvider().refreshAll();
+        updateExtrasList(
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+                menuExtras
+        );
+    }
+
+    private void removeInstrumentsSet() {
+        // Находим позиции для набора приборов
+        MenuItem soya = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("соевый соус"))
+                .findFirst()
+                .orElse(null);
+        MenuItem wasabi = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("васаби"))
+                .findFirst()
+                .orElse(null);
+        MenuItem ginger = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("имбирь"))
+                .findFirst()
+                .orElse(null);
+        MenuItem sticks = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("палочки") ||
+                        item.getName().toLowerCase().contains("приборы"))
+                .findFirst()
+                .orElse(null);
+
+        // Удаляем по одной позиции каждого типа
+        if (soya != null) {
+            CartItem cartItem = cartItems.stream()
+                    .filter(ci -> ci.getMenuItem().equals(soya))
+                    .findFirst()
+                    .orElse(null);
+            if (cartItem != null) {
+                if (cartItem.getQuantity() > 1) {
+                    cartItem.decrement();
+                } else {
+                    cartItems.remove(cartItem);
+                }
+            }
+        }
+        if (wasabi != null) {
+            CartItem cartItem = cartItems.stream()
+                    .filter(ci -> ci.getMenuItem().equals(wasabi))
+                    .findFirst()
+                    .orElse(null);
+            if (cartItem != null) {
+                if (cartItem.getQuantity() > 1) {
+                    cartItem.decrement();
+                } else {
+                    cartItems.remove(cartItem);
+                }
+            }
+        }
+        if (ginger != null) {
+            CartItem cartItem = cartItems.stream()
+                    .filter(ci -> ci.getMenuItem().equals(ginger))
+                    .findFirst()
+                    .orElse(null);
+            if (cartItem != null) {
+                if (cartItem.getQuantity() > 1) {
+                    cartItem.decrement();
+                } else {
+                    cartItems.remove(cartItem);
+                }
+            }
+        }
+        if (sticks != null) {
+            CartItem cartItem = cartItems.stream()
+                    .filter(ci -> ci.getMenuItem().equals(sticks))
+                    .findFirst()
+                    .orElse(null);
+            if (cartItem != null) {
+                if (cartItem.getQuantity() > 1) {
+                    cartItem.decrement();
+                } else {
+                    cartItems.remove(cartItem);
+                }
+            }
+        }
+
+        updateTotalPay();
+        updateTotalTime();
+        chosenGrid.getDataProvider().refreshAll();
+        updateExtrasList(
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+                menuExtras
+        );
+    }
+
+    private void updateInstrumentsSetQuantity(Span quantitySpan) {
+        // Находим позиции для набора приборов
+        MenuItem soya = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("Соевый соус"))
+                .findFirst()
+                .orElse(null);
+        MenuItem wasabi = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("Васаби"))
+                .findFirst()
+                .orElse(null);
+        MenuItem ginger = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("Имбирь"))
+                .findFirst()
+                .orElse(null);
+        MenuItem sticks = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("Палочки"))
+                .findFirst()
+                .orElse(null);
+
+        // Находим минимальное количество среди всех позиций набора
+        int minQuantity = Integer.MAX_VALUE;
+        if (soya != null) {
+            CartItem cartItem = cartItems.stream()
+                    .filter(ci -> ci.getMenuItem().equals(soya))
+                    .findFirst()
+                    .orElse(null);
+            if (cartItem != null) {
+                minQuantity = Math.min(minQuantity, cartItem.getQuantity());
+            } else {
+                minQuantity = 0;
+            }
+        }
+        if (wasabi != null) {
+            CartItem cartItem = cartItems.stream()
+                    .filter(ci -> ci.getMenuItem().equals(wasabi))
+                    .findFirst()
+                    .orElse(null);
+            if (cartItem != null) {
+                minQuantity = Math.min(minQuantity, cartItem.getQuantity());
+            } else {
+                minQuantity = 0;
+            }
+        }
+        if (ginger != null) {
+            CartItem cartItem = cartItems.stream()
+                    .filter(ci -> ci.getMenuItem().equals(ginger))
+                    .findFirst()
+                    .orElse(null);
+            if (cartItem != null) {
+                minQuantity = Math.min(minQuantity, cartItem.getQuantity());
+            } else {
+                minQuantity = 0;
+            }
+        }
+        if (sticks != null) {
+            CartItem cartItem = cartItems.stream()
+                    .filter(ci -> ci.getMenuItem().equals(sticks))
+                    .findFirst()
+                    .orElse(null);
+            if (cartItem != null) {
+                minQuantity = Math.min(minQuantity, cartItem.getQuantity());
+            } else {
+                minQuantity = 0;
+            }
+        }
+
+        if (minQuantity == Integer.MAX_VALUE) {
+            minQuantity = 0;
+        }
+
+        quantitySpan.setText(String.valueOf(minQuantity));
     }
 }
