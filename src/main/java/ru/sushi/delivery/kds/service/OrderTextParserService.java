@@ -61,7 +61,7 @@ public class OrderTextParserService {
         builder.items(items);
         
         // Парсим допы (extras)
-        Map<String, Integer> extras = parseExtras(text, allMenuItems);
+        Map<String, Integer> extras = parseExtras(text, allMenuItems, items);
         
         // Парсим количество персон и добавляем палочки в допы только если instrumentsCount не указан
         // instrumentsCount уже был распарсен выше
@@ -743,8 +743,14 @@ public class OrderTextParserService {
         return items;
     }
 
-    private Map<String, Integer> parseExtras(String text, List<MenuItem> allMenuItems) {
+    private Map<String, Integer> parseExtras(String text, List<MenuItem> allMenuItems, List<ParsedOrderDto.ParsedItem> parsedItems) {
         Map<String, Integer> extras = new HashMap<>();
+        
+        // Собираем нормализованные названия всех найденных позиций для исключения
+        Set<String> foundItemNames = new HashSet<>();
+        for (ParsedOrderDto.ParsedItem item : parsedItems) {
+            foundItemNames.add(normalizeName(item.getName()));
+        }
         
         // Ищем все блоки "Дополнительно" - может быть несколько блоков
         Pattern extrasPattern = Pattern.compile(
@@ -793,6 +799,12 @@ public class OrderTextParserService {
                     continue;
                 }
                 
+                // Проверяем, не является ли эта позиция уже найденной позицией
+                String normalizedName = normalizeName(name);
+                if (foundItemNames.contains(normalizedName)) {
+                    continue; // Пропускаем, если позиция уже есть в списке найденных позиций
+                }
+                
                 extras.put(name, extras.getOrDefault(name, 0) + quantity);
             }
         }
@@ -834,6 +846,12 @@ public class OrderTextParserService {
                     name = name.replaceAll("\\s*\\[.*?\\]", "").trim();
                     name = name.replaceAll("\\s*\\|.*$", "").trim();
                     
+                    // Проверяем, не является ли эта позиция уже найденной позицией
+                    String normalizedName = normalizeName(name);
+                    if (foundItemNames.contains(normalizedName)) {
+                        continue; // Пропускаем, если позиция уже есть в списке найденных позиций
+                    }
+                    
                     extras.put(name, extras.getOrDefault(name, 0) + quantity);
                 }
             }
@@ -861,6 +879,12 @@ public class OrderTextParserService {
                 !name.toLowerCase().contains("палочки") &&
                 !name.toLowerCase().contains("приборы")) {
                 continue;
+            }
+            
+            // Проверяем, не является ли эта позиция уже найденной позицией
+            String normalizedName = normalizeName(name);
+            if (foundItemNames.contains(normalizedName)) {
+                continue; // Пропускаем, если позиция уже есть в списке найденных позиций
             }
             
             extras.put(name, extras.getOrDefault(name, 0) + quantity);
