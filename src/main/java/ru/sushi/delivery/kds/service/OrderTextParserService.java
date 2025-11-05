@@ -637,6 +637,109 @@ public class OrderTextParserService {
             processedPositions.add(normalizedName);
         }
         
+        // Универсальный паттерн для поиска всех позиций вида "1 x Название" или "1× Название" или "• 1 x Название"
+        // Также поддерживаем формат с переносом строки: "1 x Название г\nцена ₽"
+        // Ищем по всему тексту, исключая только уже обработанные позиции
+        // НЕ ищем паттерны вида "1510 x 1 = 1510 руб" (цена x количество = итого)
+        Pattern universalItemPattern = Pattern.compile(
+            "(?:^|\\n|\\r|[•·]|\\s)(\\d+)\\s*[х×x]\\s*([^\\n]+?)(?:\\s+\\d+\\s*г)?(?:\\s*\\n\\s*\\d+\\s*₽|\\s*\\n\\s*\\d+\\s*[×х]\\s*\\d+\\s*₽|\\s+\\d+\\s*₽|\\s*\\d+\\s*руб|\\s*–\\s*[^\\n]*|\\s*$)(?!\\s*[=×х]\\s*\\d)", 
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.MULTILINE
+        );
+        Matcher universalItemMatcher = universalItemPattern.matcher(text);
+        
+        while (universalItemMatcher.find()) {
+            int quantity = Integer.parseInt(universalItemMatcher.group(1));
+            String name = universalItemMatcher.group(2).trim();
+            
+            // Пропускаем пустые названия
+            if (name.isEmpty()) {
+                continue;
+            }
+            
+            // Пропускаем если это часть формата "цена x количество = итого" или "| цена x количество ="
+            // Проверяем контекст до и после совпадения
+            int matchStart = universalItemMatcher.start();
+            int matchEnd = universalItemMatcher.end();
+            
+            // Проверяем контекст до совпадения - если есть "|" или "]", это формат "Название [цена] | цена x количество ="
+            if (matchStart > 0) {
+                String beforeMatch = text.substring(Math.max(0, matchStart - 20), matchStart);
+                if (beforeMatch.contains("|") || beforeMatch.contains("]")) {
+                    continue; // Это формат "Название [цена] | цена x количество =", пропускаем (уже обработано)
+                }
+            }
+            
+            // Проверяем контекст после совпадения - если есть "=" или "x" с цифрой, это формат "цена x количество = итого"
+            if (matchEnd < text.length()) {
+                String afterMatch = text.substring(matchEnd, Math.min(matchEnd + 50, text.length()));
+                if (afterMatch.matches("\\s*[=×х]\\s*\\d+.*")) {
+                    continue; // Это формат "цена x количество = итого", пропускаем
+                }
+            }
+            
+            // Пропускаем сеты (они уже обработаны)
+            if (name.toLowerCase().contains("сет")) {
+                continue;
+            }
+            
+            // Пропускаем только стандартные допы из блока "Дополнительно" (они обрабатываются отдельно)
+            // Но пропускаем только если это явно в блоке "Дополнительно"
+            // Соусы типа "Спайси соус" должны парситься как позиции
+            boolean isStandardExtra = name.toLowerCase().contains("васаби") || 
+                name.toLowerCase().contains("имбирь") ||
+                (name.toLowerCase().contains("соевый соус") && !name.toLowerCase().contains("спайси")) ||
+                name.toLowerCase().contains("палочки") ||
+                name.toLowerCase().contains("приборы");
+            
+            // Проверяем, находится ли позиция в блоке "Дополнительно"
+            String textBeforeMatch = text.substring(0, matchStart);
+            boolean isInExtrasBlock = textBeforeMatch.toLowerCase().contains("дополнительно") &&
+                !textBeforeMatch.substring(textBeforeMatch.toLowerCase().lastIndexOf("дополнительно")).toLowerCase().contains("итого");
+            
+            // Если это стандартный доп и в блоке "Дополнительно" - пропускаем
+            if (isStandardExtra && isInExtrasBlock) {
+                continue;
+            }
+            
+            // Убираем цену, вес и лишнее
+            name = name.replaceAll("\\s+\\d+\\s*г", "").trim();
+            name = name.replaceAll("\\s+\\d+\\s*₽", "").trim();
+            name = name.replaceAll("\\s*–\\s*Подарок.*", "").trim();
+            name = name.replaceAll("\\s*–\\s*Бесплатно", "").trim();
+            name = name.replaceAll("\\s*–\\s*\\d+\\s*P", "").trim();
+            name = name.replaceAll("\\s*–\\s*\\d+\\s*руб", "").trim();
+            name = name.replaceAll("\\s*–\\s*\\d+\\s*балл", "").trim();
+            name = name.replaceAll("\\s*–\\s*[^\\n]*", "").trim();
+            name = name.replaceAll("\\*$", "").trim(); // Убираем звездочку в конце
+            name = name.replaceAll("\\[.*?\\]", "").trim();
+            
+            // Убираем префиксы типа "Выберите соусы" если они есть
+            name = name.replaceAll("^Выберите\\s+[^\\n]+\\s*", "").trim();
+            
+            // Если название пустое после очистки - пропускаем
+            if (name.isEmpty()) {
+                continue;
+            }
+            
+            String normalizedName = normalizeName(name);
+            
+            // Проверяем, не обрабатывали ли мы уже эту позицию
+            if (processedPositions.contains(normalizedName)) {
+                continue;
+            }
+            
+            // Ищем соответствующий MenuItem
+            MenuItem foundItem = findMenuItemByName(allMenuItems, name);
+            
+            // Добавляем позицию в список независимо от того, найдена она или нет
+            items.add(ParsedOrderDto.ParsedItem.builder()
+                .name(name)
+                .quantity(quantity)
+                .menuItem(foundItem) // Может быть null если не найдено
+                .build());
+            processedPositions.add(normalizedName);
+        }
+        
         return items;
     }
 
@@ -654,11 +757,11 @@ public class OrderTextParserService {
             String extrasBlock = extrasBlockMatcher.group(1);
             
             // Паттерн для строк вида "2 х Васаби 15 г" или "2× Васаби" или "Название [цена] | цена x количество = итого"
-            // Также поддерживаем формат где цена на отдельной строке: "2 х Васаби 15 г\n2 × 30 ₽"
+            // Также поддерживаем формат где цена на отдельной строке: "2 х Васаби 15 г\n2 × 30 ₽" или "1 x Унаги соус 40 г\n60 ₽"
             // Используем DOTALL чтобы паттерн захватывал переносы строк
             Pattern itemPattern = Pattern.compile(
-                "(\\d+)\\s*[х×]\\s*([^\\n]+?)(?:\\s+\\d+\\s*г)?(?:\\s*\\n\\s*\\d+\\s*[×х]\\s*\\d+\\s*₽|\\s+\\d+\\s*₽|\\s*\\d+\\s*руб|\\s*Бесплатно|\\s*\\[.*?\\]|$)",
-                Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+                "(\\d+)\\s*[х×]\\s*([^\\n]+?)(?:\\s+\\d+\\s*г)?(?:\\s*\\n\\s*\\d+\\s*₽|\\s*\\n\\s*\\d+\\s*[×х]\\s*\\d+\\s*₽|\\s+\\d+\\s*₽|\\s*\\d+\\s*руб|\\s*Бесплатно|\\s*\\[.*?\\]|\\s*$)",
+                Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.MULTILINE
             );
             Matcher itemMatcher = itemPattern.matcher(extrasBlock);
             
@@ -675,6 +778,18 @@ public class OrderTextParserService {
                 
                 // Пропускаем пустые названия или строки которые являются только ценой
                 if (name.isEmpty() || name.matches("^\\d+\\s*[×х]\\s*\\d+\\s*₽$") || name.matches("^\\d+\\s*₽$")) {
+                    continue;
+                }
+                
+                // Пропускаем позиции которые не являются допами (соусы могут быть допами)
+                // Но если это в блоке "Дополнительно", то это точно доп
+                if (!name.toLowerCase().contains("соус") && 
+                    !name.toLowerCase().contains("васаби") && 
+                    !name.toLowerCase().contains("имбирь") &&
+                    !name.toLowerCase().contains("соевый соус") &&
+                    !name.toLowerCase().contains("палочки") &&
+                    !name.toLowerCase().contains("приборы")) {
+                    // Это может быть позиция, а не доп - пропускаем
                     continue;
                 }
                 
