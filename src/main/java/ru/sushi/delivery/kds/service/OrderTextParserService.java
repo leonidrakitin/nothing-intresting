@@ -694,14 +694,17 @@ public class OrderTextParserService {
                 (name.toLowerCase().contains("соевый соус") && !name.toLowerCase().contains("спайси")) ||
                 name.toLowerCase().contains("палочки") ||
                 name.toLowerCase().contains("приборы");
-            
+
             // Проверяем, находится ли позиция в блоке "Дополнительно"
-            String textBeforeMatch = text.substring(0, matchStart);
-            boolean isInExtrasBlock = textBeforeMatch.toLowerCase().contains("дополнительно") &&
-                !textBeforeMatch.substring(textBeforeMatch.toLowerCase().lastIndexOf("дополнительно")).toLowerCase().contains("итого");
+            // String textBeforeMatch = text.substring(0, matchStart);
+            // boolean isInExtrasBlock = textBeforeMatch.toLowerCase().contains("дополнительно") &&
+            //     !textBeforeMatch.substring(textBeforeMatch.toLowerCase().lastIndexOf("дополнительно")).toLowerCase().contains("итого");
             
-            // Если это стандартный доп и в блоке "Дополнительно" - пропускаем
-            if (isStandardExtra && isInExtrasBlock) {
+            // // Если это стандартный доп и в блоке "Дополнительно" - пропускаем
+            // if (isStandardExtra && isInExtrasBlock) {
+
+            // Стандартные допы не считаем позициями, вне зависимости от блока
+            if (isStandardExtra) {
                 continue;
             }
             
