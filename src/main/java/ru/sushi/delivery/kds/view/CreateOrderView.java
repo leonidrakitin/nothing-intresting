@@ -19,6 +19,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -87,6 +88,60 @@ public class CreateOrderView extends VerticalLayout {
     private final EnhancedDateRangePicker datePicker = new EnhancedDateRangePicker("Диапазон дат");
     private final ComboBox<OrderStatus> statusFilter = new ComboBox<>("Статус");
     private final Button applyDateFilterButton = new Button("Применить", VaadinIcon.CALENDAR.create());
+
+    private static class NotAddedEntry {
+        private final ParsedOrderDto.ParsedItem parsedItem;
+        private final ParsedOrderDto.ParsedCombo parsedCombo;
+        private final String originalName;
+
+        private NotAddedEntry(ParsedOrderDto.ParsedItem parsedItem) {
+            this.parsedItem = parsedItem;
+            this.parsedCombo = null;
+            this.originalName = parsedItem.getName();
+        }
+
+        private NotAddedEntry(ParsedOrderDto.ParsedCombo parsedCombo) {
+            this.parsedItem = null;
+            this.parsedCombo = parsedCombo;
+            this.originalName = parsedCombo.getName();
+        }
+
+        private boolean isCombo() {
+            return parsedCombo != null;
+        }
+
+        private String getOriginalName() {
+            return originalName;
+        }
+
+        private String getOriginalDisplayLabel() {
+            if (isCombo()) {
+                return "Сет: " + originalName + " x" + getQuantity();
+            }
+            return originalName + " x" + getQuantity();
+        }
+
+        private String getCurrentName() {
+            if (parsedItem != null) {
+                return parsedItem.getName();
+            }
+            return parsedCombo.getName();
+        }
+
+        private int getQuantity() {
+            if (parsedItem != null) {
+                return parsedItem.getQuantity();
+            }
+            return parsedCombo.getQuantity();
+        }
+
+        private String getDisplayLabel() {
+            if (isCombo()) {
+                return "Сет: " + getCurrentName() + " x" + getQuantity();
+            }
+            return getCurrentName() + " x" + getQuantity();
+        }
+    }
 
     @Autowired
     public CreateOrderView(ViewService viewService, CashListener cashListener, CityProperties cityProperties, OrderTextParserService orderTextParserService) {
@@ -1515,15 +1570,15 @@ public class CreateOrderView extends VerticalLayout {
             confirmDialog.close();
             
             // Собираем список позиций, которые не удалось добавить
-            List<String> notAddedItems = new ArrayList<>();
+            List<NotAddedEntry> notAddedItems = new ArrayList<>();
             for (ParsedOrderDto.ParsedCombo combo : parsed.getCombos()) {
                 if (combo.getCombo() == null) {
-                    notAddedItems.add(String.format("Сет: %s x%d", combo.getName(), combo.getQuantity()));
+                    notAddedItems.add(new NotAddedEntry(combo));
                 }
             }
             for (ParsedOrderDto.ParsedItem item : parsed.getItems()) {
                 if (item.getMenuItem() == null) {
-                    notAddedItems.add(String.format("%s x%d", item.getName(), item.getQuantity()));
+                    notAddedItems.add(new NotAddedEntry(item));
                 }
             }
             
@@ -1561,7 +1616,7 @@ public class CreateOrderView extends VerticalLayout {
     
     private void showCommentConfirmationDialog(ParsedOrderDto parsed, TextField orderNumberFieldDialog, 
                                                DateTimePicker startTimePicker, Map<String, Integer> extrasToAdd,
-                                               List<String> notAddedItems) {
+                                               List<NotAddedEntry> notAddedItems) {
         Dialog commentDialog = new Dialog();
         commentDialog.setHeaderTitle("Учли комментарий?");
         commentDialog.setWidth("500px");
@@ -1602,7 +1657,7 @@ public class CreateOrderView extends VerticalLayout {
     
     private void showNotAddedItemsDialog(ParsedOrderDto parsed, TextField orderNumberFieldDialog,
                                         DateTimePicker startTimePicker, Map<String, Integer> extrasToAdd,
-                                        List<String> notAddedItems) {
+                                        List<NotAddedEntry> notAddedItems) {
         Dialog notAddedDialog = new Dialog();
         notAddedDialog.setHeaderTitle("Не получилось добавить");
         notAddedDialog.setWidth("600px");
@@ -1618,16 +1673,7 @@ public class CreateOrderView extends VerticalLayout {
         
         Div itemsDiv = new Div();
         itemsDiv.getStyle().set("margin-top", "10px");
-        H4 itemsHeader = new H4("Список позиций:");
-        itemsDiv.add(itemsHeader);
-        
-        for (String itemStr : notAddedItems) {
-            Span itemSpan = new Span("✗ " + itemStr);
-            itemSpan.getStyle().set("display", "block");
-            itemSpan.getStyle().set("margin", "5px 0");
-            itemSpan.getStyle().set("color", "var(--lumo-error-color)");
-            itemsDiv.add(itemSpan);
-        }
+        rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
         
         content.add(itemsDiv);
         notAddedDialog.add(content);
@@ -1640,6 +1686,157 @@ public class CreateOrderView extends VerticalLayout {
         
         notAddedDialog.getFooter().add(okButton);
         notAddedDialog.open();
+    }
+
+    private void rebuildNotAddedItemsList(Div itemsDiv, List<NotAddedEntry> notAddedItems,
+                                          ParsedOrderDto parsed) {
+        itemsDiv.removeAll();
+
+        H4 itemsHeader = new H4("Список позиций:");
+        itemsDiv.add(itemsHeader);
+
+        if (notAddedItems.isEmpty()) {
+            Span emptySpan = new Span("Все позиции обработаны");
+            emptySpan.getStyle().set("color", "var(--lumo-success-color)");
+            itemsDiv.add(emptySpan);
+            return;
+        }
+
+        for (NotAddedEntry entry : notAddedItems) {
+            HorizontalLayout row = new HorizontalLayout();
+            row.setWidthFull();
+            row.setSpacing(true);
+            row.setAlignItems(Alignment.CENTER);
+
+            Span itemSpan = new Span("✗ " + entry.getDisplayLabel());
+            itemSpan.getStyle().set("color", "var(--lumo-error-color)");
+            row.setFlexGrow(1, itemSpan);
+
+            Button editButton = new Button("Изменить", VaadinIcon.EDIT.create());
+            editButton.addClickListener(e -> openChangeDialog(entry, notAddedItems, parsed, itemsDiv));
+
+            Button deleteButton = new Button("Удалить", VaadinIcon.TRASH.create());
+            deleteButton.getStyle().set("color", "var(--lumo-error-color)");
+            deleteButton.addClickListener(e -> openDeleteConfirmationDialog(entry, notAddedItems, parsed, itemsDiv));
+
+            row.add(itemSpan, editButton, deleteButton);
+            itemsDiv.add(row);
+        }
+    }
+
+    private void openDeleteConfirmationDialog(NotAddedEntry entry, List<NotAddedEntry> notAddedItems,
+                                              ParsedOrderDto parsed, Div itemsDiv) {
+        Dialog confirmDialog = new Dialog();
+        confirmDialog.setHeaderTitle("Удалить позицию?");
+        confirmDialog.add(new Span(String.format(
+            "Точно хотите удалить \"%s\"?",
+            entry.getDisplayLabel()
+        )));
+
+        Button cancelButton = new Button("Отмена", e -> confirmDialog.close());
+        Button deleteButton = new Button("Удалить", e -> {
+            if (entry.isCombo()) {
+                parsed.getCombos().remove(entry.parsedCombo);
+            } else {
+                parsed.getItems().remove(entry.parsedItem);
+            }
+            notAddedItems.remove(entry);
+            confirmDialog.close();
+            rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
+        });
+        deleteButton.getStyle().set("color", "var(--lumo-error-color)");
+
+        confirmDialog.getFooter().add(cancelButton, deleteButton);
+        confirmDialog.open();
+    }
+
+    private void openChangeDialog(NotAddedEntry entry, List<NotAddedEntry> notAddedItems,
+                                  ParsedOrderDto parsed, Div itemsDiv) {
+        Dialog changeDialog = new Dialog();
+        changeDialog.setHeaderTitle("Выберите замену");
+        changeDialog.setWidth("500px");
+
+        VerticalLayout layout = new VerticalLayout();
+        layout.setPadding(true);
+        layout.setSpacing(true);
+
+        if (entry.isCombo()) {
+            ComboBox<ItemCombo> comboBox = new ComboBox<>("Выберите комбо");
+            comboBox.setItems(menuItemCombos);
+            comboBox.setItemLabelGenerator(ItemCombo::getName);
+            comboBox.setWidthFull();
+            layout.add(comboBox);
+
+            Button backButton = new Button("Назад", e -> changeDialog.close());
+            Button selectButton = new Button("Выбрать", e -> {
+                ItemCombo selected = comboBox.getValue();
+                if (selected == null) {
+                    Notification.show("Выберите комбо");
+                    return;
+                }
+                openChangeConfirmationDialog(entry, notAddedItems, parsed, itemsDiv,
+                        changeDialog, selected, null);
+            });
+
+            changeDialog.add(layout);
+            changeDialog.getFooter().add(backButton, selectButton);
+        } else {
+            ComboBox<MenuItem> comboBox = new ComboBox<>("Выберите позицию");
+            comboBox.setItems(menuMenuItems);
+            comboBox.setItemLabelGenerator(MenuItem::getName);
+            comboBox.setWidthFull();
+            layout.add(comboBox);
+
+            Button backButton = new Button("Назад", e -> changeDialog.close());
+            Button selectButton = new Button("Выбрать", e -> {
+                MenuItem selected = comboBox.getValue();
+                if (selected == null) {
+                    Notification.show("Выберите позицию");
+                    return;
+                }
+                openChangeConfirmationDialog(entry, notAddedItems, parsed, itemsDiv,
+                        changeDialog, null, selected);
+            });
+
+            changeDialog.add(layout);
+            changeDialog.getFooter().add(backButton, selectButton);
+        }
+
+        changeDialog.open();
+    }
+
+    private void openChangeConfirmationDialog(NotAddedEntry entry, List<NotAddedEntry> notAddedItems,
+                                              ParsedOrderDto parsed, Div itemsDiv,
+                                              Dialog changeDialog, ItemCombo newCombo, MenuItem newMenuItem) {
+        Dialog confirmDialog = new Dialog();
+        confirmDialog.setHeaderTitle("Подтверждение");
+
+        String replacementName = newCombo != null ? newCombo.getName() : newMenuItem.getName();
+        Span message = new Span(String.format(
+            "Вы точно хотите заменить позицию \"%s\" на \"%s\"?",
+            entry.getOriginalDisplayLabel(), replacementName
+        ));
+        message.getStyle().set("white-space", "pre-wrap");
+        confirmDialog.add(message);
+
+        Button backButton = new Button("Назад", e -> confirmDialog.close());
+        Button confirmButton = new Button("Заменить", e -> {
+            if (newCombo != null) {
+                entry.parsedCombo.setCombo(newCombo);
+                entry.parsedCombo.setName(newCombo.getName());
+            } else {
+                entry.parsedItem.setMenuItem(newMenuItem);
+                entry.parsedItem.setName(newMenuItem.getName());
+            }
+            notAddedItems.remove(entry);
+            confirmDialog.close();
+            changeDialog.close();
+            rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
+            Notification.show("Позиция заменена");
+        });
+
+        confirmDialog.getFooter().add(backButton, confirmButton);
+        confirmDialog.open();
     }
     
     private void addParsedOrderToCart(ParsedOrderDto parsed, String orderNumber, LocalDateTime kitchenStartTime,
