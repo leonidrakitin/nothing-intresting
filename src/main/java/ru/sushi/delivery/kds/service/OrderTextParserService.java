@@ -85,10 +85,14 @@ public class OrderTextParserService {
             
             if (sticksItem != null) {
                 // Добавляем палочки в количестве, равном количеству персон
-                extras.put(sticksItem.getName(), extras.getOrDefault(sticksItem.getName(), 0) + personsCount);
+                if (extras.getOrDefault(sticksItem.getName(), 0) == 0) {
+                    extras.put(sticksItem.getName(), personsCount);
+                }
             } else {
                 // Если не нашли палочки, добавляем с названием "Палочки"
-                extras.put("Палочки", extras.getOrDefault("Палочки", 0) + personsCount);
+                if (extras.getOrDefault("Палочки", 0) == 0) {
+                    extras.put("Палочки", personsCount);
+                }
             }
         }
         
