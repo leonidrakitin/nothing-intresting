@@ -27,6 +27,9 @@ databaseChangeLog:
       file: menu_item/master.yaml
       relativeToChangelogFile: true
   - include:
+      file: menu_item_alias/master.yaml
+      relativeToChangelogFile: true
+  - include:
       file: combo_item/master.yaml
       relativeToChangelogFile: true
   - include:

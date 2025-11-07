@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: menu_item_alias.CREATE.07.11.25.12.00
+      author: gpt5codex
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: menu_item_alias
+      changes:
+        - createSequence:
+            sequenceName: menu_item_alias_id_seq_generator
+            startValue: 1
+        - createTable:
+            tableName: menu_item_alias
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  defaultValueSequenceNext: menu_item_alias_id_seq_generator
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: alias_text
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: menu_item_id
+                  type: BIGINT
+              - column:
+                  name: combo_id
+                  type: BIGINT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: menu_item_alias
+            columnNames: alias_text
+            constraintName: uk_menu_item_alias_text
+        - addForeignKeyConstraint:
+            baseTableName: menu_item_alias
+            baseColumnNames: menu_item_id
+            referencedTableName: menu_item
+            referencedColumnNames: id
+            constraintName: fk_menu_item_alias_menu_item
+            onDelete: SET NULL
+        - addForeignKeyConstraint:
+            baseTableName: menu_item_alias
+            baseColumnNames: combo_id
+            referencedTableName: item_combo
+            referencedColumnNames: id
+            constraintName: fk_menu_item_alias_combo
+            onDelete: SET NULL
+#        - addCheckConstraint:
+#            tableName: menu_item_alias
+#            constraintName: chk_menu_item_alias_target
+#            checkConstraint: "(menu_item_id IS NOT NULL AND combo_id IS NULL) OR (menu_item_id IS NULL AND combo_id IS NOT NULL)"
+

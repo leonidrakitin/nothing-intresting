@@ -392,7 +392,7 @@ public class OrderTextParserService {
                     .anyMatch(c -> c.getName().toLowerCase().equals(finalName.toLowerCase()));
                 
                 if (!alreadyAdded) {
-                    ItemCombo foundCombo = findComboByName(allCombos, name);
+            ItemCombo foundCombo = findComboByName(allCombos, name);
                     combos.add(ParsedOrderDto.ParsedCombo.builder()
                         .name(name)
                         .quantity(quantity)
@@ -925,29 +925,29 @@ public class OrderTextParserService {
 
     private ItemCombo findComboByName(List<ItemCombo> allCombos, String name) {
         String normalizedName = normalizeName(name);
-        
+
         for (ItemCombo combo : allCombos) {
             String comboName = normalizeName(combo.getName());
-            if (comboName.equals(normalizedName) || 
-                comboName.contains(normalizedName) || 
+            if (comboName.equals(normalizedName) ||
+                comboName.contains(normalizedName) ||
                 normalizedName.contains(comboName)) {
                 return combo;
             }
         }
-        
+
         return null;
     }
 
     private MenuItem findMenuItemByName(List<MenuItem> allMenuItems, String name) {
         String normalizedName = normalizeName(name);
-        
+
         for (MenuItem item : allMenuItems) {
             String itemName = normalizeName(item.getName());
             if (itemName.equals(normalizedName)) {
                 return item;
             }
         }
-        
+
         return null;
     }
 

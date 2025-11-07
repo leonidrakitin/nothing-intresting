@@ -24,6 +24,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -33,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.config.CityProperties;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.domain.service.MenuItemAliasService;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.dto.ParsedOrderDto;
@@ -64,6 +66,7 @@ public class CreateOrderView extends VerticalLayout {
     private final CashListener cashListener;
     private final CityProperties cityProperties;
     private final OrderTextParserService orderTextParserService;
+    private final MenuItemAliasService menuItemAliasService;
     private Instant selectedKitchenStart = null;
     private final Span kitchenStartDisplay = new Span("Время начала приготовления: Сейчас");
     private final Button changeKitchenStartButton = new Button("изменить");
@@ -93,17 +96,23 @@ public class CreateOrderView extends VerticalLayout {
         private final ParsedOrderDto.ParsedItem parsedItem;
         private final ParsedOrderDto.ParsedCombo parsedCombo;
         private final String originalName;
+        private MenuItem aliasMenuItem;
+        private ItemCombo aliasCombo;
 
-        private NotAddedEntry(ParsedOrderDto.ParsedItem parsedItem) {
+        private NotAddedEntry(ParsedOrderDto.ParsedItem parsedItem, MenuItem aliasMenuItem) {
             this.parsedItem = parsedItem;
             this.parsedCombo = null;
-            this.originalName = parsedItem.getName();
+            this.originalName = parsedItem.getName() != null ? parsedItem.getName().trim() : "";
+            this.aliasMenuItem = aliasMenuItem;
+            this.aliasCombo = null;
         }
 
-        private NotAddedEntry(ParsedOrderDto.ParsedCombo parsedCombo) {
+        private NotAddedEntry(ParsedOrderDto.ParsedCombo parsedCombo, ItemCombo aliasCombo) {
             this.parsedItem = null;
             this.parsedCombo = parsedCombo;
-            this.originalName = parsedCombo.getName();
+            this.originalName = parsedCombo.getName() != null ? parsedCombo.getName().trim() : "";
+            this.aliasMenuItem = null;
+            this.aliasCombo = aliasCombo;
         }
 
         private boolean isCombo() {
@@ -141,16 +150,48 @@ public class CreateOrderView extends VerticalLayout {
             }
             return getCurrentName() + " x" + getQuantity();
         }
+
+        private boolean hasAlias() {
+            return aliasMenuItem != null || aliasCombo != null;
+        }
+
+        private String getAliasTargetName() {
+            if (aliasMenuItem != null) {
+                return aliasMenuItem.getName();
+            }
+            if (aliasCombo != null) {
+                return aliasCombo.getName();
+            }
+            return "";
+        }
+
+        private MenuItem getAliasMenuItem() {
+            return aliasMenuItem;
+        }
+
+        private ItemCombo getAliasCombo() {
+            return aliasCombo;
+        }
+
+        private void clearAlias() {
+            this.aliasMenuItem = null;
+            this.aliasCombo = null;
+        }
     }
 
     @Autowired
-    public CreateOrderView(ViewService viewService, CashListener cashListener, CityProperties cityProperties, OrderTextParserService orderTextParserService) {
+    public CreateOrderView(ViewService viewService,
+                           CashListener cashListener,
+                           CityProperties cityProperties,
+                           OrderTextParserService orderTextParserService,
+                           MenuItemAliasService menuItemAliasService) {
         setSizeFull();
 
         this.viewService = viewService;
         this.cashListener = cashListener;
         this.cityProperties = cityProperties;
         this.orderTextParserService = orderTextParserService;
+        this.menuItemAliasService = menuItemAliasService;
 
         getStyle().set("padding", "20px");
         getStyle().set("gap", "20px");
@@ -358,6 +399,18 @@ public class CreateOrderView extends VerticalLayout {
         mainContent.getStyle().set("gap", "20px");
 
         add(cityHeader, mainContent);
+    }
+
+    private NotAddedEntry createNotAddedEntry(ParsedOrderDto.ParsedItem item) {
+        MenuItem aliasTarget = menuItemAliasService.findMenuItemAliasTarget(item.getName())
+                .orElse(null);
+        return new NotAddedEntry(item, aliasTarget);
+    }
+
+    private NotAddedEntry createNotAddedEntry(ParsedOrderDto.ParsedCombo combo) {
+        ItemCombo aliasTarget = menuItemAliasService.findComboAliasTarget(combo.getName())
+                .orElse(null);
+        return new NotAddedEntry(combo, aliasTarget);
     }
 
     // Метод для обновления списка допов в две колонки
@@ -1502,8 +1555,14 @@ public class CreateOrderView extends VerticalLayout {
 
         Map<String, Integer> extrasToAdd = new HashMap<>();
         
+        boolean extrasAlreadyContainSticks = parsed.getExtras().keySet().stream()
+            .anyMatch(name -> {
+                String lower = name.toLowerCase();
+                return lower.contains("палочки") || lower.contains("приборы");
+            });
+
         // Обрабатываем приборы
-        if (parsed.getInstrumentsCount() != null && parsed.getInstrumentsCount() > 0) {
+        if (!extrasAlreadyContainSticks && parsed.getInstrumentsCount() != null && parsed.getInstrumentsCount() > 0) {
             MenuItem instrumentsItem = menuExtras.stream()
                 .filter(item -> item.getName().toLowerCase().contains("палочки") || 
                                item.getName().toLowerCase().contains("приборы"))
@@ -1573,12 +1632,12 @@ public class CreateOrderView extends VerticalLayout {
             List<NotAddedEntry> notAddedItems = new ArrayList<>();
             for (ParsedOrderDto.ParsedCombo combo : parsed.getCombos()) {
                 if (combo.getCombo() == null) {
-                    notAddedItems.add(new NotAddedEntry(combo));
+                    notAddedItems.add(createNotAddedEntry(combo));
                 }
             }
             for (ParsedOrderDto.ParsedItem item : parsed.getItems()) {
                 if (item.getMenuItem() == null) {
-                    notAddedItems.add(new NotAddedEntry(item));
+                    notAddedItems.add(createNotAddedEntry(item));
                 }
             }
             
@@ -1660,7 +1719,7 @@ public class CreateOrderView extends VerticalLayout {
                                         List<NotAddedEntry> notAddedItems) {
         Dialog notAddedDialog = new Dialog();
         notAddedDialog.setHeaderTitle("Не получилось добавить");
-        notAddedDialog.setWidth("600px");
+        notAddedDialog.setWidth("900px");
         
         VerticalLayout content = new VerticalLayout();
         content.setPadding(true);
@@ -1673,6 +1732,7 @@ public class CreateOrderView extends VerticalLayout {
         
         Div itemsDiv = new Div();
         itemsDiv.getStyle().set("margin-top", "10px");
+        itemsDiv.setWidthFull();
         rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
         
         content.add(itemsDiv);
@@ -1703,25 +1763,82 @@ public class CreateOrderView extends VerticalLayout {
         }
 
         for (NotAddedEntry entry : notAddedItems) {
-            HorizontalLayout row = new HorizontalLayout();
-            row.setWidthFull();
-            row.setSpacing(true);
-            row.setAlignItems(Alignment.CENTER);
+            VerticalLayout entryLayout = new VerticalLayout();
+            entryLayout.setPadding(false);
+            entryLayout.setSpacing(false);
+            entryLayout.setWidthFull();
 
-            Span itemSpan = new Span("✗ " + entry.getDisplayLabel());
-            itemSpan.getStyle().set("color", "var(--lumo-error-color)");
-            row.setFlexGrow(1, itemSpan);
+            if (entry.hasAlias()) {
+                HorizontalLayout aliasRow = new HorizontalLayout();
+                aliasRow.setWidthFull();
+                aliasRow.setSpacing(true);
+                aliasRow.setAlignItems(Alignment.CENTER);
 
-            Button editButton = new Button("Изменить", VaadinIcon.EDIT.create());
-            editButton.addClickListener(e -> openChangeDialog(entry, notAddedItems, parsed, itemsDiv));
+                Span aliasSpan = new Span(entry.getOriginalName() + " -> " + entry.getAliasTargetName());
+                aliasSpan.getStyle().set("color", "var(--lumo-primary-color)");
+                aliasSpan.getStyle().set("white-space", "normal");
+                aliasSpan.setWidthFull();
+                aliasRow.setFlexGrow(1, aliasSpan);
 
-            Button deleteButton = new Button("Удалить", VaadinIcon.TRASH.create());
-            deleteButton.getStyle().set("color", "var(--lumo-error-color)");
-            deleteButton.addClickListener(e -> openDeleteConfirmationDialog(entry, notAddedItems, parsed, itemsDiv));
+                Button okButton = new Button("ОК", e -> applyAliasSuggestion(entry, notAddedItems, parsed, itemsDiv));
+                Button changeButton = new Button("Изменить", VaadinIcon.EDIT.create());
+                changeButton.addClickListener(e -> openChangeDialog(entry, notAddedItems, parsed, itemsDiv));
+                Button removeAliasButton = new Button("Удалить", VaadinIcon.TRASH.create());
+                removeAliasButton.getStyle().set("color", "var(--lumo-error-color)");
+                removeAliasButton.addClickListener(e -> {
+                    menuItemAliasService.deleteAlias(entry.getOriginalName());
+                    entry.clearAlias();
+                    rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
+                    Notification.show("Сопоставление удалено");
+                });
 
-            row.add(itemSpan, editButton, deleteButton);
-            itemsDiv.add(row);
+                aliasRow.add(aliasSpan, okButton, changeButton, removeAliasButton);
+                entryLayout.add(aliasRow);
+            }
+
+            if (!entry.hasAlias()) {
+                HorizontalLayout row = new HorizontalLayout();
+                row.setWidthFull();
+                row.setSpacing(true);
+                row.setAlignItems(Alignment.CENTER);
+
+                Span itemSpan = new Span("✗ " + entry.getDisplayLabel());
+                itemSpan.getStyle().set("color", "var(--lumo-error-color)");
+                itemSpan.getStyle().set("white-space", "normal");
+                itemSpan.setWidthFull();
+                row.setFlexGrow(1, itemSpan);
+
+                Button editButton = new Button("Изменить", VaadinIcon.EDIT.create());
+                editButton.addClickListener(e -> openChangeDialog(entry, notAddedItems, parsed, itemsDiv));
+
+                Button deleteButton = new Button("Удалить", VaadinIcon.TRASH.create());
+                deleteButton.getStyle().set("color", "var(--lumo-error-color)");
+                deleteButton.addClickListener(e -> openDeleteConfirmationDialog(entry, notAddedItems, parsed, itemsDiv));
+
+                row.add(itemSpan, editButton, deleteButton);
+                entryLayout.add(row);
+            }
+
+            itemsDiv.add(entryLayout);
         }
+    }
+
+    private void applyAliasSuggestion(NotAddedEntry entry, List<NotAddedEntry> notAddedItems,
+                                      ParsedOrderDto parsed, Div itemsDiv) {
+        if (entry.getAliasMenuItem() != null && entry.parsedItem != null) {
+            entry.parsedItem.setMenuItem(entry.getAliasMenuItem());
+            entry.parsedItem.setName(entry.getAliasMenuItem().getName());
+        } else if (entry.getAliasCombo() != null && entry.parsedCombo != null) {
+            entry.parsedCombo.setCombo(entry.getAliasCombo());
+            entry.parsedCombo.setName(entry.getAliasCombo().getName());
+        } else {
+            Notification.show("Не удалось применить сопоставление");
+            return;
+        }
+
+        notAddedItems.remove(entry);
+        rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
+        Notification.show("Сопоставление применено");
     }
 
     private void openDeleteConfirmationDialog(NotAddedEntry entry, List<NotAddedEntry> notAddedItems,
@@ -1760,6 +1877,12 @@ public class CreateOrderView extends VerticalLayout {
         layout.setPadding(true);
         layout.setSpacing(true);
 
+        IntegerField quantityField = new IntegerField("Количество");
+        quantityField.setMin(1);
+        quantityField.setValue(Math.max(1, entry.getQuantity()));
+        quantityField.setWidthFull();
+        layout.add(quantityField);
+
         if (entry.isCombo()) {
             ComboBox<ItemCombo> comboBox = new ComboBox<>("Выберите комбо");
             comboBox.setItems(menuItemCombos);
@@ -1769,13 +1892,18 @@ public class CreateOrderView extends VerticalLayout {
 
             Button backButton = new Button("Назад", e -> changeDialog.close());
             Button selectButton = new Button("Выбрать", e -> {
+                Integer quantity = quantityField.getValue();
+                if (quantity == null || quantity <= 0) {
+                    Notification.show("Укажите корректное количество");
+                    return;
+                }
                 ItemCombo selected = comboBox.getValue();
                 if (selected == null) {
                     Notification.show("Выберите комбо");
                     return;
                 }
                 openChangeConfirmationDialog(entry, notAddedItems, parsed, itemsDiv,
-                        changeDialog, selected, null);
+                        changeDialog, selected, null, quantity);
             });
 
             changeDialog.add(layout);
@@ -1789,13 +1917,18 @@ public class CreateOrderView extends VerticalLayout {
 
             Button backButton = new Button("Назад", e -> changeDialog.close());
             Button selectButton = new Button("Выбрать", e -> {
+                Integer quantity = quantityField.getValue();
+                if (quantity == null || quantity <= 0) {
+                    Notification.show("Укажите корректное количество");
+                    return;
+                }
                 MenuItem selected = comboBox.getValue();
                 if (selected == null) {
                     Notification.show("Выберите позицию");
                     return;
                 }
                 openChangeConfirmationDialog(entry, notAddedItems, parsed, itemsDiv,
-                        changeDialog, null, selected);
+                        changeDialog, null, selected, quantity);
             });
 
             changeDialog.add(layout);
@@ -1807,14 +1940,15 @@ public class CreateOrderView extends VerticalLayout {
 
     private void openChangeConfirmationDialog(NotAddedEntry entry, List<NotAddedEntry> notAddedItems,
                                               ParsedOrderDto parsed, Div itemsDiv,
-                                              Dialog changeDialog, ItemCombo newCombo, MenuItem newMenuItem) {
+                                              Dialog changeDialog, ItemCombo newCombo, MenuItem newMenuItem, int newQuantity) {
         Dialog confirmDialog = new Dialog();
         confirmDialog.setHeaderTitle("Подтверждение");
 
         String replacementName = newCombo != null ? newCombo.getName() : newMenuItem.getName();
+        String replacementLabel = replacementName + " x" + newQuantity;
         Span message = new Span(String.format(
             "Вы точно хотите заменить позицию \"%s\" на \"%s\"?",
-            entry.getOriginalDisplayLabel(), replacementName
+            entry.getOriginalDisplayLabel(), replacementLabel
         ));
         message.getStyle().set("white-space", "pre-wrap");
         confirmDialog.add(message);
@@ -1824,9 +1958,13 @@ public class CreateOrderView extends VerticalLayout {
             if (newCombo != null) {
                 entry.parsedCombo.setCombo(newCombo);
                 entry.parsedCombo.setName(newCombo.getName());
+                entry.parsedCombo.setQuantity(newQuantity);
+                menuItemAliasService.saveComboAlias(entry.getOriginalName(), newCombo);
             } else {
                 entry.parsedItem.setMenuItem(newMenuItem);
                 entry.parsedItem.setName(newMenuItem.getName());
+                entry.parsedItem.setQuantity(newQuantity);
+                menuItemAliasService.saveMenuItemAlias(entry.getOriginalName(), newMenuItem);
             }
             notAddedItems.remove(entry);
             confirmDialog.close();

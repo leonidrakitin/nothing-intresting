@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: menu_item_alias.CREATE.07.11.25.12.00.yaml
+      relativeToChangelogFile: true
+
