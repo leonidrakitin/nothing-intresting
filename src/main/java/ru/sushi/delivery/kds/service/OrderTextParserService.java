@@ -940,9 +940,7 @@ public class OrderTextParserService {
         
         for (MenuItem item : allMenuItems) {
             String itemName = normalizeName(item.getName());
-            if (itemName.equals(normalizedName) || 
-                itemName.contains(normalizedName) || 
-                normalizedName.contains(itemName)) {
+            if (itemName.equals(normalizedName)) {
                 return item;
             }
         }
