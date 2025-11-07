@@ -1419,13 +1419,13 @@ public class CreateOrderView extends VerticalLayout {
         // Добавляем сеты
         for (ParsedOrderDto.ParsedCombo combo : parsed.getCombos()) {
             String status = combo.getCombo() != null ? "✓" : "✗";
-            itemsList.add(String.format("%s Сет: %s x%d", status, combo.getName(), combo.getQuantity()));
+            itemsList.add(String.format("%s Сет: %s x%d", status, combo.getCombo().getName(), combo.getQuantity()));
         }
         
         // Добавляем отдельные позиции
         for (ParsedOrderDto.ParsedItem item : parsed.getItems()) {
             String status = item.getMenuItem() != null ? "✓" : "✗";
-            itemsList.add(String.format("%s %s x%d", status, item.getName(), item.getQuantity()));
+            itemsList.add(String.format("%s %s x%d", status, item.getMenuItem().getName(), item.getQuantity()));
         }
 
         for (String itemStr : itemsList) {
