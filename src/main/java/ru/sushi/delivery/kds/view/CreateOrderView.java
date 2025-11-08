@@ -1739,9 +1739,32 @@ public class CreateOrderView extends VerticalLayout {
         notAddedDialog.add(content);
         
         Button okButton = new Button("ОК", e -> {
-            notAddedDialog.close();
-            // Все равно добавляем то, что удалось добавить
-            addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
+            long unresolvedCount = notAddedItems.stream()
+                    .filter(entry -> entry.getAliasMenuItem() == null && entry.getAliasCombo() == null)
+                    .count();
+
+            if (unresolvedCount > 0) {
+                Dialog confirmDialog = new Dialog();
+                confirmDialog.setHeaderTitle("Есть необработанные позиции");
+                confirmDialog.add(new Span(String.format(
+                        "Обнаружено %d позиция(и), которые всё ещё не сопоставлены. Всё равно продолжить?",
+                        unresolvedCount
+                )));
+
+                Button backButton = new Button("Назад", ev -> confirmDialog.close());
+                Button continueButton = new Button("Продолжить", ev -> {
+                    confirmDialog.close();
+                    notAddedDialog.close();
+                    addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
+                });
+                continueButton.getStyle().set("color", "var(--lumo-error-color)");
+
+                confirmDialog.getFooter().add(backButton, continueButton);
+                confirmDialog.open();
+            } else {
+                notAddedDialog.close();
+                addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
+            }
         });
         
         notAddedDialog.getFooter().add(okButton);
