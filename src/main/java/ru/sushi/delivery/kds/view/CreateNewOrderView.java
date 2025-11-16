@@ -1,100 +1,239 @@
 package ru.sushi.delivery.kds.view;
 
+import com.vaadin.componentfactory.DateRange;
+import com.vaadin.componentfactory.EnhancedDateRangePicker;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.H5;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
+import ru.sushi.delivery.kds.config.CityProperties;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.domain.service.MenuItemAliasService;
+import ru.sushi.delivery.kds.dto.OrderItemDto;
+import ru.sushi.delivery.kds.dto.OrderShortDto;
+import ru.sushi.delivery.kds.dto.ParsedOrderDto;
+import ru.sushi.delivery.kds.model.OrderItemStationStatus;
+import ru.sushi.delivery.kds.model.OrderStatus;
+import ru.sushi.delivery.kds.service.MultiCityOrderService;
 import ru.sushi.delivery.kds.service.MultiCityViewService;
-import ru.sushi.delivery.kds.service.MultiCityViewService.City;
+import ru.sushi.delivery.kds.service.OrderTextParserService;
+import ru.sushi.delivery.kds.service.ViewService;
+import ru.sushi.delivery.kds.service.listeners.CashListener;
 import ru.sushi.delivery.kds.view.dto.CartItem;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Route("create-new")
 public class CreateNewOrderView extends VerticalLayout {
 
-    private final MultiCityViewService multiCityViewService;
-    
-    // Текущий выбранный город
-    private City currentCity = City.PARNAS;
-    
-    // Данные для текущего города
-    private List<MenuItem> currentMenuItems = new ArrayList<>();
-    private List<ItemCombo> currentCombos = new ArrayList<>();
-    private List<MenuItem> currentExtras = new ArrayList<>();
-    
-    // Корзина (общая для обоих городов, но можно разделить)
     private final List<CartItem> cartItems = new ArrayList<>();
-    
-    // UI компоненты
-    private final Grid<MenuItem> rollsGrid = new Grid<>(MenuItem.class, false);
-    private final Grid<ItemCombo> setsGrid = new Grid<>(ItemCombo.class, false);
-    private final Grid<CartItem> chosenGrid = new Grid<>(CartItem.class, false);
-    private final TextField orderNumberField = new TextField("Номер заказа");
-    private final H3 totalPay = new H3("К оплате: 0.0 рублей");
+    private final ViewService viewService;
+    private final CashListener cashListener;
+    private final CityProperties cityProperties;
+    private final OrderTextParserService orderTextParserService;
+    private final MenuItemAliasService menuItemAliasService;
+    private final MultiCityViewService multiCityViewService;
+    private final MultiCityOrderService multiCityOrderService;
+    private MultiCityViewService.City currentCity = MultiCityViewService.City.PARNAS;
+    private Instant selectedKitchenStart = null;
+    private final Span kitchenStartDisplay = new Span("Время начала приготовления: Сейчас");
+    private final Button changeKitchenStartButton = new Button("изменить");
     private final DateTimePicker finishPicker = new DateTimePicker("Время готовности");
     private final Checkbox isYandexOrder = new Checkbox("Заказ Яндекс");
-    
-    // Вкладки для городов
-    private final Tab parnasTab = new Tab("Парнас");
-    private final Tab ukhtaTab = new Tab("Ухта");
-    private final Tabs cityTabs = new Tabs(parnasTab, ukhtaTab);
-    
-    // Вкладки для меню (Роллы/Сеты)
-    private final Tab rollsTab = new Tab("Роллы");
-    private final Tab setsTab = new Tab("Сеты");
-    private final Tabs menuTabs = new Tabs(rollsTab, setsTab);
-    
     private final VerticalLayout rollsTabLayout = new VerticalLayout();
     private final VerticalLayout setsTabLayout = new VerticalLayout();
+    private final VerticalLayout extrasLayout = new VerticalLayout();
+
+    private final Grid<MenuItem> rollsGrid = new Grid<>(MenuItem.class, false);
+    private final Grid<ItemCombo> setsGrid = new Grid<>(ItemCombo.class, false);
+    private List<MenuItem> menuMenuItems = new ArrayList<>();
+    private List<ItemCombo> menuItemCombos = new ArrayList<>();
+    private List<MenuItem> menuExtras = new ArrayList<>();
+
+    private final Grid<CartItem> chosenGrid = new Grid<>(CartItem.class, false);
+    private final Grid<OrderShortDto> ordersGrid = new Grid<>(OrderShortDto.class, false);
+    private final Grid<OrderShortDto> activeOrdersGrid = new Grid<>(OrderShortDto.class, false);
+    private final TextField orderNumberField = new TextField("Номер заказа");
+    private final H3 totalPay = new H3("К оплате: 0.0 рублей");
+    private final H5 totalTime = new H5("Общее время приготовления: 0 минут");
+    private final EnhancedDateRangePicker datePicker = new EnhancedDateRangePicker("Диапазон дат");
+    private final ComboBox<OrderStatus> statusFilter = new ComboBox<>("Статус");
+    private final Button applyDateFilterButton = new Button("Применить", VaadinIcon.CALENDAR.create());
+
+    private static class NotAddedEntry {
+        private final ParsedOrderDto.ParsedItem parsedItem;
+        private final ParsedOrderDto.ParsedCombo parsedCombo;
+        private final String originalName;
+        private MenuItem aliasMenuItem;
+        private ItemCombo aliasCombo;
+
+        private NotAddedEntry(ParsedOrderDto.ParsedItem parsedItem, MenuItem aliasMenuItem) {
+            this.parsedItem = parsedItem;
+            this.parsedCombo = null;
+            this.originalName = parsedItem.getName() != null ? parsedItem.getName().trim() : "";
+            this.aliasMenuItem = aliasMenuItem;
+            this.aliasCombo = null;
+        }
+
+        private NotAddedEntry(ParsedOrderDto.ParsedCombo parsedCombo, ItemCombo aliasCombo) {
+            this.parsedItem = null;
+            this.parsedCombo = parsedCombo;
+            this.originalName = parsedCombo.getName() != null ? parsedCombo.getName().trim() : "";
+            this.aliasMenuItem = null;
+            this.aliasCombo = aliasCombo;
+        }
+
+        private boolean isCombo() {
+            return parsedCombo != null;
+        }
+
+        private String getOriginalName() {
+            return originalName;
+        }
+
+        private String getOriginalDisplayLabel() {
+            if (isCombo()) {
+                return "Сет: " + originalName + " x" + getQuantity();
+            }
+            return originalName + " x" + getQuantity();
+        }
+
+        private String getCurrentName() {
+            if (parsedItem != null) {
+                return parsedItem.getName();
+            }
+            return parsedCombo.getName();
+        }
+
+        private int getQuantity() {
+            if (parsedItem != null) {
+                return parsedItem.getQuantity();
+            }
+            return parsedCombo.getQuantity();
+        }
+
+        private String getDisplayLabel() {
+            if (isCombo()) {
+                return "Сет: " + getCurrentName() + " x" + getQuantity();
+            }
+            return getCurrentName() + " x" + getQuantity();
+        }
+
+        private boolean hasAlias() {
+            return aliasMenuItem != null || aliasCombo != null;
+        }
+
+        private String getAliasTargetName() {
+            if (aliasMenuItem != null) {
+                return aliasMenuItem.getName();
+            }
+            if (aliasCombo != null) {
+                return aliasCombo.getName();
+            }
+            return "";
+        }
+
+        private MenuItem getAliasMenuItem() {
+            return aliasMenuItem;
+        }
+
+        private ItemCombo getAliasCombo() {
+            return aliasCombo;
+        }
+
+        private void clearAlias() {
+            this.aliasMenuItem = null;
+            this.aliasCombo = null;
+        }
+    }
 
     @Autowired
-    public CreateNewOrderView(MultiCityViewService multiCityViewService) {
-        this.multiCityViewService = multiCityViewService;
-        
+    public CreateNewOrderView(ViewService viewService,
+                           CashListener cashListener,
+                           CityProperties cityProperties,
+                           OrderTextParserService orderTextParserService,
+                           MenuItemAliasService menuItemAliasService,
+                           MultiCityViewService multiCityViewService,
+                           MultiCityOrderService multiCityOrderService) {
         setSizeFull();
+
+        this.viewService = viewService;
+        this.cashListener = cashListener;
+        this.cityProperties = cityProperties;
+        this.orderTextParserService = orderTextParserService;
+        this.menuItemAliasService = menuItemAliasService;
+        this.multiCityViewService = multiCityViewService;
+        this.multiCityOrderService = multiCityOrderService;
+
         getStyle().set("padding", "20px");
         getStyle().set("gap", "20px");
-        
-        // Заголовок
-        H1 header = new H1("Создание заказа (Мульти-город)");
-        header.getStyle()
+
+        // Создаем заголовок
+        H1 cityHeader = new H1("Создание заказа (Мульти-город)");
+        cityHeader.getStyle()
                 .set("text-align", "center")
                 .set("margin", "0 0 20px 0")
-                .set("color", "var(--lumo-primary-color)");
-        
-        // Вкладки для переключения между городами
-        cityTabs.setWidthFull();
-        cityTabs.addSelectedChangeListener(event -> {
-            if (event.getSelectedTab().equals(parnasTab)) {
-                switchCity(City.PARNAS);
-            } else {
-                switchCity(City.UKHTA);
-            }
-        });
-        
-        // Вкладки для меню (Роллы/Сеты)
-        menuTabs.setWidthFull();
-        menuTabs.addSelectedChangeListener(event -> {
-            if (event.getSelectedTab().equals(rollsTab)) {
+                .set("color", "var(--lumo-primary-color)")
+                .set("font-size", "3rem")
+                .set("font-weight", "bold")
+                .set("text-shadow", "2px 2px 4px rgba(0,0,0,0.1)");
+
+        // Загружаем меню для текущего города
+        switchCity(currentCity);
+
+        datePicker.setId("order-create-picker");
+        datePicker.setWidth("300px"); // Устанавливаем явную ширину для видимости
+        finishPicker.setLocale(Locale.of("ru", "RU"));
+
+        // ЛЕВАЯ ЧАСТЬ
+        Tab tabRolls = new Tab("Роллы");
+        Tab tabSets = new Tab("Сеты");
+        Tabs tabsLeft = new Tabs(tabRolls, tabSets);
+        tabsLeft.setWidthFull();
+
+        Div tabsContentLeft = new Div(rollsTabLayout, setsTabLayout);
+        tabsContentLeft.setWidthFull();
+        setsTabLayout.setVisible(false);
+
+        tabsLeft.addSelectedChangeListener(event -> {
+            if (event.getSelectedTab().equals(tabRolls)) {
                 rollsTabLayout.setVisible(true);
                 setsTabLayout.setVisible(false);
             } else {
@@ -102,21 +241,116 @@ public class CreateNewOrderView extends VerticalLayout {
                 setsTabLayout.setVisible(true);
             }
         });
+
+        // Вкладка "Роллы"
+        rollsTabLayout.setPadding(false);
+        rollsTabLayout.setSpacing(true);
+
+        TextField rollsSearchField = new TextField("Поиск по роллам");
+        rollsSearchField.setPlaceholder("Введите название...");
+        rollsSearchField.setWidthFull();
+        rollsSearchField.setValueChangeMode(ValueChangeMode.TIMEOUT);
+//        rollsSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
+        rollsSearchField.addValueChangeListener(e -> {
+            String searchValue = e.getValue().trim().toLowerCase();
+            if (searchValue.isEmpty()) {
+                rollsGrid.setItems(menuMenuItems);
+            } else {
+                rollsGrid.setItems(
+                        menuMenuItems.stream()
+                                .filter(item -> item.getName().toLowerCase().contains(searchValue))
+                                .collect(Collectors.toList())
+                );
+            }
+        });
+
+        // Меню будет установлено при переключении города
+        rollsGrid.addColumn(MenuItem::getName).setHeader("Наименование");
+        rollsGrid.addColumn(MenuItem::getPrice).setHeader("Цена");
+        rollsGrid.setWidthFull();
+        rollsGrid.addItemClickListener(e -> addToCart(e.getItem()));
+
+        rollsTabLayout.add(rollsSearchField, rollsGrid);
+
+        // Вкладка "Сеты"
+        setsTabLayout.setPadding(false);
+        setsTabLayout.setSpacing(true);
+
+        TextField setsSearchField = new TextField("Поиск по сетам");
+        setsSearchField.setPlaceholder("Введите название...");
+        setsSearchField.setWidthFull();
+        setsSearchField.setValueChangeMode(ValueChangeMode.TIMEOUT);
+//        setsSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
+        setsSearchField.addValueChangeListener(e -> {
+            String searchValue = e.getValue().trim().toLowerCase();
+            if (searchValue.isEmpty()) {
+                setsGrid.setItems(menuItemCombos);
+            } else {
+                setsGrid.setItems(
+                        menuItemCombos.stream()
+                                .filter(s -> s.getName().toLowerCase().contains(searchValue))
+                                .collect(Collectors.toList())
+                );
+            }
+        });
+
+        // Меню будет установлено при переключении города
+        setsGrid.addColumn(ItemCombo::getName).setHeader("Наименование");
+        setsGrid.setWidthFull();
+        setsGrid.addItemClickListener(e -> {
+            ItemCombo clickedSet = e.getItem();
+            for (MenuItem item : clickedSet.getMenuItems()) {
+                addToCart(item);
+            }
+            Notification.show("Добавлен сет: " + clickedSet.getName());
+        });
+
+        setsTabLayout.add(setsSearchField, setsGrid);
+
+        // Допы (две колонки)
+        extrasLayout.setPadding(false);
+        extrasLayout.setSpacing(true);
+
+        VerticalLayout extrasListLeft = new VerticalLayout();
+        extrasListLeft.setPadding(false);
+        extrasListLeft.setSpacing(false);
+
+        VerticalLayout extrasListRight = new VerticalLayout();
+        extrasListRight.setPadding(false);
+        extrasListRight.setSpacing(false);
+
+        HorizontalLayout extrasColumns = new HorizontalLayout(extrasListLeft, extrasListRight);
+        extrasColumns.setWidthFull();
+        extrasColumns.setSpacing(true);
+        updateExtrasList(extrasListLeft, extrasListRight, menuExtras);
+
+        // Набор приборов
+        HorizontalLayout instrumentsSetLayout = new HorizontalLayout();
+        instrumentsSetLayout.setWidthFull();
+        instrumentsSetLayout.setAlignItems(Alignment.CENTER);
+        instrumentsSetLayout.setSpacing(true);
         
-        // Инициализация UI
-        initializeMenuTabs();
-        initializeCart();
+        Span instrumentsSetName = new Span("Набор приборов (соевый/васаби/имбирь/палочки)");
+        Span instrumentsSetQuantity = new Span("0");
+        Button instrumentsSetRemoveBtn = new Button(VaadinIcon.MINUS.create());
+        Button instrumentsSetAddBtn = new Button(VaadinIcon.PLUS.create());
         
-        // Загружаем данные для Парнаса по умолчанию
-        switchCity(City.PARNAS);
+        instrumentsSetRemoveBtn.addClickListener(e -> {
+            removeInstrumentsSet();
+            updateInstrumentsSetQuantity(instrumentsSetQuantity);
+        });
         
-        // Основной layout
-        HorizontalLayout mainLayout = new HorizontalLayout();
-        mainLayout.setSizeFull();
-        mainLayout.getStyle().set("gap", "20px");
+        instrumentsSetAddBtn.addClickListener(e -> {
+            addInstrumentsSet();
+            updateInstrumentsSetQuantity(instrumentsSetQuantity);
+        });
         
-        // Левая часть - меню
-        VerticalLayout leftLayout = new VerticalLayout(cityTabs, menuTabs, rollsTabLayout, setsTabLayout);
+        instrumentsSetLayout.add(instrumentsSetName, instrumentsSetRemoveBtn, instrumentsSetQuantity, instrumentsSetAddBtn);
+        instrumentsSetLayout.setFlexGrow(1.0, instrumentsSetName);
+
+        extrasLayout.add(new H4("Допы"), extrasColumns, instrumentsSetLayout);
+
+        VerticalLayout leftLayout = new VerticalLayout(tabsLeft, tabsContentLeft, extrasLayout);
         leftLayout.setWidth("50%");
         leftLayout.setPadding(false);
         leftLayout.setSpacing(true);
@@ -124,16 +358,54 @@ public class CreateNewOrderView extends VerticalLayout {
                 .set("border", "1px solid #ccc")
                 .set("border-radius", "8px")
                 .set("padding", "20px");
-        
-        // Правая часть - корзина
-        VerticalLayout rightLayout = new VerticalLayout(
-            new Span("Город: " + getCurrentCityName()),
-            orderNumberField,
-            finishPicker,
-            isYandexOrder,
-            chosenGrid,
-            totalPay
-        );
+
+        // ПРАВАЯ ЧАСТЬ
+        orderNumberField.setPlaceholder("Введите номер заказа...");
+        orderNumberField.setWidthFull();
+
+        // Вкладки для переключения между городами
+        Tab parnasTab = new Tab("Парнас");
+        Tab ukhtaTab = new Tab("Ухта");
+        Tabs cityTabs = new Tabs(parnasTab, ukhtaTab);
+        cityTabs.setWidthFull();
+        cityTabs.addSelectedChangeListener(event -> {
+            if (event.getSelectedTab().equals(parnasTab)) {
+                switchCity(MultiCityViewService.City.PARNAS);
+            } else {
+                switchCity(MultiCityViewService.City.UKHTA);
+            }
+        });
+
+        Tab cartTab = new Tab("Корзина");
+        Tab activeOrdersTab = new Tab("Активные заказы");
+        Tab allOrdersTab = new Tab("Все заказы");
+        Tabs rightTabs = new Tabs(cartTab, activeOrdersTab, allOrdersTab);
+
+        Div cartLayout = buildCartLayout();
+        Div activeOrdersLayout = buildActiveOrdersLayout();
+        Div allOrdersLayout = buildAllOrdersLayout();
+        activeOrdersLayout.setVisible(false);
+        allOrdersLayout.setVisible(false);
+
+        rightTabs.addSelectedChangeListener(event -> {
+            if (event.getSelectedTab().equals(cartTab)) {
+                cartLayout.setVisible(true);
+                activeOrdersLayout.setVisible(false);
+                allOrdersLayout.setVisible(false);
+            } else if (event.getSelectedTab().equals(activeOrdersTab)) {
+                cartLayout.setVisible(false);
+                activeOrdersLayout.setVisible(true);
+                allOrdersLayout.setVisible(false);
+                refreshActiveOrdersGrid(null, null);
+            } else {
+                cartLayout.setVisible(false);
+                activeOrdersLayout.setVisible(false);
+                allOrdersLayout.setVisible(true);
+                refreshOrdersGrid(null, null);
+            }
+        });
+
+        VerticalLayout rightLayout = new VerticalLayout(cityTabs, rightTabs, orderNumberField, cartLayout, activeOrdersLayout, allOrdersLayout);
         rightLayout.setWidth("50%");
         rightLayout.setPadding(false);
         rightLayout.setSpacing(true);
@@ -141,134 +413,59 @@ public class CreateNewOrderView extends VerticalLayout {
                 .set("border", "1px solid #ccc")
                 .set("border-radius", "8px")
                 .set("padding", "20px");
-        
-        mainLayout.add(leftLayout, rightLayout);
-        
-        add(header, mainLayout);
+
+        // Создаем горизонтальный контейнер для основного содержимого
+        HorizontalLayout mainContent = new HorizontalLayout(leftLayout, rightLayout);
+        mainContent.setSizeFull();
+        mainContent.getStyle().set("gap", "20px");
+
+        add(cityHeader, mainContent);
     }
-    
-    private void switchCity(City city) {
-        this.currentCity = city;
-        
-        // Загружаем данные для выбранного города
-        try {
-            currentMenuItems = multiCityViewService.getMenuItems(city);
-            currentCombos = multiCityViewService.getCombos(city);
-            currentExtras = multiCityViewService.getExtras(city);
-            
-            // Обновляем UI
-            rollsGrid.setItems(currentMenuItems);
-            setsGrid.setItems(currentCombos);
-            
-            // Обновляем отображение города в правой части
-            Notification.show("Переключено на: " + getCurrentCityName());
-        } catch (Exception e) {
-            Notification.show("Ошибка загрузки данных для " + getCurrentCityName() + ": " + e.getMessage(), 5000, Notification.Position.MIDDLE);
+
+    private NotAddedEntry createNotAddedEntry(ParsedOrderDto.ParsedItem item) {
+        MenuItem aliasTarget = menuItemAliasService.findMenuItemAliasTarget(item.getName())
+                .orElse(null);
+        return new NotAddedEntry(item, aliasTarget);
+    }
+
+    private NotAddedEntry createNotAddedEntry(ParsedOrderDto.ParsedCombo combo) {
+        ItemCombo aliasTarget = menuItemAliasService.findComboAliasTarget(combo.getName())
+                .orElse(null);
+        return new NotAddedEntry(combo, aliasTarget);
+    }
+
+    // Метод для обновления списка допов в две колонки
+    private void updateExtrasList(VerticalLayout leftColumn, VerticalLayout rightColumn, List<MenuItem> items) {
+        leftColumn.removeAll();
+        rightColumn.removeAll();
+
+        int halfSize = (items.size() + 1) / 2; // Делим список на две части, округляя вверх
+        for (int i = 0; i < items.size(); i++) {
+            MenuItem item = items.get(i);
+            HorizontalLayout itemLayout = new HorizontalLayout();
+            itemLayout.setWidthFull();
+            itemLayout.setAlignItems(Alignment.CENTER);
+
+            Span name = new Span(item.getName());
+            Span price = new Span(String.format("%.1f руб.", item.getPrice()));
+            Button addButton = new Button(VaadinIcon.PLUS.create());
+            Button removeButton = new Button(VaadinIcon.MINUS.create());
+            Span quantity = new Span(String.valueOf(getCartQuantity(item)));
+
+            addButton.addClickListener(e -> addToCart(item));
+            removeButton.addClickListener(e -> removeFromCart(item, quantity));
+
+            itemLayout.add(name, price, removeButton, quantity, addButton);
+            itemLayout.setFlexGrow(1, name);
+
+            if (i < halfSize) {
+                leftColumn.add(itemLayout);
+            } else {
+                rightColumn.add(itemLayout);
+            }
         }
     }
-    
-    private String getCurrentCityName() {
-        return currentCity == City.PARNAS ? "Парнас" : "Ухта";
-    }
-    
-    private void initializeMenuTabs() {
-        // Вкладка "Роллы"
-        rollsTabLayout.setPadding(false);
-        rollsTabLayout.setSpacing(true);
-        rollsTabLayout.setVisible(true);
-        
-        TextField rollsSearchField = new TextField("Поиск по роллам");
-        rollsSearchField.setPlaceholder("Введите название...");
-        rollsSearchField.setWidthFull();
-        rollsSearchField.setValueChangeMode(ValueChangeMode.TIMEOUT);
-        rollsSearchField.addValueChangeListener(e -> {
-            String searchValue = e.getValue().trim().toLowerCase();
-            if (searchValue.isEmpty()) {
-                rollsGrid.setItems(currentMenuItems);
-            } else {
-                rollsGrid.setItems(
-                    currentMenuItems.stream()
-                        .filter(item -> item.getName().toLowerCase().contains(searchValue))
-                        .collect(Collectors.toList())
-                );
-            }
-        });
-        
-        rollsGrid.addColumn(MenuItem::getName).setHeader("Наименование");
-        rollsGrid.addColumn(MenuItem::getPrice).setHeader("Цена");
-        rollsGrid.setWidthFull();
-        rollsGrid.addItemClickListener(e -> addToCart(e.getItem()));
-        
-        rollsTabLayout.add(rollsSearchField, rollsGrid);
-        
-        // Вкладка "Сеты"
-        setsTabLayout.setPadding(false);
-        setsTabLayout.setSpacing(true);
-        setsTabLayout.setVisible(false);
-        
-        TextField setsSearchField = new TextField("Поиск по сетам");
-        setsSearchField.setPlaceholder("Введите название...");
-        setsSearchField.setWidthFull();
-        setsSearchField.setValueChangeMode(ValueChangeMode.TIMEOUT);
-        setsSearchField.addValueChangeListener(e -> {
-            String searchValue = e.getValue().trim().toLowerCase();
-            if (searchValue.isEmpty()) {
-                setsGrid.setItems(currentCombos);
-            } else {
-                setsGrid.setItems(
-                    currentCombos.stream()
-                        .filter(combo -> combo.getName().toLowerCase().contains(searchValue))
-                        .collect(Collectors.toList())
-                );
-            }
-        });
-        
-        setsGrid.addColumn(ItemCombo::getName).setHeader("Наименование");
-        setsGrid.setWidthFull();
-        setsGrid.addItemClickListener(e -> {
-            ItemCombo clickedSet = e.getItem();
-            // Добавляем все позиции из сета в корзину
-            if (clickedSet.getMenuItems() != null) {
-                for (MenuItem item : clickedSet.getMenuItems()) {
-                    addToCart(item);
-                }
-            }
-            Notification.show("Добавлен сет: " + clickedSet.getName());
-        });
-        
-        setsTabLayout.add(setsSearchField, setsGrid);
-    }
-    
-    private void initializeCart() {
-        finishPicker.setLocale(Locale.of("ru", "RU"));
-        
-        chosenGrid.addColumn(cartItem -> cartItem.getMenuItem().getName()).setHeader("Наименование");
-        chosenGrid.addColumn(CartItem::getQuantity).setHeader("Кол-во");
-        chosenGrid.addColumn(cartItem -> cartItem.getMenuItem().getPrice() * cartItem.getQuantity()).setHeader("Цена");
-        chosenGrid.addComponentColumn(cartItem -> {
-            HorizontalLayout buttons = new HorizontalLayout();
-            Button removeBtn = new Button(VaadinIcon.MINUS.create());
-            removeBtn.addClickListener(e -> {
-                if (cartItem.getQuantity() > 1) {
-                    cartItem.decrement();
-                } else {
-                    cartItems.remove(cartItem);
-                }
-                updateTotalPay();
-                chosenGrid.getDataProvider().refreshAll();
-            });
-            Button addBtn = new Button(VaadinIcon.PLUS.create());
-            addBtn.addClickListener(e -> {
-                cartItem.increment();
-                updateTotalPay();
-                chosenGrid.getDataProvider().refreshAll();
-            });
-            buttons.add(removeBtn, addBtn);
-            return buttons;
-        }).setHeader("Действие");
-        chosenGrid.setItems(cartItems);
-    }
-    
+
     private void addToCart(MenuItem item) {
         CartItem existingItem = cartItems.stream()
                 .filter(cartItem -> cartItem.getMenuItem().equals(item))
@@ -282,15 +479,1835 @@ public class CreateNewOrderView extends VerticalLayout {
         }
 
         updateTotalPay();
+        updateTotalTime();
         Notification.show(String.format("Добавлен: %s - %.1f рублей", item.getName(), item.getPrice()));
         chosenGrid.getDataProvider().refreshAll();
+        updateExtrasList(
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+                menuExtras
+        ); // Обновляем список допов
     }
-    
+
+    private void removeFromCart(MenuItem item, Span quantityLabel) {
+        CartItem existingItem = cartItems.stream()
+                .filter(cartItem -> cartItem.getMenuItem().equals(item))
+                .findFirst()
+                .orElse(null);
+
+        if (existingItem != null) {
+            if (existingItem.getQuantity() > 1) {
+                existingItem.decrement();
+            } else {
+                cartItems.remove(existingItem);
+            }
+            updateTotalPay();
+            updateTotalTime();
+            chosenGrid.getDataProvider().refreshAll();
+            quantityLabel.setText(String.valueOf(getCartQuantity(item))); // Обновляем количество в списке
+            Notification.show(String.format("Удален: %s", item.getName()));
+        }
+    }
+
+    private int getCartQuantity(MenuItem item) {
+        return cartItems.stream()
+                .filter(cartItem -> cartItem.getMenuItem().equals(item))
+                .mapToInt(CartItem::getQuantity)
+                .findFirst()
+                .orElse(0);
+    }
+
+    private Div buildCartLayout() {
+        Div cartLayout = new Div();
+        cartLayout.setWidthFull();
+
+        H3 chosenTitle = new H3("Корзина:");
+        chosenGrid.addColumn(cartItem -> cartItem.getMenuItem().getName()).setHeader("Наименование");
+        chosenGrid.addColumn(CartItem::getQuantity).setHeader("Кол-во");
+        chosenGrid.addColumn(cartItem -> cartItem.getMenuItem().getPrice() * cartItem.getQuantity()).setHeader("Цена");
+        chosenGrid.addComponentColumn(cartItem -> {
+            HorizontalLayout buttons = new HorizontalLayout();
+            Button removeBtn = new Button(VaadinIcon.MINUS.create());
+            removeBtn.addClickListener(e -> {
+                if (cartItem.getQuantity() > 1) {
+                    cartItem.decrement();
+                } else {
+                    cartItems.remove(cartItem);
+                }
+                updateTotalPay();
+                updateTotalTime();
+                chosenGrid.getDataProvider().refreshAll();
+                updateExtrasList(
+                        (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+                        (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+                        menuExtras
+                );
+            });
+            Button addBtn = new Button(VaadinIcon.PLUS.create());
+            addBtn.addClickListener(e -> {
+                cartItem.increment();
+                updateTotalPay();
+                updateTotalTime();
+                chosenGrid.getDataProvider().refreshAll();
+                updateExtrasList(
+                        (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+                        (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+                        menuExtras
+                );
+            });
+            buttons.add(removeBtn);
+            buttons.add(addBtn);
+            return buttons;
+        }).setHeader("Действие");
+        chosenGrid.setItems(cartItems);
+
+        Button updateTimeButton = new Button("Обновить", VaadinIcon.REFRESH.create());
+        updateTimeButton.addClickListener(e -> updateKitchenStartTime());
+
+        HorizontalLayout kitchenStartLayout = new HorizontalLayout(kitchenStartDisplay, updateTimeButton, changeKitchenStartButton);
+        kitchenStartLayout.setAlignItems(Alignment.CENTER);
+        changeKitchenStartButton.addClickListener(e -> openKitchenStartDialog());
+
+
+        finishPicker.setValue(LocalDateTime.now().plusMinutes(15));
+
+        // Инициализируем время начала приготовления актуальным временем
+        selectedKitchenStart = Instant.now();
+        kitchenStartDisplay.setText("Время начала приготовления: " +
+                selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+
+        HorizontalLayout finishLayout = new HorizontalLayout(finishPicker, isYandexOrder); // Чекбокс рядом с временем готовности
+        finishLayout.setAlignItems(Alignment.CENTER);
+        finishLayout.setWidthFull();
+
+        Button createOrderButton = new Button("Создать заказ");
+        Button importButton = new Button("Импорт", VaadinIcon.UPLOAD.create());
+        Button clearCartButton = new Button("Очистить корзину");
+        HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, importButton, clearCartButton);
+        
+        importButton.addClickListener(e -> openImportDialog());
+
+        createOrderButton.addClickListener(e -> {
+            if (cartItems.isEmpty()) {
+                Notification.show("Корзина пуста, нельзя создать заказ");
+                return;
+            }
+
+            String orderNumber = orderNumberField.getValue().trim();
+            if (orderNumber.isEmpty()) {
+                Notification.show("Нельзя создать заказ без номера");
+                return;
+            }
+
+            // Check if order with this name already exists today
+            if (multiCityOrderService.orderExistsByNameToday(getOrderCity(), orderNumber)) {
+                Dialog errorDialog = new Dialog();
+                errorDialog.setHeaderTitle("Ошибка");
+                errorDialog.add("Заказ с номером '" + orderNumber + "' уже существует за сегодня.");
+
+                Button okBtn = new Button("OK", ev -> errorDialog.close());
+                Button cancelBtn = new Button("Отмена", ev -> errorDialog.close());
+
+                errorDialog.getFooter().add(cancelBtn, okBtn);
+                errorDialog.open();
+                return;
+            }
+
+            if (selectedKitchenStart.isBefore(Instant.now())) {
+                selectedKitchenStart = Instant.now();
+                updateTotalTime();
+            }
+
+            LocalDateTime finishTime = finishPicker.getValue();
+            if (finishTime == null) {
+                Notification.show("Пожалуйста, укажите время готовности");
+                return;
+            }
+
+            Instant kitchenShouldGetOrderAt = (selectedKitchenStart != null) ? selectedKitchenStart : Instant.now();
+            Instant shouldBeFinishedAt = finishTime.atZone(ZoneId.systemDefault()).toInstant();
+
+            if (shouldBeFinishedAt.isBefore(kitchenShouldGetOrderAt)) {
+                Notification.show("Время готовности не может быть раньше времени начала приготовления");
+                return;
+            }
+
+            // Проверяем наличие приборов (productType = 7)
+            boolean hasInstruments = cartItems.stream()
+                    .anyMatch(cartItem -> cartItem.getMenuItem().getProductType().getId() == 7);
+
+            if (!hasInstruments) {
+                // Показываем диалог подтверждения
+                Dialog confirmDialog = new Dialog();
+                confirmDialog.setHeaderTitle("Точно без приборов?");
+                confirmDialog.add("В корзине нет приборов. Продолжить создание заказа?");
+
+                Button yesBtn = new Button("Да", ev -> {
+                    confirmDialog.close();
+                    createOrder(orderNumber, kitchenShouldGetOrderAt, shouldBeFinishedAt);
+                });
+
+                Button noBtn = new Button("Нет", ev -> confirmDialog.close());
+
+                confirmDialog.getFooter().add(noBtn, yesBtn);
+                confirmDialog.open();
+            } else {
+                createOrder(orderNumber, kitchenShouldGetOrderAt, shouldBeFinishedAt);
+            }
+        });
+
+        clearCartButton.addClickListener(e -> {
+            cartItems.clear();
+            updateTotalPay();
+            updateTotalTime();
+            chosenGrid.getDataProvider().refreshAll();
+            updateExtrasList(
+                    (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+                    (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+                    menuExtras
+            );
+            Notification.show("Корзина очищена");
+
+            updateKitchenStartTime();
+            isYandexOrder.setValue(false); // Сбрасываем чекбокс при очистке
+        });
+
+
+        cartLayout.add(chosenTitle, chosenGrid, kitchenStartLayout, finishLayout, totalPay, totalTime, buttonBar);
+        return cartLayout;
+    }
+
     private void updateTotalPay() {
         double total = cartItems.stream()
                 .mapToDouble(cartItem -> cartItem.getMenuItem().getPrice() * cartItem.getQuantity())
                 .sum();
-        totalPay.setText(String.format("К оплате: %.2f рублей", total));
+        totalPay.setText("К оплате: " + total + " рублей");
+    }
+
+    private Div buildActiveOrdersLayout() {
+        Div ordersLayout = new Div();
+        ordersLayout.setWidthFull();
+
+        Span ordersCountLabel = new Span("");
+
+        activeOrdersGrid.removeAllColumns();
+        activeOrdersGrid.addColumn(new ComponentRenderer<>(orderDto -> {
+            HorizontalLayout layout = new HorizontalLayout();
+            layout.setAlignItems(Alignment.CENTER);
+            if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
+                Icon icon = VaadinIcon.EXCLAMATION.create();
+                icon.setColor("var(--lumo-error-color)");
+                icon.setSize("var(--lumo-icon-size-s)");
+                layout.add(icon);
+            }
+            layout.add(new Span(orderDto.getName()));
+            return layout;
+        })).setHeader("Номер").setAutoWidth(true);
+
+        activeOrdersGrid.addColumn(dto -> dto.getItems() == null ? 0 : dto.getItems().stream()
+                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+                .count()).setHeader("Кол-во").setAutoWidth(true);
+        activeOrdersGrid.addColumn(orderDto -> {
+            String baseStatus = switch (orderDto.getStatus()) {
+                case CREATED -> "Создан";
+                case COOKING -> "Готовится";
+                case COLLECTING -> "Сборка";
+                case READY -> "Выполнен";
+                case CANCELED -> "Отменён";
+            };
+
+            // Добавляем процент готовности для статуса "Готовится"
+            if (orderDto.getStatus() == OrderStatus.COOKING) {
+                int progressPercent = calculateOrderProgress(orderDto);
+                return baseStatus + " (" + progressPercent + "%)";
+            }
+
+            return baseStatus;
+        }).setHeader("Статус").setAutoWidth(true);
+        activeOrdersGrid.addColumn(order -> order.getKitchenShouldGetOrderAt()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalTime()
+                        .format(DateTimeFormatter.ofPattern("HH:mm")))
+                .setHeader("Начало").setAutoWidth(true);
+        activeOrdersGrid.addColumn(order -> order.getShouldBeFinishedAt()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalTime()
+                        .format(DateTimeFormatter.ofPattern("HH:mm")))
+                .setHeader("Готов к").setAutoWidth(true);
+        activeOrdersGrid.addComponentColumn(orderDto -> {
+            HorizontalLayout layout = new HorizontalLayout();
+
+            Button detailsBtn = new Button(VaadinIcon.LIST_OL.create());
+            detailsBtn.addClickListener(e -> openOrderItemsDialog(orderDto));
+            layout.add(detailsBtn);
+
+            if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
+                Button editTimeBtn = new Button(VaadinIcon.CLOCK.create());
+                editTimeBtn.addClickListener(e -> openEditDialog(orderDto));
+                layout.add(editTimeBtn);
+
+                Button editNameBtn = new Button(VaadinIcon.EDIT.create());
+                editNameBtn.addClickListener(e -> openEditOrderNameDialog(orderDto));
+                layout.add(editNameBtn);
+
+                Button priorityBtn = new Button(VaadinIcon.ARROW_UP.create());
+                priorityBtn.addClickListener(e -> setPriorityTimeForOrder(orderDto));
+                layout.add(priorityBtn);
+
+                Button cancelBtn = new Button(VaadinIcon.CLOSE.create());
+                cancelBtn.addClickListener(e -> {
+                    multiCityOrderService.cancelOrder(getOrderCity(), orderDto.getId());
+                    Notification.show("Заказ " + orderDto.getName() + " отменён!");
+                    refreshActiveOrdersGrid(null, ordersCountLabel);
+                });
+                layout.add(cancelBtn);
+            }
+            return layout;
+        }).setHeader("Действие").setAutoWidth(true);
+
+        ordersLayout.add(new H3("Активные заказы:"), activeOrdersGrid, ordersCountLabel);
+        refreshActiveOrdersGrid(null, ordersCountLabel);
+
+        return ordersLayout;
+    }
+
+    private Div buildAllOrdersLayout() {
+        Div ordersLayout = new Div();
+        ordersLayout.setWidthFull();
+
+        // Фильтр по датам
+        datePicker.setValue(new DateRange(LocalDate.now(), null));
+        datePicker.setWidth("300px");
+        datePicker.getStyle().set("display", "inline-block");
+
+        statusFilter.setItems(OrderStatus.values());
+        statusFilter.setItemLabelGenerator(status -> switch (status) {
+            case CREATED -> "Создан";
+            case COOKING -> "Готовится";
+            case COLLECTING -> "Сборка";
+            case READY -> "Выполнен";
+            case CANCELED -> "Отменён";
+        });
+        statusFilter.setPlaceholder("Все статусы");
+
+        Span ordersCountLabel = new Span("");
+
+        // Кнопка применения фильтров
+        applyDateFilterButton.addClickListener(e -> refreshOrdersGrid(statusFilter.getValue(), ordersCountLabel));
+
+        HorizontalLayout filterLayout = new HorizontalLayout(statusFilter, datePicker, applyDateFilterButton);
+        filterLayout.setAlignItems(Alignment.BASELINE);
+        filterLayout.setWidthFull();
+        filterLayout.setSpacing(true);
+
+        ordersGrid.removeAllColumns();
+        ordersGrid.addColumn(new ComponentRenderer<>(orderDto -> {
+            HorizontalLayout layout = new HorizontalLayout();
+            layout.setAlignItems(Alignment.CENTER);
+            if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
+                Icon icon = VaadinIcon.EXCLAMATION.create();
+                icon.setColor("var(--lumo-error-color)");
+                icon.setSize("var(--lumo-icon-size-s)");
+                layout.add(icon);
+            }
+            layout.add(new Span(orderDto.getName()));
+            return layout;
+        })).setHeader("Номер").setAutoWidth(true);
+
+        ordersGrid.addColumn(dto -> dto.getItems() == null ? 0 : dto.getItems().stream()
+                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+                .count()).setHeader("Кол-во").setAutoWidth(true);
+        ordersGrid.addColumn(orderDto -> {
+            String baseStatus = switch (orderDto.getStatus()) {
+                case CREATED -> "Создан";
+                case COOKING -> "Готовится";
+                case COLLECTING -> "Сборка";
+                case READY -> "Выполнен";
+                case CANCELED -> "Отменён";
+            };
+
+            // Добавляем процент готовности для статуса "Готовится"
+            if (orderDto.getStatus() == OrderStatus.COOKING) {
+                int progressPercent = calculateOrderProgress(orderDto);
+                return baseStatus + " (" + progressPercent + "%)";
+            }
+
+            return baseStatus;
+        }).setHeader("Статус").setAutoWidth(true);
+        ordersGrid.addColumn(order -> order.getKitchenShouldGetOrderAt()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalTime()
+                        .format(DateTimeFormatter.ofPattern("HH:mm")))
+                .setHeader("Начало").setAutoWidth(true);
+        ordersGrid.addColumn(order -> order.getShouldBeFinishedAt()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalTime()
+                        .format(DateTimeFormatter.ofPattern("HH:mm")))
+                .setHeader("Готов к").setAutoWidth(true);
+        ordersGrid.addComponentColumn(orderDto -> {
+            HorizontalLayout layout = new HorizontalLayout();
+
+            Button detailsBtn = new Button(VaadinIcon.LIST_OL.create());
+            detailsBtn.addClickListener(e -> openOrderItemsDialog(orderDto));
+            layout.add(detailsBtn);
+
+            if (orderDto.getStatus() != OrderStatus.READY && orderDto.getStatus() != OrderStatus.CANCELED) {
+                Button editTimeBtn = new Button(VaadinIcon.CLOCK.create());
+                editTimeBtn.addClickListener(e -> openEditDialog(orderDto));
+                layout.add(editTimeBtn);
+
+                Button editNameBtn = new Button(VaadinIcon.EDIT.create());
+                editNameBtn.addClickListener(e -> openEditOrderNameDialog(orderDto));
+                layout.add(editNameBtn);
+
+                Button priorityBtn = new Button(VaadinIcon.ARROW_UP.create());
+                priorityBtn.addClickListener(e -> setPriorityTimeForOrder(orderDto));
+                layout.add(priorityBtn);
+
+                Button cancelBtn = new Button(VaadinIcon.CLOSE.create());
+                cancelBtn.addClickListener(e -> {
+                    multiCityOrderService.cancelOrder(getOrderCity(), orderDto.getId());
+                    Notification.show("Заказ " + orderDto.getName() + " отменён!");
+                    refreshAllOrdersTables();
+                });
+                layout.add(cancelBtn);
+            } else if (orderDto.getStatus() == OrderStatus.READY) {
+                // Для выполненных заказов показываем кнопки редактирования и возврата
+                Button editNameBtn = new Button(VaadinIcon.EDIT.create());
+                editNameBtn.addClickListener(e -> openEditOrderNameDialog(orderDto));
+                layout.add(editNameBtn);
+
+                Button returnBtn = new Button("Вернуть");
+                returnBtn.addClickListener(e -> openReturnItemsDialog(orderDto));
+                layout.add(returnBtn);
+            }
+            return layout;
+        }).setHeader("Действие").setAutoWidth(true);
+
+        ordersLayout.add(new H3("Список всех заказов:"), filterLayout, ordersGrid, ordersCountLabel);
+        refreshOrdersGrid(statusFilter.getValue(), ordersCountLabel);
+
+        return ordersLayout;
+    }
+
+    private void openEditDialog(OrderShortDto orderDto) {
+        Dialog editDialog = new Dialog();
+        editDialog.setHeaderTitle("Редактировать время начала приготовления");
+
+        DateTimePicker picker = new DateTimePicker("Время начала приготовления");
+        picker.setLocale(Locale.of("ru", "RU"));
+
+        picker.setValue(orderDto.getKitchenShouldGetOrderAt().atZone(ZoneId.systemDefault()).toLocalDateTime());
+
+        Button saveBtn = new Button("Сохранить", ev -> {
+            LocalDateTime newTime = picker.getValue();
+            if (newTime != null) {
+                Instant newInstant = newTime.atZone(ZoneId.systemDefault()).toInstant();
+                multiCityOrderService.updateKitchenShouldGetOrderAt(getOrderCity(), orderDto.getId(), newInstant);
+                Notification.show("Время начала приготовления обновлено");
+                editDialog.close();
+                refreshAllOrdersTables();
+            } else {
+                Notification.show("Пожалуйста, укажите время");
+            }
+        });
+
+        Button cancelBtn = new Button("Отмена", ev -> editDialog.close());
+
+        editDialog.add(picker);
+        editDialog.getFooter().add(saveBtn, cancelBtn);
+        editDialog.open();
+    }
+
+    private void refreshActiveOrdersGrid(OrderStatus statusFilter, Span ordersCountLabel) {
+        List<OrderShortDto> allOrders = multiCityOrderService.getAllActiveOrdersWithItems(getOrderCity());
+
+        // Обновляем таблицу
+        activeOrdersGrid.setItems(allOrders);
+
+        if (ordersCountLabel != null) {
+            ordersCountLabel.setText("Заказов: " + allOrders.size());
+        }
+    }
+
+    private void refreshAllOrdersTables() {
+        // Обновляем активные заказы если видима их вкладка
+        if (activeOrdersGrid.isAttached()) {
+            refreshActiveOrdersGrid(null, null);
+        }
+        // Обновляем все заказы если видима их вкладка
+        if (ordersGrid.isAttached()) {
+            refreshOrdersGrid(null, null);
+        }
+    }
+
+    private void refreshOrdersGrid(OrderStatus statusFilter, Span ordersCountLabel) {
+        LocalDate from = datePicker.getValue() != null ? datePicker.getValue().getStartDate() : LocalDate.now();
+        LocalDate to = datePicker.getValue() != null ? datePicker.getValue().getEndDate() : LocalDate.now();
+
+        if (to == null) {
+            to = from;
+        }
+
+        if (from.isAfter(to)) {
+            Notification.show("Дата 'С' не может быть позже даты 'По'");
+            return;
+        }
+
+        List<OrderShortDto> allOrders = multiCityOrderService.getAllOrdersWithItemsBetweenDates(
+                getOrderCity(),
+                from.atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                to.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
+        );
+
+        // Применяем фильтр по статусу, если он выбран
+        if (statusFilter != null) {
+            allOrders = allOrders.stream()
+                    .filter(order -> order.getStatus() == statusFilter)
+                    .collect(Collectors.toList());
+        }
+
+        // Обновляем таблицу
+        ordersGrid.setItems(allOrders);
+
+        if (ordersCountLabel != null) {
+            ordersCountLabel.setText("Заказов: " + allOrders.size());
+        }
+    }
+
+    private void openOrderItemsDialog(OrderShortDto orderDto) {
+        Dialog dialog = new Dialog();
+        dialog.setWidth("600px");
+        dialog.setHeaderTitle("Позиции заказа: " + orderDto.getName());
+
+        Grid<OrderItemDto> itemsGrid = new Grid<>(OrderItemDto.class, false);
+        itemsGrid.addColumn(OrderItemDto::getName).setHeader("Наименование");
+
+        // Добавляем столбцы станции и статуса для незавершенных заказов
+        if (!OrderStatus.READY.name().equalsIgnoreCase(orderDto.getStatus().toString())) {
+            itemsGrid.addColumn(itemDto -> itemDto.getCurrentStation() != null ? itemDto.getCurrentStation().getName() : "")
+                    .setHeader("Станция").setAutoWidth(true);
+            itemsGrid.addColumn(itemDto -> switch (itemDto.getStatus()) {
+                case ADDED -> "Ожидает";
+                case STARTED -> "Начато";
+                case COMPLETED -> "Завершено";
+                case CANCELED -> "Отменено";
+            }).setHeader("Статус").setAutoWidth(true);
+        }
+
+        if (!OrderStatus.READY.name().equalsIgnoreCase(orderDto.getStatus().toString())) {
+            itemsGrid.addComponentColumn(itemDto -> {
+                if ("CANCELED".equals(itemDto.getStatus().name())) {
+                    return new Span("Отменено");
+                }
+
+                Button removeBtn = new Button("Удалить");
+                removeBtn.addClickListener(click -> {
+                    multiCityOrderService.cancelOrderItem(getOrderCity(), itemDto.getId());
+                    Notification.show("Позиция удалена (ID=" + itemDto.getId() + ")");
+                    itemsGrid.setItems(multiCityOrderService.getOrderItems(getOrderCity(), orderDto.getId()));
+                });
+
+                return removeBtn;
+            }).setHeader("Действие");
+
+            Button addItemBtn = new Button("Добавить позицию");
+            addItemBtn.addClickListener(ev -> {
+                Dialog addDialog = buildAddItemsDialog(orderDto.getId(), itemsGrid);
+                addDialog.open();
+            });
+            dialog.getFooter().add(addItemBtn);
+        }
+
+        // Загружаем позиции заказа из БД выбранного города
+        itemsGrid.setItems(multiCityOrderService.getOrderItems(getOrderCity(), orderDto.getId()));
+
+        VerticalLayout layout = new VerticalLayout(itemsGrid);
+        dialog.add(layout);
+
+        Button closeBtn = new Button("Закрыть", event -> dialog.close());
+        dialog.getFooter().add(closeBtn);
+
+        dialog.open();
+    }
+
+    private Dialog buildAddItemsDialog(Long orderId, Grid<OrderItemDto> itemsGrid) {
+        Dialog addDialog = new Dialog();
+        addDialog.setWidth("600px");
+        addDialog.setHeaderTitle("Выберите позицию для добавления");
+
+        Tab rollsTab = new Tab("Роллы");
+        Tab setsTab = new Tab("Сеты");
+        Tabs tabs = new Tabs(rollsTab, setsTab);
+
+        VerticalLayout rollsLayout = new VerticalLayout();
+        VerticalLayout setsLayout = new VerticalLayout();
+
+        setsLayout.setVisible(false);
+        tabs.addSelectedChangeListener(e -> {
+            if (e.getSelectedTab() == rollsTab) {
+                rollsLayout.setVisible(true);
+                setsLayout.setVisible(false);
+            } else {
+                rollsLayout.setVisible(false);
+                setsLayout.setVisible(true);
+            }
+        });
+
+        TextField rollSearchField = new TextField("Поиск по роллам");
+        rollSearchField.setPlaceholder("Введите название...");
+        rollSearchField.setValueChangeMode(ValueChangeMode.TIMEOUT);
+//        rollSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
+
+        Grid<MenuItem> rollsGrid = new Grid<>(MenuItem.class, false);
+        rollsGrid.setWidthFull();
+        rollsGrid.addColumn(MenuItem::getName).setHeader("Наименование");
+
+        rollsGrid.addComponentColumn(item -> {
+            Button addButton = new Button("Добавить");
+            addButton.addClickListener(click -> {
+                multiCityOrderService.addItemToOrder(getOrderCity(), orderId, item);
+                Notification.show("Добавлено: " + item.getName());
+                itemsGrid.setItems(multiCityOrderService.getOrderItems(getOrderCity(), orderId));
+            });
+            return addButton;
+        }).setHeader("Действие");
+
+        rollsGrid.setItems(menuMenuItems);
+
+        rollSearchField.addValueChangeListener(ev -> {
+            String search = ev.getValue().toLowerCase().trim();
+            if (search.isEmpty()) {
+                rollsGrid.setItems(menuMenuItems);
+            } else {
+                rollsGrid.setItems(
+                        menuMenuItems.stream()
+                                .filter(item -> item.getName().toLowerCase().contains(search))
+                                .collect(Collectors.toList())
+                );
+            }
+        });
+
+        rollsLayout.add(rollSearchField, rollsGrid);
+
+        TextField setSearchField = new TextField("Поиск по сетам");
+        setSearchField.setPlaceholder("Введите название...");
+        setSearchField.setValueChangeMode(ValueChangeMode.TIMEOUT);
+//        setSearchField.setValueChangeTimeout(500); // Обновление через 500мс после остановки ввода
+
+        Grid<ItemCombo> setsGrid = new Grid<>(ItemCombo.class, false);
+        setsGrid.setWidthFull();
+        setsGrid.addColumn(ItemCombo::getName).setHeader("Наименование");
+
+        setsGrid.addComponentColumn(set -> {
+            Button addButton = new Button("Добавить");
+            addButton.addClickListener(click -> {
+                for (MenuItem i : set.getMenuItems()) {
+                    multiCityOrderService.addItemToOrder(getOrderCity(), orderId, i);
+                }
+                Notification.show("Добавлен сет: " + set.getName());
+                itemsGrid.setItems(multiCityOrderService.getOrderItems(getOrderCity(), orderId));
+            });
+            return addButton;
+        }).setHeader("Действие");
+
+        setsGrid.setItems(menuItemCombos);
+
+        setSearchField.addValueChangeListener(ev -> {
+            String search = ev.getValue().toLowerCase().trim();
+            if (search.isEmpty()) {
+                setsGrid.setItems(menuItemCombos);
+            } else {
+                setsGrid.setItems(
+                        menuItemCombos.stream()
+                                .filter(set -> set.getName().toLowerCase().contains(search))
+                                .collect(Collectors.toList())
+                );
+            }
+        });
+
+        setsLayout.add(setSearchField, setsGrid);
+
+        Div tabsContent = new Div(rollsLayout, setsLayout);
+        tabsContent.setSizeFull();
+
+        VerticalLayout content = new VerticalLayout(tabs, tabsContent);
+        content.setPadding(false);
+        content.setSpacing(true);
+        content.setSizeFull();
+
+        addDialog.add(content);
+
+        Button cancelBtn = new Button("Отмена", ev -> addDialog.close());
+        addDialog.getFooter().add(cancelBtn);
+
+        return addDialog;
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+//        this.cashListener.register(this);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+//        this.cashListener.unregister(this);
+        super.onDetach(detachEvent);
+    }
+
+//    @Override
+//    public void receiveBroadcast(BroadcastMessage message) {
+//        // Обрабатываем только уведомления, игнорируем REFRESH_PAGE для страницы создания заказов
+//        if (message.getType() == BroadcastMessageType.NOTIFICATION) {
+//            Notification.show(message.getContent());
+//        } else if (message.getType() == BroadcastMessageType.REFRESH_PAGE) {
+//            // Логируем получение REFRESH_PAGE сообщений для диагностики
+//            System.out.println("CreateOrderView получил REFRESH_PAGE сообщение - это не должно происходить!");
+//            // Игнорируем REFRESH_PAGE сообщения
+//        }
+//        // REFRESH_PAGE сообщения игнорируем - страница создания заказов не должна обновляться автоматически
+//    }
+
+    private void updateTotalTime() {
+        // Подсчитываем количество позиций, исключая ProductType с id 7, 8, 9
+        int mainItemsCount = cartItems.stream()
+                .mapToInt(cartItem -> {
+                    Long productTypeId = cartItem.getMenuItem().getProductType().getId();
+                    // Исключаем ProductType с id 7, 8, 9
+                    if (productTypeId == 7 || productTypeId == 8 || productTypeId == 9) {
+                        return 0;
+                    }
+                    return cartItem.getQuantity();
+                })
+                .sum();
+
+        // Определяем время приготовления по новым правилам
+        int totalMinutes;
+        if (mainItemsCount <= 2) {
+            totalMinutes = 10;
+        } else if (mainItemsCount <= 4) {
+            totalMinutes = 15;
+        } else {
+            totalMinutes = 20;
+        }
+
+        String formattedTime = String.format("%d мин", totalMinutes);
+        totalTime.setText("Общее время приготовления: " + formattedTime);
+
+        // Обновляем время готовности (без обновления времени начала, чтобы избежать постоянных перерисовок)
+        Instant startTime = (selectedKitchenStart != null) ? selectedKitchenStart : Instant.now();
+        finishPicker.setValue(startTime.atZone(ZoneId.systemDefault()).toLocalDateTime().plusMinutes(totalMinutes));
+    }
+
+    private void updateKitchenStartTime() {
+        // Обновляем время начала приготовления на текущее время
+        selectedKitchenStart = Instant.now();
+        LocalDateTime currentTime = selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime();
+        kitchenStartDisplay.setText("Время начала приготовления: " +
+                currentTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+        updateTotalTime();
+    }
+
+    private void createOrder(String orderNumber, Instant kitchenShouldGetOrderAt, Instant shouldBeFinishedAt) {
+        List<MenuItem> itemsToCreate = new ArrayList<>();
+        for (CartItem cartItem : cartItems) {
+            for (int i = 0; i < cartItem.getQuantity(); i++) {
+                itemsToCreate.add(cartItem.getMenuItem());
+            }
+        }
+
+        boolean yandexOrder = isYandexOrder.getValue();
+        multiCityOrderService.createOrder(getOrderCity(), orderNumber, itemsToCreate, shouldBeFinishedAt, kitchenShouldGetOrderAt);
+        Notification.show("Заказ создан! Номер: " + orderNumber + ", Позиции: " + itemsToCreate.size() +
+                (yandexOrder ? ", Яндекс заказ" : ""));
+
+        cartItems.clear();
+        updateTotalPay();
+        updateTotalTime();
+        chosenGrid.getDataProvider().refreshAll();
+        updateExtrasList(
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+                menuExtras
+        );
+        orderNumberField.clear();
+
+        updateKitchenStartTime();
+        finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
+        isYandexOrder.setValue(false);
+    }
+
+    private void openKitchenStartDialog() {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Выберите время начала приготовления");
+
+        DateTimePicker picker = new DateTimePicker();
+        picker.setLocale(Locale.of("ru", "RU"));
+
+        picker.setValue(selectedKitchenStart != null
+                ? selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime()
+                : LocalDateTime.now());
+
+        Button saveBtn = new Button("Сохранить", ev -> {
+            LocalDateTime selectedTime = picker.getValue();
+            if (selectedTime != null) {
+                selectedKitchenStart = selectedTime.atZone(ZoneId.systemDefault()).toInstant();
+                kitchenStartDisplay.setText("Время начала приготовления: " + selectedTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+                updateTotalTime();
+                dialog.close();
+            } else {
+                Notification.show("Пожалуйста, выберите время");
+            }
+        });
+
+        Button cancelBtn = new Button("Отмена", ev -> dialog.close());
+
+        dialog.add(picker);
+        dialog.getFooter().add(saveBtn, cancelBtn);
+        dialog.open();
+    }
+
+    private void openEditOrderNameDialog(OrderShortDto orderDto) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Редактировать номер заказа: " + orderDto.getName());
+
+        TextField orderNameField = new TextField("Номер заказа");
+        orderNameField.setValue(orderDto.getName());
+        orderNameField.setWidthFull();
+        orderNameField.setPlaceholder("Введите номер заказа...");
+
+        Button saveBtn = new Button("Сохранить", ev -> {
+            String newOrderName = orderNameField.getValue().trim();
+            if (newOrderName.isEmpty()) {
+                Notification.show("Номер заказа не может быть пустым");
+                return;
+            }
+
+            try {
+                multiCityOrderService.updateOrderName(getOrderCity(), orderDto.getId(), newOrderName);
+                Notification.show("Номер заказа обновлен: " + newOrderName);
+                dialog.close();
+                refreshAllOrdersTables();
+            } catch (Exception e) {
+                Notification.show("Ошибка при обновлении номера заказа: " + e.getMessage());
+            }
+        });
+
+        Button cancelBtn = new Button("Отмена", ev -> dialog.close());
+
+        VerticalLayout layout = new VerticalLayout(orderNameField);
+        layout.setPadding(false);
+        layout.setSpacing(true);
+
+        dialog.add(layout);
+        dialog.getFooter().add(saveBtn, cancelBtn);
+        dialog.open();
+    }
+
+    private void openReturnItemsDialog(OrderShortDto orderDto) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Вернуть блюда из заказа #" + orderDto.getName());
+
+        // Получаем все позиции заказа
+        List<OrderItemDto> items = multiCityOrderService.getOrderItems(getOrderCity(), orderDto.getId());
+
+        // Фильтруем только основные блюда (исключаем допы и отмененные)
+        List<OrderItemDto> itemsToShow = items.stream()
+                .filter(item -> !item.isExtra() && item.getStatus() != OrderItemStationStatus.CANCELED)
+                .collect(Collectors.toList());
+
+        if (itemsToShow.isEmpty()) {
+            Notification.show("Нет позиций для возврата");
+            return;
+        }
+
+        // Создаем чекбоксы для каждой позиции (по умолчанию все выбраны)
+        Map<Long, Boolean> selectedItems = new HashMap<>();
+        itemsToShow.forEach(item -> selectedItems.put(item.getId(), true));
+
+        VerticalLayout contentLayout = new VerticalLayout();
+
+        Grid<OrderItemDto> itemsGrid = new Grid<>(OrderItemDto.class, false);
+        itemsGrid.addColumn(OrderItemDto::getName).setHeader("Наименование");
+        itemsGrid.addComponentColumn(item -> {
+            Checkbox checkbox = new Checkbox(
+                    item.getName(),
+                    selectedItems.get(item.getId()),
+                    e -> selectedItems.put(item.getId(), e.getValue()));
+            return checkbox;
+        }).setHeader("Выбрать");
+
+        itemsGrid.setItems(itemsToShow);
+        contentLayout.add(itemsGrid);
+
+        dialog.add(contentLayout);
+
+        Button returnBtn = new Button("Вернуть", ev -> {
+            List<Long> selectedIds = selectedItems.entrySet().stream()
+                    .filter(Map.Entry::getValue)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+
+            if (selectedIds.isEmpty()) {
+                Notification.show("Выберите хотя бы одну позицию");
+                return;
+            }
+
+            try {
+                multiCityOrderService.returnOrderItems(getOrderCity(), orderDto.getId(), selectedIds);
+                Notification.show("Позиции возвращены");
+                dialog.close();
+                refreshAllOrdersTables();
+            } catch (Exception ex) {
+                Notification.show("Ошибка при возврате позиций: " + ex.getMessage());
+            }
+        });
+
+        Button cancelBtn = new Button("Отмена", ev -> dialog.close());
+        dialog.getFooter().add(cancelBtn, returnBtn);
+        dialog.open();
+    }
+
+    private void setPriorityTimeForOrder(OrderShortDto orderDto) {
+        try {
+            // Находим первый заказ в статусе COOKING (готовится)
+            OrderShortDto firstCookingOrder = multiCityOrderService.getAllActiveCollectorOrdersWithItems(getOrderCity()).stream()
+                    .filter(order -> order.getStatus() == OrderStatus.COOKING)
+                    .min(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
+                    .orElse(null);
+
+            if (firstCookingOrder != null) {
+                // Устанавливаем время начала приготовления сразу после первого заказа в статусе COOKING
+                multiCityOrderService.setPriorityForOrderAfterCooking(getOrderCity(), orderDto.getId());
+                Notification.show("Приоритет установлен для заказа " + orderDto.getName() + "! Заказ будет готовиться сразу после " + firstCookingOrder.getName());
+            } else {
+                // Если нет заказов в статусе COOKING, ищем первый заказ в статусе CREATED
+                OrderShortDto firstCreatedOrder = multiCityOrderService.getAllActiveCollectorOrdersWithItems(getOrderCity()).stream()
+                        .filter(order -> order.getStatus() == OrderStatus.CREATED)
+                        .min(Comparator.comparing(OrderShortDto::getKitchenShouldGetOrderAt))
+                        .orElse(null);
+
+                if (firstCreatedOrder != null) {
+                    multiCityOrderService.setPriorityForOrderAfterCooking(getOrderCity(), orderDto.getId());
+                    Notification.show("Приоритет установлен для заказа " + orderDto.getName() + "! Заказ будет готовиться сразу после " + firstCreatedOrder.getName());
+                } else {
+                    Notification.show("Нет активных заказов для установки приоритета");
+                    return;
+                }
+            }
+
+            // Обновляем таблицу заказов
+            refreshAllOrdersTables();
+        } catch (Exception e) {
+            Notification.show("Ошибка при установке приоритета: " + e.getMessage());
+        }
+    }
+
+    private int calculateOrderProgress(OrderShortDto orderDto) {
+        if (orderDto.getItems() == null || orderDto.getItems().isEmpty()) {
+            return 0;
+        }
+
+        long totalItems = orderDto.getItems().stream()
+                .filter(item -> !item.isExtra())
+                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+                .count();
+
+        if (totalItems == 0) {
+            return 0;
+        }
+
+        double totalCoefficient = orderDto.getItems().stream()
+                .filter(item -> !item.isExtra())
+                .filter(item -> item.getStatus() != OrderItemStationStatus.CANCELED)
+                .mapToDouble(item -> {
+                    if (item.getCurrentStation() == null) {
+                        return 0.0;
+                    }
+                    // Коэффициент = 1 если станция ID >= 4
+                    if (item.getCurrentStation().getId() >= 4) {
+                        return 1.0;
+                    }
+                    // Коэффициент = 0.5 если станция ID > 2 ИЛИ статус == STARTED
+                    else if (item.getCurrentStation().getId() == 2 && item.getStatus() == OrderItemStationStatus.STARTED) {
+                        return 0.3;
+                    }
+                    // Коэффициент = 0.5 если станция ID > 2 ИЛИ статус == STARTED
+                    else if (item.getCurrentStation().getId() == 3 && item.getStatus() == OrderItemStationStatus.ADDED) {
+                        if (item.getFlowId() == 3) {
+                            return 0.0;
+                        }
+                        return 0.6;
+                    }
+                    // Коэффициент = 0.5 если станция ID > 2 ИЛИ статус == STARTED
+                    else if (item.getCurrentStation().getId() == 3 && item.getStatus() == OrderItemStationStatus.STARTED) {
+                        if (item.getFlowId() == 3) {
+                            return 0.5;
+                        }
+                        return 0.8;
+                    }
+                    // Иначе коэффициент = 0
+                    return 0.0;
+                })
+                .sum();
+
+        // Процент = (сумма коэффициентов / количество items) * 100, округляем
+        return (int) Math.round((totalCoefficient / totalItems) * 100);
+    }
+
+    private void openImportDialog() {
+        Dialog importDialog = new Dialog();
+        importDialog.setHeaderTitle("Импорт заказа");
+        importDialog.setWidth("900px");
+        importDialog.setMaxHeight("80vh");
+
+        // Предупреждение о бета-версии
+        Span betaWarning = new Span("БЕТА ВЕРСИЯ\n\nЛАНЧИ НЕ ПАРСЯТСЯ");
+        betaWarning.getStyle().set("font-size", "24px");
+        betaWarning.getStyle().set("font-weight", "bold");
+        betaWarning.getStyle().set("color", "var(--lumo-error-color)");
+        betaWarning.getStyle().set("text-align", "center");
+        betaWarning.getStyle().set("white-space", "pre-line");
+        betaWarning.getStyle().set("margin-bottom", "20px");
+        betaWarning.getStyle().set("padding", "15px");
+        betaWarning.getStyle().set("background-color", "var(--lumo-error-color-10pct)");
+        betaWarning.getStyle().set("border-radius", "4px");
+        betaWarning.getStyle().set("display", "block");
+        betaWarning.getStyle().set("width", "100%");
+
+        TextArea textArea = new TextArea("Вставьте текст заказа");
+        textArea.setWidthFull();
+        textArea.setMinHeight("400px");
+        textArea.setMaxHeight("500px");
+        textArea.setPlaceholder("Вставьте текст заказа из системы...");
+        textArea.setClearButtonVisible(true);
+        textArea.setValue("");
+
+        VerticalLayout content = new VerticalLayout();
+        content.setPadding(true);
+        content.setSpacing(true);
+        content.setWidthFull();
+        content.add(betaWarning);
+        content.add(textArea);
+        content.setFlexGrow(1.0, textArea);
+
+        importDialog.add(content);
+
+        Button parseButton = new Button("Парсить", VaadinIcon.SEARCH.create());
+        Button cancelButton = new Button("Отмена", ev -> importDialog.close());
+
+        parseButton.addClickListener(e -> {
+            String text = textArea.getValue();
+            if (text == null || text.trim().isEmpty()) {
+                Notification.show("Введите текст заказа");
+                return;
+            }
+
+            try {
+                // Парсинг
+                ParsedOrderDto parsed = orderTextParserService.parseOrderText(text, menuMenuItems, menuItemCombos);
+                
+                // Закрываем диалог импорта и показываем диалог подтверждения
+                importDialog.close();
+                showImportConfirmationDialog(parsed);
+            } catch (Exception ex) {
+                Notification.show("Ошибка при парсинге: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
+        importDialog.getFooter().add(cancelButton, parseButton);
+        importDialog.open();
+    }
+
+    private void showImportConfirmationDialog(ParsedOrderDto parsed) {
+        Dialog confirmDialog = new Dialog();
+        confirmDialog.setHeaderTitle("Результаты парсинга заказа");
+        confirmDialog.setWidth("700px");
+
+        VerticalLayout content = new VerticalLayout();
+
+        // Шаг 3: Номер заказа и комментарий
+        TextField orderNumberFieldDialog = new TextField("Номер заказа");
+        orderNumberFieldDialog.setValue(parsed.getOrderNumber() != null ? parsed.getOrderNumber() : "");
+        orderNumberFieldDialog.setWidthFull();
+        content.add(orderNumberFieldDialog);
+
+        if (parsed.getComment() != null && !parsed.getComment().isEmpty()) {
+            Span commentLabel = new Span("Комментарий: " + parsed.getComment());
+            content.add(commentLabel);
+        }
+
+        // Выводим найденные позиции
+        Div itemsDiv = new Div();
+        itemsDiv.getStyle().set("margin-top", "10px");
+        H4 itemsHeader = new H4("Найденные позиции:");
+        itemsDiv.add(itemsHeader);
+
+        List<String> itemsList = new ArrayList<>();
+        
+        // Добавляем сеты
+        for (ParsedOrderDto.ParsedCombo combo : parsed.getCombos()) {
+            String status = combo.getCombo() != null ? "✓" : "✗";
+            String name = combo.getCombo() != null ? combo.getCombo().getName() : combo.getName();
+            itemsList.add(String.format("%s Сет: %s x%d", status, name, combo.getQuantity()));
+        }
+        
+        // Добавляем отдельные позиции
+        for (ParsedOrderDto.ParsedItem item : parsed.getItems()) {
+            String status = item.getMenuItem() != null ? "✓" : "✗";
+            String name = item.getMenuItem() != null ? item.getMenuItem().getName() : item.getName();
+            itemsList.add(String.format("%s %s x%d", status, name, item.getQuantity()));
+        }
+
+        for (String itemStr : itemsList) {
+            Span itemSpan = new Span(itemStr);
+            itemSpan.getStyle().set("display", "block");
+            itemSpan.getStyle().set("margin", "5px 0");
+            itemsDiv.add(itemSpan);
+        }
+        
+        content.add(itemsDiv);
+
+        // Шаг 4: Допы (productType=7)
+        Div extrasDiv = new Div();
+        extrasDiv.getStyle().set("margin-top", "10px");
+        H4 extrasHeader = new H4("Допы (предзаполнение):");
+        extrasDiv.add(extrasHeader);
+
+        Map<String, Integer> extrasToAdd = new HashMap<>();
+        
+        boolean extrasAlreadyContainSticks = parsed.getExtras().keySet().stream()
+            .anyMatch(name -> {
+                String lower = name.toLowerCase();
+                return lower.contains("палочки") || lower.contains("приборы");
+            });
+
+        // Обрабатываем приборы
+        if (!extrasAlreadyContainSticks && parsed.getInstrumentsCount() != null && parsed.getInstrumentsCount() > 0) {
+            MenuItem instrumentsItem = menuExtras.stream()
+                .filter(item -> item.getName().toLowerCase().contains("палочки") || 
+                               item.getName().toLowerCase().contains("приборы"))
+                .findFirst()
+                .orElse(null);
+            
+            if (instrumentsItem != null) {
+                extrasToAdd.put(instrumentsItem.getName(), parsed.getInstrumentsCount());
+            }
+        }
+
+        // Обрабатываем остальные допы
+        for (Map.Entry<String, Integer> extraEntry : parsed.getExtras().entrySet()) {
+            String extraName = extraEntry.getKey();
+            Integer quantity = extraEntry.getValue();
+            
+            // Ищем соответствующий MenuItem
+            MenuItem foundExtra = menuExtras.stream()
+                .filter(item -> {
+                    String itemName = item.getName().toLowerCase();
+                    String extraNameLower = extraName.toLowerCase();
+                    return itemName.contains(extraNameLower) || extraNameLower.contains(itemName);
+                })
+                .findFirst()
+                .orElse(null);
+            
+            if (foundExtra != null) {
+                extrasToAdd.put(foundExtra.getName(), extrasToAdd.getOrDefault(foundExtra.getName(), 0) + quantity);
+            }
+        }
+
+        // Выводим список допов
+        for (Map.Entry<String, Integer> extraEntry : extrasToAdd.entrySet()) {
+            Span extraSpan = new Span(String.format("%s x%d", extraEntry.getKey(), extraEntry.getValue()));
+            extraSpan.getStyle().set("display", "block");
+            extraSpan.getStyle().set("margin", "5px 0");
+            extrasDiv.add(extraSpan);
+        }
+        
+        content.add(extrasDiv);
+
+        // Шаг 5: Время начала
+        DateTimePicker startTimePicker = new DateTimePicker("Время начала приготовления");
+        startTimePicker.setLocale(Locale.of("ru", "RU"));
+        if (parsed.getKitchenStartTime() != null) {
+            startTimePicker.setValue(parsed.getKitchenStartTime()
+                .atZone(ZoneId.systemDefault()).toLocalDateTime());
+        } else {
+            startTimePicker.setValue(LocalDateTime.now());
+        }
+        startTimePicker.setWidthFull();
+        content.add(startTimePicker);
+
+        // Время готовности (если есть)
+        if (parsed.getFinishTime() != null) {
+            finishPicker.setValue(parsed.getFinishTime()
+                .atZone(ZoneId.systemDefault()).toLocalDateTime());
+        }
+
+        confirmDialog.add(content);
+
+        Button confirmButton = new Button("Добавить в корзину", VaadinIcon.CHECK.create());
+        confirmButton.addClickListener(e -> {
+            confirmDialog.close();
+            
+            // Собираем список позиций, которые не удалось добавить
+            List<NotAddedEntry> notAddedItems = new ArrayList<>();
+            for (ParsedOrderDto.ParsedCombo combo : parsed.getCombos()) {
+                if (combo.getCombo() == null) {
+                    notAddedItems.add(createNotAddedEntry(combo));
+                }
+            }
+            for (ParsedOrderDto.ParsedItem item : parsed.getItems()) {
+                if (item.getMenuItem() == null) {
+                    notAddedItems.add(createNotAddedEntry(item));
+                }
+            }
+            
+            // Шаг 1: Проверка комментария
+            if (parsed.getComment() != null && !parsed.getComment().isEmpty()) {
+                showCommentConfirmationDialog(parsed, orderNumberFieldDialog, startTimePicker, extrasToAdd, notAddedItems);
+            } else {
+                // Если комментария нет, сразу проверяем недобавленные позиции
+                if (!notAddedItems.isEmpty()) {
+                    showNotAddedItemsDialog(parsed, orderNumberFieldDialog, startTimePicker, extrasToAdd, notAddedItems);
+                } else {
+                    // Все ОК - добавляем в корзину
+                    addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
+                }
+            }
+        });
+
+        Button cancelButton = new Button("Отмена", ev -> confirmDialog.close());
+        confirmDialog.getFooter().add(cancelButton, confirmButton);
+        confirmDialog.open();
+    }
+
+    private void addToCartSilently(MenuItem item) {
+        CartItem existingItem = cartItems.stream()
+            .filter(cartItem -> cartItem.getMenuItem().equals(item))
+            .findFirst()
+            .orElse(null);
+
+        if (existingItem != null) {
+            existingItem.increment();
+        } else {
+            cartItems.add(new CartItem(item, 1));
+        }
+    }
+    
+    private void showCommentConfirmationDialog(ParsedOrderDto parsed, TextField orderNumberFieldDialog, 
+                                               DateTimePicker startTimePicker, Map<String, Integer> extrasToAdd,
+                                               List<NotAddedEntry> notAddedItems) {
+        Dialog commentDialog = new Dialog();
+        commentDialog.setHeaderTitle("Учли комментарий?");
+        commentDialog.setWidth("500px");
+        
+        VerticalLayout content = new VerticalLayout();
+        content.setPadding(true);
+        content.setSpacing(true);
+        
+        Span commentText = new Span(parsed.getComment());
+        commentText.getStyle().set("white-space", "pre-wrap");
+        commentText.getStyle().set("padding", "10px");
+        commentText.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+        commentText.getStyle().set("border-radius", "4px");
+        content.add(commentText);
+        
+        commentDialog.add(content);
+        
+        Button backButton = new Button("Назад", e -> {
+            commentDialog.close();
+            // Возвращаемся к диалогу подтверждения
+            showImportConfirmationDialog(parsed);
+        });
+        
+        Button nextButton = new Button("Дальше", e -> {
+            commentDialog.close();
+            // Проверяем недобавленные позиции
+            if (!notAddedItems.isEmpty()) {
+                showNotAddedItemsDialog(parsed, orderNumberFieldDialog, startTimePicker, extrasToAdd, notAddedItems);
+            } else {
+                // Все ОК - добавляем в корзину
+                addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
+            }
+        });
+        
+        commentDialog.getFooter().add(backButton, nextButton);
+        commentDialog.open();
+    }
+    
+    private void showNotAddedItemsDialog(ParsedOrderDto parsed, TextField orderNumberFieldDialog,
+                                        DateTimePicker startTimePicker, Map<String, Integer> extrasToAdd,
+                                        List<NotAddedEntry> notAddedItems) {
+        Dialog notAddedDialog = new Dialog();
+        notAddedDialog.setHeaderTitle("Не получилось добавить");
+        notAddedDialog.setWidth("900px");
+        
+        VerticalLayout content = new VerticalLayout();
+        content.setPadding(true);
+        content.setSpacing(true);
+        
+        Span warningText = new Span("Не получилось добавить - сделай скриншот и добавь руками");
+        warningText.getStyle().set("font-weight", "bold");
+        warningText.getStyle().set("color", "var(--lumo-error-color)");
+        content.add(warningText);
+        
+        Div itemsDiv = new Div();
+        itemsDiv.getStyle().set("margin-top", "10px");
+        itemsDiv.setWidthFull();
+        rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
+        
+        content.add(itemsDiv);
+        notAddedDialog.add(content);
+        
+        Button okButton = new Button("ОК", e -> {
+            long unresolvedCount = notAddedItems.stream()
+                    .filter(entry -> entry.getAliasMenuItem() == null && entry.getAliasCombo() == null)
+                    .count();
+
+            if (unresolvedCount > 0) {
+                Dialog confirmDialog = new Dialog();
+                confirmDialog.setHeaderTitle("Есть необработанные позиции");
+                confirmDialog.add(new Span(String.format(
+                        "Обнаружено %d позиция(и), которые всё ещё не сопоставлены. Всё равно продолжить?",
+                        unresolvedCount
+                )));
+
+                Button backButton = new Button("Назад", ev -> confirmDialog.close());
+                Button continueButton = new Button("Продолжить", ev -> {
+                    confirmDialog.close();
+                    notAddedDialog.close();
+                    addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
+                });
+                continueButton.getStyle().set("color", "var(--lumo-error-color)");
+
+                confirmDialog.getFooter().add(backButton, continueButton);
+                confirmDialog.open();
+            } else {
+                notAddedDialog.close();
+                addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
+            }
+        });
+        
+        notAddedDialog.getFooter().add(okButton);
+        notAddedDialog.open();
+    }
+
+    private void rebuildNotAddedItemsList(Div itemsDiv, List<NotAddedEntry> notAddedItems,
+                                          ParsedOrderDto parsed) {
+        itemsDiv.removeAll();
+
+        H4 itemsHeader = new H4("Список позиций:");
+        itemsDiv.add(itemsHeader);
+
+        if (notAddedItems.isEmpty()) {
+            Span emptySpan = new Span("Все позиции обработаны");
+            emptySpan.getStyle().set("color", "var(--lumo-success-color)");
+            itemsDiv.add(emptySpan);
+            return;
+        }
+
+        for (NotAddedEntry entry : notAddedItems) {
+            VerticalLayout entryLayout = new VerticalLayout();
+            entryLayout.setPadding(false);
+            entryLayout.setSpacing(false);
+            entryLayout.setWidthFull();
+
+            if (entry.hasAlias()) {
+                HorizontalLayout aliasRow = new HorizontalLayout();
+                aliasRow.setWidthFull();
+                aliasRow.setSpacing(true);
+                aliasRow.setAlignItems(Alignment.CENTER);
+
+                Span aliasSpan = new Span(entry.getOriginalName() + " -> " + entry.getAliasTargetName());
+                aliasSpan.getStyle().set("color", "var(--lumo-primary-color)");
+                aliasSpan.getStyle().set("white-space", "normal");
+                aliasSpan.setWidthFull();
+                aliasRow.setFlexGrow(1, aliasSpan);
+
+                Button okButton = new Button("ОК", e -> applyAliasSuggestion(entry, notAddedItems, parsed, itemsDiv));
+                Button changeButton = new Button("Изменить", VaadinIcon.EDIT.create());
+                changeButton.addClickListener(e -> openChangeDialog(entry, notAddedItems, parsed, itemsDiv));
+                Button removeAliasButton = new Button("Удалить", VaadinIcon.TRASH.create());
+                removeAliasButton.getStyle().set("color", "var(--lumo-error-color)");
+                removeAliasButton.addClickListener(e -> {
+                    menuItemAliasService.deleteAlias(entry.getOriginalName());
+                    entry.clearAlias();
+                    rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
+                    Notification.show("Сопоставление удалено");
+                });
+
+                aliasRow.add(aliasSpan, okButton, changeButton, removeAliasButton);
+                entryLayout.add(aliasRow);
+            }
+
+            if (!entry.hasAlias()) {
+                HorizontalLayout row = new HorizontalLayout();
+                row.setWidthFull();
+                row.setSpacing(true);
+                row.setAlignItems(Alignment.CENTER);
+
+                Span itemSpan = new Span("✗ " + entry.getDisplayLabel());
+                itemSpan.getStyle().set("color", "var(--lumo-error-color)");
+                itemSpan.getStyle().set("white-space", "normal");
+                itemSpan.setWidthFull();
+                row.setFlexGrow(1, itemSpan);
+
+                Button editButton = new Button("Изменить", VaadinIcon.EDIT.create());
+                editButton.addClickListener(e -> openChangeDialog(entry, notAddedItems, parsed, itemsDiv));
+
+                Button deleteButton = new Button("Удалить", VaadinIcon.TRASH.create());
+                deleteButton.getStyle().set("color", "var(--lumo-error-color)");
+                deleteButton.addClickListener(e -> openDeleteConfirmationDialog(entry, notAddedItems, parsed, itemsDiv));
+
+                row.add(itemSpan, editButton, deleteButton);
+                entryLayout.add(row);
+            }
+
+            itemsDiv.add(entryLayout);
+        }
+    }
+
+    private void applyAliasSuggestion(NotAddedEntry entry, List<NotAddedEntry> notAddedItems,
+                                      ParsedOrderDto parsed, Div itemsDiv) {
+        if (entry.getAliasMenuItem() != null && entry.parsedItem != null) {
+            entry.parsedItem.setMenuItem(entry.getAliasMenuItem());
+            entry.parsedItem.setName(entry.getAliasMenuItem().getName());
+        } else if (entry.getAliasCombo() != null && entry.parsedCombo != null) {
+            entry.parsedCombo.setCombo(entry.getAliasCombo());
+            entry.parsedCombo.setName(entry.getAliasCombo().getName());
+        } else {
+            Notification.show("Не удалось применить сопоставление");
+            return;
+        }
+
+        notAddedItems.remove(entry);
+        rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
+        Notification.show("Сопоставление применено");
+    }
+
+    private void openDeleteConfirmationDialog(NotAddedEntry entry, List<NotAddedEntry> notAddedItems,
+                                              ParsedOrderDto parsed, Div itemsDiv) {
+        Dialog confirmDialog = new Dialog();
+        confirmDialog.setHeaderTitle("Удалить позицию?");
+        confirmDialog.add(new Span(String.format(
+            "Точно хотите удалить \"%s\"?",
+            entry.getDisplayLabel()
+        )));
+
+        Button cancelButton = new Button("Отмена", e -> confirmDialog.close());
+        Button deleteButton = new Button("Удалить", e -> {
+            if (entry.isCombo()) {
+                parsed.getCombos().remove(entry.parsedCombo);
+            } else {
+                parsed.getItems().remove(entry.parsedItem);
+            }
+            notAddedItems.remove(entry);
+            confirmDialog.close();
+            rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
+        });
+        deleteButton.getStyle().set("color", "var(--lumo-error-color)");
+
+        confirmDialog.getFooter().add(cancelButton, deleteButton);
+        confirmDialog.open();
+    }
+
+    private void openChangeDialog(NotAddedEntry entry, List<NotAddedEntry> notAddedItems,
+                                  ParsedOrderDto parsed, Div itemsDiv) {
+        Dialog changeDialog = new Dialog();
+        changeDialog.setHeaderTitle("Выберите замену");
+        changeDialog.setWidth("500px");
+
+        VerticalLayout layout = new VerticalLayout();
+        layout.setPadding(true);
+        layout.setSpacing(true);
+
+        IntegerField quantityField = new IntegerField("Количество");
+        quantityField.setMin(1);
+        quantityField.setValue(Math.max(1, entry.getQuantity()));
+        quantityField.setWidthFull();
+        layout.add(quantityField);
+
+        if (entry.isCombo()) {
+            ComboBox<ItemCombo> comboBox = new ComboBox<>("Выберите комбо");
+            comboBox.setItems(menuItemCombos);
+            comboBox.setItemLabelGenerator(ItemCombo::getName);
+            comboBox.setWidthFull();
+            layout.add(comboBox);
+
+            Button backButton = new Button("Назад", e -> changeDialog.close());
+            Button selectButton = new Button("Выбрать", e -> {
+                Integer quantity = quantityField.getValue();
+                if (quantity == null || quantity <= 0) {
+                    Notification.show("Укажите корректное количество");
+                    return;
+                }
+                ItemCombo selected = comboBox.getValue();
+                if (selected == null) {
+                    Notification.show("Выберите комбо");
+                    return;
+                }
+                openChangeConfirmationDialog(entry, notAddedItems, parsed, itemsDiv,
+                        changeDialog, selected, null, quantity);
+            });
+
+            changeDialog.add(layout);
+            changeDialog.getFooter().add(backButton, selectButton);
+        } else {
+            ComboBox<MenuItem> comboBox = new ComboBox<>("Выберите позицию");
+            comboBox.setItems(menuMenuItems);
+            comboBox.setItemLabelGenerator(MenuItem::getName);
+            comboBox.setWidthFull();
+            layout.add(comboBox);
+
+            Button backButton = new Button("Назад", e -> changeDialog.close());
+            Button selectButton = new Button("Выбрать", e -> {
+                Integer quantity = quantityField.getValue();
+                if (quantity == null || quantity <= 0) {
+                    Notification.show("Укажите корректное количество");
+                    return;
+                }
+                MenuItem selected = comboBox.getValue();
+                if (selected == null) {
+                    Notification.show("Выберите позицию");
+                    return;
+                }
+                openChangeConfirmationDialog(entry, notAddedItems, parsed, itemsDiv,
+                        changeDialog, null, selected, quantity);
+            });
+
+            changeDialog.add(layout);
+            changeDialog.getFooter().add(backButton, selectButton);
+        }
+
+        changeDialog.open();
+    }
+
+    private void openChangeConfirmationDialog(NotAddedEntry entry, List<NotAddedEntry> notAddedItems,
+                                              ParsedOrderDto parsed, Div itemsDiv,
+                                              Dialog changeDialog, ItemCombo newCombo, MenuItem newMenuItem, int newQuantity) {
+        Dialog confirmDialog = new Dialog();
+        confirmDialog.setHeaderTitle("Подтверждение");
+
+        String replacementName = newCombo != null ? newCombo.getName() : newMenuItem.getName();
+        String replacementLabel = replacementName + " x" + newQuantity;
+        Span message = new Span(String.format(
+            "Вы точно хотите заменить позицию \"%s\" на \"%s\"?",
+            entry.getOriginalDisplayLabel(), replacementLabel
+        ));
+        message.getStyle().set("white-space", "pre-wrap");
+        confirmDialog.add(message);
+
+        Button backButton = new Button("Назад", e -> confirmDialog.close());
+        Button confirmButton = new Button("Заменить", e -> {
+            if (newCombo != null) {
+                entry.parsedCombo.setCombo(newCombo);
+                entry.parsedCombo.setName(newCombo.getName());
+                entry.parsedCombo.setQuantity(newQuantity);
+                menuItemAliasService.saveComboAlias(entry.getOriginalName(), newCombo);
+            } else {
+                entry.parsedItem.setMenuItem(newMenuItem);
+                entry.parsedItem.setName(newMenuItem.getName());
+                entry.parsedItem.setQuantity(newQuantity);
+                menuItemAliasService.saveMenuItemAlias(entry.getOriginalName(), newMenuItem);
+            }
+            notAddedItems.remove(entry);
+            confirmDialog.close();
+            changeDialog.close();
+            rebuildNotAddedItemsList(itemsDiv, notAddedItems, parsed);
+            Notification.show("Позиция заменена");
+        });
+
+        confirmDialog.getFooter().add(backButton, confirmButton);
+        confirmDialog.open();
+    }
+    
+    private void addParsedOrderToCart(ParsedOrderDto parsed, String orderNumber, LocalDateTime kitchenStartTime,
+                                     Map<String, Integer> extrasToAdd) {
+        // Очищаем текущую корзину
+        cartItems.clear();
+        
+        // Добавляем сеты
+        for (ParsedOrderDto.ParsedCombo combo : parsed.getCombos()) {
+            if (combo.getCombo() != null) {
+                for (MenuItem item : combo.getCombo().getMenuItems()) {
+                    for (int i = 0; i < combo.getQuantity(); i++) {
+                        addToCartSilently(item);
+                    }
+                }
+            }
+        }
+        
+        // Добавляем отдельные позиции
+        for (ParsedOrderDto.ParsedItem item : parsed.getItems()) {
+            if (item.getMenuItem() != null) {
+                for (int i = 0; i < item.getQuantity(); i++) {
+                    addToCartSilently(item.getMenuItem());
+                }
+            }
+        }
+        
+        // Добавляем допы
+        for (Map.Entry<String, Integer> extraEntry : extrasToAdd.entrySet()) {
+            MenuItem extraItem = menuExtras.stream()
+                .filter(item -> item.getName().equals(extraEntry.getKey()))
+                .findFirst()
+                .orElse(null);
+            
+            if (extraItem != null) {
+                for (int i = 0; i < extraEntry.getValue(); i++) {
+                    addToCartSilently(extraItem);
+                }
+            }
+        }
+        
+        // Обновляем поля
+        orderNumberField.setValue(orderNumber);
+        if (kitchenStartTime != null) {
+            selectedKitchenStart = kitchenStartTime
+                .atZone(ZoneId.systemDefault()).toInstant();
+            kitchenStartDisplay.setText("Время начала приготовления: " + 
+                selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime()
+                    .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+        }
+        
+        updateTotalPay();
+        updateTotalTime();
+        chosenGrid.getDataProvider().refreshAll();
+        updateExtrasList(
+            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+            menuExtras
+        );
+        
+        Notification.show("Заказ импортирован в корзину");
+    }
+
+    private void addInstrumentsSet() {
+        // Находим позиции для набора приборов
+        MenuItem soya = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("соевый соус"))
+            .findFirst()
+            .orElse(null);
+        MenuItem wasabi = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("васаби"))
+            .findFirst()
+            .orElse(null);
+        MenuItem ginger = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("имбирь"))
+            .findFirst()
+            .orElse(null);
+        MenuItem sticks = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("палочки") || 
+                           item.getName().toLowerCase().contains("приборы"))
+            .findFirst()
+            .orElse(null);
+
+        // Добавляем все позиции набора
+        if (soya != null) addToCartSilently(soya);
+        if (wasabi != null) addToCartSilently(wasabi);
+        if (ginger != null) addToCartSilently(ginger);
+        if (sticks != null) addToCartSilently(sticks);
+
+        updateTotalPay();
+        updateTotalTime();
+        chosenGrid.getDataProvider().refreshAll();
+        updateExtrasList(
+            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+            menuExtras
+        );
+    }
+
+    private void removeInstrumentsSet() {
+        // Находим позиции для набора приборов
+        MenuItem soya = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("соевый соус"))
+            .findFirst()
+            .orElse(null);
+        MenuItem wasabi = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("васаби"))
+            .findFirst()
+            .orElse(null);
+        MenuItem ginger = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("имбирь"))
+            .findFirst()
+            .orElse(null);
+        MenuItem sticks = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("палочки") || 
+                           item.getName().toLowerCase().contains("приборы"))
+            .findFirst()
+            .orElse(null);
+
+        // Удаляем по одной позиции каждого типа
+        if (soya != null) {
+            CartItem cartItem = cartItems.stream()
+                .filter(ci -> ci.getMenuItem().equals(soya))
+                .findFirst()
+                .orElse(null);
+            if (cartItem != null) {
+                if (cartItem.getQuantity() > 1) {
+                    cartItem.decrement();
+                } else {
+                    cartItems.remove(cartItem);
+                }
+            }
+        }
+        if (wasabi != null) {
+            CartItem cartItem = cartItems.stream()
+                .filter(ci -> ci.getMenuItem().equals(wasabi))
+                .findFirst()
+                .orElse(null);
+            if (cartItem != null) {
+                if (cartItem.getQuantity() > 1) {
+                    cartItem.decrement();
+                } else {
+                    cartItems.remove(cartItem);
+                }
+            }
+        }
+        if (ginger != null) {
+            CartItem cartItem = cartItems.stream()
+                .filter(ci -> ci.getMenuItem().equals(ginger))
+                .findFirst()
+                .orElse(null);
+            if (cartItem != null) {
+                if (cartItem.getQuantity() > 1) {
+                    cartItem.decrement();
+                } else {
+                    cartItems.remove(cartItem);
+                }
+            }
+        }
+        if (sticks != null) {
+            CartItem cartItem = cartItems.stream()
+                .filter(ci -> ci.getMenuItem().equals(sticks))
+                .findFirst()
+                .orElse(null);
+            if (cartItem != null) {
+                if (cartItem.getQuantity() > 1) {
+                    cartItem.decrement();
+                } else {
+                    cartItems.remove(cartItem);
+                }
+            }
+        }
+
+        updateTotalPay();
+        updateTotalTime();
+        chosenGrid.getDataProvider().refreshAll();
+        updateExtrasList(
+            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
+            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
+            menuExtras
+        );
+    }
+
+    private void updateInstrumentsSetQuantity(Span quantitySpan) {
+        // Находим позиции для набора приборов
+        MenuItem soya = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("Соевый соус"))
+            .findFirst()
+            .orElse(null);
+        MenuItem wasabi = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("Васаби"))
+            .findFirst()
+            .orElse(null);
+        MenuItem ginger = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("Имбирь"))
+            .findFirst()
+            .orElse(null);
+        MenuItem sticks = menuExtras.stream()
+            .filter(item -> item.getName().toLowerCase().contains("Палочки"))
+            .findFirst()
+            .orElse(null);
+
+        // Находим минимальное количество среди всех позиций набора
+        int minQuantity = Integer.MAX_VALUE;
+        if (soya != null) {
+            CartItem cartItem = cartItems.stream()
+                .filter(ci -> ci.getMenuItem().equals(soya))
+                .findFirst()
+                .orElse(null);
+            if (cartItem != null) {
+                minQuantity = Math.min(minQuantity, cartItem.getQuantity());
+            } else {
+                minQuantity = 0;
+            }
+        }
+        if (wasabi != null) {
+            CartItem cartItem = cartItems.stream()
+                .filter(ci -> ci.getMenuItem().equals(wasabi))
+                .findFirst()
+                .orElse(null);
+            if (cartItem != null) {
+                minQuantity = Math.min(minQuantity, cartItem.getQuantity());
+            } else {
+                minQuantity = 0;
+            }
+        }
+        if (ginger != null) {
+            CartItem cartItem = cartItems.stream()
+                .filter(ci -> ci.getMenuItem().equals(ginger))
+                .findFirst()
+                .orElse(null);
+            if (cartItem != null) {
+                minQuantity = Math.min(minQuantity, cartItem.getQuantity());
+            } else {
+                minQuantity = 0;
+            }
+        }
+        if (sticks != null) {
+            CartItem cartItem = cartItems.stream()
+                .filter(ci -> ci.getMenuItem().equals(sticks))
+                .findFirst()
+                .orElse(null);
+            if (cartItem != null) {
+                minQuantity = Math.min(minQuantity, cartItem.getQuantity());
+            } else {
+                minQuantity = 0;
+            }
+        }
+
+        if (minQuantity == Integer.MAX_VALUE) {
+            minQuantity = 0;
+        }
+
+        quantitySpan.setText(String.valueOf(minQuantity));
+    }
+
+    private MultiCityOrderService.City getOrderCity() {
+        return currentCity == MultiCityViewService.City.PARNAS 
+            ? MultiCityOrderService.City.PARNAS 
+            : MultiCityOrderService.City.UKHTA;
+    }
+
+    private void switchCity(MultiCityViewService.City city) {
+        this.currentCity = city;
+        
+        try {
+            // Загружаем данные для выбранного города
+            menuMenuItems = multiCityViewService.getMenuItems(city);
+            menuItemCombos = multiCityViewService.getCombos(city);
+            menuExtras = multiCityViewService.getExtras(city);
+            
+            // Обновляем UI
+            rollsGrid.setItems(menuMenuItems);
+            setsGrid.setItems(menuItemCombos);
+            
+            // Обновляем список допов
+            VerticalLayout extrasListLeft = (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0);
+            VerticalLayout extrasListRight = (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1);
+            updateExtrasList(extrasListLeft, extrasListRight, menuExtras);
+            
+            // Обновляем таблицы заказов, если они видимы
+            refreshAllOrdersTables();
+            
+            Notification.show("Переключено на: " + (city == MultiCityViewService.City.PARNAS ? "Парнас" : "Ухта"));
+        } catch (Exception e) {
+            Notification.show("Ошибка загрузки данных для " + (city == MultiCityViewService.City.PARNAS ? "Парнас" : "Ухта") + ": " + e.getMessage(), 5000, Notification.Position.MIDDLE);
+        }
     }
 }
 
