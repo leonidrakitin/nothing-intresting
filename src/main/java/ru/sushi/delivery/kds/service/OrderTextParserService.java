@@ -438,7 +438,7 @@ public class OrderTextParserService {
 
     private List<ParsedOrderDto.ParsedItem> parseItems(String text, List<MenuItem> allMenuItems, List<ParsedOrderDto.ParsedCombo> parsedCombos) {
         List<ParsedOrderDto.ParsedItem> items = new ArrayList<>();
-        Set<String> processedPositions = new HashSet<>(); // Для отслеживания уже обработанных позиций
+        Map<String, ParsedOrderDto.ParsedItem> processedPositions = new HashMap<>(); // Для отслеживания уже обработанных позиций и суммирования количества
         
         // Собираем названия всех сетов, чтобы их исключить
         List<String> comboNames = new ArrayList<>();
@@ -482,7 +482,10 @@ public class OrderTextParserService {
             String normalizedName = normalizeName(name);
             
             // Проверяем, не обрабатывали ли мы уже эту позицию
-            if (processedPositions.contains(normalizedName)) {
+            if (processedPositions.containsKey(normalizedName)) {
+                // Если позиция уже найдена, суммируем количество
+                ParsedOrderDto.ParsedItem existingItem = processedPositions.get(normalizedName);
+                existingItem.setQuantity(existingItem.getQuantity() + quantity);
                 continue;
             }
             
@@ -490,12 +493,13 @@ public class OrderTextParserService {
             MenuItem foundItem = findMenuItemByName(allMenuItems, name);
             
             // Добавляем позицию в список независимо от того, найдена она или нет
-            items.add(ParsedOrderDto.ParsedItem.builder()
+            ParsedOrderDto.ParsedItem parsedItem = ParsedOrderDto.ParsedItem.builder()
                 .name(name)
                 .quantity(quantity)
                 .menuItem(foundItem) // Может быть null если не найдено
-                .build());
-            processedPositions.add(normalizedName);
+                .build();
+            items.add(parsedItem);
+            processedPositions.put(normalizedName, parsedItem);
         }
         
         // Формат "• 1 x Сет Жар-птица" (Telegram) - только если не обработали в Starter формате
@@ -530,8 +534,9 @@ public class OrderTextParserService {
             name = name.replaceAll("\\s*\\d+\\s*₽", "").trim();
             String normalizedName = normalizeName(name);
             
-            // Проверяем, не обрабатывали ли мы уже эту позицию
-            if (processedPositions.contains(normalizedName)) {
+            // Проверяем, не обрабатывали ли мы уже эту позицию другим паттерном
+            // Если позиция уже найдена, пропускаем (не суммируем, чтобы избежать двойного подсчета)
+            if (processedPositions.containsKey(normalizedName)) {
                 continue;
             }
             
@@ -539,12 +544,13 @@ public class OrderTextParserService {
             MenuItem foundItem = findMenuItemByName(allMenuItems, name);
             
             // Добавляем позицию в список независимо от того, найдена она или нет
-            items.add(ParsedOrderDto.ParsedItem.builder()
+            ParsedOrderDto.ParsedItem parsedItem = ParsedOrderDto.ParsedItem.builder()
                 .name(name)
                 .quantity(quantity)
                 .menuItem(foundItem) // Может быть null если не найдено
-                .build());
-            processedPositions.add(normalizedName);
+                .build();
+            items.add(parsedItem);
+            processedPositions.put(normalizedName, parsedItem);
         }
         
         // Формат "Название [цена руб/балл] | цена x количество = итого" (новый формат)
@@ -576,8 +582,9 @@ public class OrderTextParserService {
             name = name.replaceAll("\\[.*?\\]", "").trim();
             String normalizedName = normalizeName(name);
             
-            // Проверяем, не обрабатывали ли мы уже эту позицию
-            if (processedPositions.contains(normalizedName)) {
+            // Проверяем, не обрабатывали ли мы уже эту позицию другим паттерном
+            // Если позиция уже найдена, пропускаем (не суммируем, чтобы избежать двойного подсчета)
+            if (processedPositions.containsKey(normalizedName)) {
                 continue;
             }
             
@@ -585,12 +592,13 @@ public class OrderTextParserService {
             MenuItem foundItem = findMenuItemByName(allMenuItems, name);
             
             // Добавляем позицию в список независимо от того, найдена она или нет
-            items.add(ParsedOrderDto.ParsedItem.builder()
+            ParsedOrderDto.ParsedItem parsedItem = ParsedOrderDto.ParsedItem.builder()
                 .name(name)
                 .quantity(quantity)
                 .menuItem(foundItem) // Может быть null если не найдено
-                .build());
-            processedPositions.add(normalizedName);
+                .build();
+            items.add(parsedItem);
+            processedPositions.put(normalizedName, parsedItem);
         }
         
         // Старый формат (обычный)
@@ -624,8 +632,9 @@ public class OrderTextParserService {
             name = name.replaceAll("\\[.*?\\]", "").trim(); // Убираем [380 балл]
             String normalizedName = normalizeName(name);
             
-            // Проверяем, не обрабатывали ли мы уже эту позицию
-            if (processedPositions.contains(normalizedName)) {
+            // Проверяем, не обрабатывали ли мы уже эту позицию другим паттерном
+            // Если позиция уже найдена, пропускаем (не суммируем, чтобы избежать двойного подсчета)
+            if (processedPositions.containsKey(normalizedName)) {
                 continue;
             }
             
@@ -633,15 +642,17 @@ public class OrderTextParserService {
             MenuItem foundItem = findMenuItemByName(allMenuItems, name);
             
             // Добавляем позицию в список независимо от того, найдена она или нет
-            items.add(ParsedOrderDto.ParsedItem.builder()
+            ParsedOrderDto.ParsedItem parsedItem = ParsedOrderDto.ParsedItem.builder()
                 .name(name)
                 .quantity(quantity)
                 .menuItem(foundItem) // Может быть null если не найдено
-                .build());
-            processedPositions.add(normalizedName);
+                .build();
+            items.add(parsedItem);
+            processedPositions.put(normalizedName, parsedItem);
         }
         
         // Универсальный паттерн для поиска всех позиций вида "1 x Название" или "1× Название" или "• 1 x Название"
+        // ВАЖНО: этот паттерн пропускает позиции, которые уже были найдены специфичными паттернами выше
         // Также поддерживаем формат с переносом строки: "1 x Название г\nцена ₽"
         // Ищем по всему тексту, исключая только уже обработанные позиции
         // НЕ ищем паттерны вида "1510 x 1 = 1510 руб" (цена x количество = итого)
@@ -730,8 +741,10 @@ public class OrderTextParserService {
             
             String normalizedName = normalizeName(name);
             
-            // Проверяем, не обрабатывали ли мы уже эту позицию
-            if (processedPositions.contains(normalizedName)) {
+            // Проверяем, не обрабатывали ли мы уже эту позицию специфичными паттернами
+            // Универсальный паттерн НЕ суммирует количество, а просто пропускает уже найденные позиции
+            if (processedPositions.containsKey(normalizedName)) {
+                // Позиция уже найдена специфичным паттерном, пропускаем
                 continue;
             }
             
@@ -739,12 +752,13 @@ public class OrderTextParserService {
             MenuItem foundItem = findMenuItemByName(allMenuItems, name);
             
             // Добавляем позицию в список независимо от того, найдена она или нет
-            items.add(ParsedOrderDto.ParsedItem.builder()
+            ParsedOrderDto.ParsedItem parsedItem = ParsedOrderDto.ParsedItem.builder()
                 .name(name)
                 .quantity(quantity)
                 .menuItem(foundItem) // Может быть null если не найдено
-                .build());
-            processedPositions.add(normalizedName);
+                .build();
+            items.add(parsedItem);
+            processedPositions.put(normalizedName, parsedItem);
         }
         
         return items;
