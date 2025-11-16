@@ -16,6 +16,9 @@ import javax.sql.DataSource;
  * Эти DataSource используются только для чтения данных через JDBC,
  * не конфликтуют с основным DataSource из application.yaml,
  * который используется для JPA и EntityManagerFactory.
+ * 
+ * ВАЖНО: Эти DataSource НЕ помечены как @Primary, поэтому Spring Boot
+ * будет использовать основной DataSource из PrimaryDataSourceConfig для JPA.
  */
 @Configuration
 public class MultiCityDataSourceConfig {
