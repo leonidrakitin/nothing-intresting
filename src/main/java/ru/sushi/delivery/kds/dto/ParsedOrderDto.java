@@ -34,6 +34,8 @@ public class ParsedOrderDto {
     private String customerPhone; // Телефон клиента
     private PaymentType paymentType; // Тип оплаты
     private OrderAddressDto address; // Адрес доставки
+    private Instant deliveryTime; // Время доставки (только для доставки)
+    private String city; // Город: "Ухта" или "Парнас"
     
     @Data
     @Builder

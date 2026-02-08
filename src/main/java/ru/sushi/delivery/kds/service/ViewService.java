@@ -53,11 +53,12 @@ public class ViewService {
             OrderType orderType,
             OrderAddressDto address,
             String customerPhone,
-            PaymentType paymentType
+            PaymentType paymentType,
+            Instant deliveryTime
     ) {
         OrderAddress addressEntity = address != null ? address.toEntity() : null;
         this.orderService.createOrder(name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
-                orderType != null ? orderType : OrderType.PICKUP, addressEntity, customerPhone, paymentType);
+                orderType != null ? orderType : OrderType.PICKUP, addressEntity, customerPhone, paymentType, deliveryTime);
     }
 
     public List<MenuItem> getAllMenuItems() {

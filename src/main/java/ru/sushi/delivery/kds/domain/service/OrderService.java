@@ -91,7 +91,8 @@ public class OrderService {
             OrderType orderType,
             OrderAddress address,
             String customerPhone,
-            PaymentType paymentType
+            PaymentType paymentType,
+            Instant deliveryTime
     ) {
         // Проверяем, является ли заказ предзаказом (время начала больше чем на 15 минут от текущего времени)
         Instant now = Instant.now();
@@ -107,6 +108,7 @@ public class OrderService {
                 .address(address)
                 .customerPhone(customerPhone)
                 .paymentType(paymentType)
+                .deliveryTime(deliveryTime)
                 .build();
         order = this.orderRepository.save(order);
         

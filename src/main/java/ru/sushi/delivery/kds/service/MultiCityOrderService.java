@@ -86,7 +86,8 @@ public class MultiCityOrderService {
             OrderType orderType,
             OrderAddressDto address,
             String customerPhone,
-            PaymentType paymentType
+            PaymentType paymentType,
+            Instant deliveryTime
     ) {
         JdbcTemplate template = getTemplate(city);
 
@@ -104,8 +105,8 @@ public class MultiCityOrderService {
             INSERT INTO orders (name, status, should_be_finished_at, kitchen_should_get_order_at, 
                               status_update_at, created_at, preorder, order_type, customer_phone, payment_type,
                               address_street, address_flat, address_floor, address_entrance, address_comment,
-                              address_city, address_doorphone, address_house)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              address_city, address_doorphone, address_house, delivery_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -130,6 +131,7 @@ public class MultiCityOrderService {
             ps.setString(idx++, address != null ? address.getCity() : null);
             ps.setString(idx++, address != null ? address.getDoorphone() : null);
             ps.setString(idx++, address != null ? address.getHouse() : null);
+            ps.setTimestamp(idx++, deliveryTime != null ? Timestamp.from(deliveryTime) : null);
             return ps;
         }, keyHolder);
 
@@ -171,7 +173,8 @@ public class MultiCityOrderService {
                    o.kitchen_should_get_order_at, o.kitchen_got_order_at, o.preorder,
                    o.order_type, o.customer_phone, o.payment_type,
                    o.address_street, o.address_flat, o.address_floor, o.address_entrance,
-                   o.address_comment, o.address_city, o.address_doorphone, o.address_house
+                   o.address_comment, o.address_city, o.address_doorphone, o.address_house,
+                   o.delivery_time
             FROM orders o
             WHERE o.status IN ('CREATED', 'COOKING', 'COLLECTING')
             ORDER BY o.kitchen_should_get_order_at ASC
@@ -195,7 +198,8 @@ public class MultiCityOrderService {
                    o.kitchen_should_get_order_at, o.kitchen_got_order_at, o.preorder,
                    o.order_type, o.customer_phone, o.payment_type,
                    o.address_street, o.address_flat, o.address_floor, o.address_entrance,
-                   o.address_comment, o.address_city, o.address_doorphone, o.address_house
+                   o.address_comment, o.address_city, o.address_doorphone, o.address_house,
+                   o.delivery_time
             FROM orders o
             WHERE o.created_at >= ? AND o.created_at < ?
             ORDER BY o.created_at DESC
@@ -512,6 +516,8 @@ public class MultiCityOrderService {
                 .address(address)
                 .customerPhone(rs.getString("customer_phone"))
                 .paymentType(paymentType)
+                .deliveryTime(rs.getTimestamp("delivery_time") != null ?
+                    rs.getTimestamp("delivery_time").toInstant() : null)
                 .build();
     }
 

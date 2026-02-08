@@ -28,6 +28,7 @@ public class OrderShortDto {
     private OrderAddressDto address;
     private String customerPhone;
     private PaymentType paymentType;
+    private Instant deliveryTime;
 
     public static OrderShortDto of(Order order, List<OrderItemDto> orderItems) {
         return OrderShortDto.builder()
@@ -42,6 +43,7 @@ public class OrderShortDto {
                 .address(OrderAddressDto.of(order.getAddress()))
                 .customerPhone(order.getCustomerPhone())
                 .paymentType(order.getPaymentType())
+                .deliveryTime(order.getDeliveryTime())
                 .build();
     }
 }

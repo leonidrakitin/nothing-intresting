@@ -4,11 +4,11 @@ application:
   city: '${CITY_NAME:Москва}'
 vaadin:
   launch-browser: true
-  productionMode: true
+  productionMode: ${VAADIN_PRODUCTION_MODE:false}   # false для разработки (bootRun), true для продакшена
   servlet:
-    productionMode: true
+    productionMode: ${VAADIN_PRODUCTION_MODE:false}
   frontend:
-    hotdeploy: false
+    hotdeploy: true
     compatibilityMode: false
 server:
   port: ${SERVER_PORT:8000}
@@ -17,6 +17,10 @@ server:
       charset: UTF-8
       enabled: true
       force: true
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param   # добавьте ?trace=true к URL для отображения stacktrace
 management:
   endpoints:
     web:
@@ -28,6 +32,18 @@ management:
   health:
     db:
       enabled: true
+# Подключения к БД городов (мультигород)
+parnas:
+  datasource:
+    url: ${PARNAS_DATASOURCE_URL:jdbc:postgresql://217.18.61.192:5432/kds-spb}
+    username: ${PARNAS_DATASOURCE_USERNAME:adm}
+    password: ${PARNAS_DATASOURCE_PASSWORD:12341234s}
+ukhta:
+  datasource:
+    url: ${UKHTA_DATASOURCE_URL:jdbc:postgresql://217.18.61.192:5432/kds-ukhta}
+    username: ${UKHTA_DATASOURCE_USERNAME:adm}
+    password: ${UKHTA_DATASOURCE_PASSWORD:12341234s}
+
 spring:
   datasource:
     url: ${SQL_URL:jdbc:postgresql://217.18.61.192:5432/kds-spb}

@@ -92,6 +92,8 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private PaymentType paymentType;
 
+    private Instant deliveryTime; // Время доставки (только для доставки)
+
     public static Order of(String name, Instant shouldBeFinishedAt, Instant kitchenShouldGetOrderAt) {
         return Order.builder()
                 .name(name)

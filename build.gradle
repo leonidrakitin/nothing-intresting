@@ -18,7 +18,8 @@ jar {
 }
 
 vaadin {
-	productionMode = true
+	// false — для разработки (./gradlew bootRun), true — для продакшена (./gradlew build -Pvaadin.production)
+	productionMode = project.hasProperty('vaadin.production') ? true : false
 }
 
 java {

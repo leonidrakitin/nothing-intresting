@@ -59,6 +59,17 @@ public class OrderTextParserService {
         OrderType orderType = parseOrderType(text);
         builder.orderType(orderType);
         
+        // Парсим время доставки (только для доставки)
+        Instant deliveryTime = null;
+        if (orderType == OrderType.DELIVERY) {
+            deliveryTime = parseDeliveryTime(text);
+        }
+        builder.deliveryTime(deliveryTime);
+        
+        // Парсим город
+        String city = parseCity(text);
+        builder.city(city);
+        
         // Парсим телефон
         String customerPhone = parseCustomerPhone(text);
         builder.customerPhone(customerPhone);
@@ -994,6 +1005,70 @@ public class OrderTextParserService {
             .trim();
     }
 
+    private Instant parseDeliveryTime(String text) {
+        // Паттерны для времени доставки:
+        // "🕒К 16:30 – 16:50, 06.02.2026"
+        // "⏰Предзаказ к 16:50 – 17:10, 07.02.2026"
+        // "Доставить  к 22:40"
+        // "Доставить — к 22:40"
+        
+        Pattern[] patterns = {
+            Pattern.compile("🕒К\\s+(\\d{1,2}):(\\d{2})\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*(\\d{2})\\.(\\d{2})\\.(\\d{4})", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("⏰Предзаказ\\s+к\\s+(\\d{1,2}):(\\d{2})\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*(\\d{2})\\.(\\d{2})\\.(\\d{4})", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Доставить\\s*[—-]?\\s*к\\s+(\\d{1,2}):(\\d{2})", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("К\\s+(\\d{1,2}):(\\d{2})", Pattern.CASE_INSENSITIVE)
+        };
+        
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                try {
+                    int hour = Integer.parseInt(matcher.group(1));
+                    int minute = Integer.parseInt(matcher.group(2));
+                    
+                    LocalDate date;
+                    if (matcher.groupCount() >= 5) {
+                        // Есть дата
+                        int day = Integer.parseInt(matcher.group(3));
+                        int month = Integer.parseInt(matcher.group(4));
+                        int year = Integer.parseInt(matcher.group(5));
+                        date = LocalDate.of(year, month, day);
+                    } else {
+                        // Нет даты - используем сегодня
+                        date = LocalDate.now();
+                    }
+                    
+                    LocalDateTime dateTime = LocalDateTime.of(date, LocalTime.of(hour, minute));
+                    return dateTime.atZone(ZoneId.systemDefault()).toInstant();
+                } catch (Exception e) {
+                    log.warn("Не удалось распарсить время доставки: {}", matcher.group(), e);
+                }
+            }
+        }
+        
+        // Если время не найдено, возвращаем +50 минут от текущего времени
+        return Instant.now().plusSeconds(50 * 60);
+    }
+
+    private String parseCity(String text) {
+        // Паттерны для определения города
+        Pattern ukhtaPattern = Pattern.compile("Ухта", Pattern.CASE_INSENSITIVE);
+        Pattern parnasPattern = Pattern.compile("Парнас|Парголово", Pattern.CASE_INSENSITIVE);
+        
+        // Проверяем Ухту
+        if (ukhtaPattern.matcher(text).find()) {
+            return "Ухта";
+        }
+        
+        // Проверяем Парнас/Парголово
+        if (parnasPattern.matcher(text).find()) {
+            return "Парнас";
+        }
+        
+        // Если город не найден, возвращаем null
+        return null;
+    }
+
     private OrderType parseOrderType(String text) {
         // Паттерны для определения типа заказа
         Pattern[] deliveryPatterns = {
@@ -1103,10 +1178,12 @@ public class OrderTextParserService {
         // Парсим адрес доставки
         // Формат 1: "Строительная улица, 2А, Ухта, 1 подъезд, кв. 2"
         // Формат 2: "Адрес доставки — посёлок Парголово, улица Шишкина, д. 303к1"
-        // Формат 3: "Доставка: посёлок Парголово, улица Михаила Дудина 25к2"
+        // Формат 3: "Адрес доставкипосёлок Парголово..." (без пробела/тире)
+        // Формат 4: "Доставка: посёлок Парголово, улица Михаила Дудина 25к2"
+        // Формат 5: "улица Дзержинского, 6, 2 подъезд, 18 домофон, 2 этаж, кв. 18"
         
         Pattern addressPattern = Pattern.compile(
-            "(?:Адрес доставки\\s*—|Доставка:)\\s*([^\\n]+)",
+            "(?:Адрес доставки\\s*[—-]?\\s*|Доставка:\\s*)([^\\n]+)",
             Pattern.CASE_INSENSITIVE
         );
         Matcher addressMatcher = addressPattern.matcher(text);
@@ -1115,61 +1192,113 @@ public class OrderTextParserService {
         if (addressMatcher.find()) {
             addressLine = addressMatcher.group(1).trim();
         } else {
-            // Формат Starter: "Строительная улица, 2А, Ухта, 1 подъезд, кв. 2"
-            // Ищем строку после эмодзи времени
-            Pattern starterAddressPattern = Pattern.compile(
-                "🕒К\\s+\\d{1,2}:\\d{2}\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*\\d{2}\\.\\d{2}\\.\\d{4}\\s*\\n([^\\n]+)",
-                Pattern.CASE_INSENSITIVE
-            );
-            Matcher starterMatcher = starterAddressPattern.matcher(text);
-            if (starterMatcher.find()) {
-                addressLine = starterMatcher.group(1).trim();
+            // Формат Starter: ищем строку после эмодзи времени (🕒К или ⏰Предзаказ)
+            Pattern[] starterAddressPatterns = {
+                Pattern.compile(
+                    "🕒К\\s+\\d{1,2}:\\d{2}\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*\\d{2}\\.\\d{2}\\.\\d{4}\\s*\\n([^\\n]+)",
+                    Pattern.CASE_INSENSITIVE
+                ),
+                Pattern.compile(
+                    "⏰Предзаказ\\s+к\\s+\\d{1,2}:\\d{2}\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*\\d{2}\\.\\d{2}\\.\\d{4}\\s*\\n([^\\n]+)",
+                    Pattern.CASE_INSENSITIVE
+                )
+            };
+            
+            for (Pattern pattern : starterAddressPatterns) {
+                Matcher starterMatcher = pattern.matcher(text);
+                if (starterMatcher.find()) {
+                    addressLine = starterMatcher.group(1).trim();
+                    break;
+                }
             }
         }
         
         if (addressLine != null) {
             // Парсим компоненты адреса
-            // Формат: "город, улица, дом" или "посёлок город, улица, дом"
+            // Формат может быть:
+            // 1. "город, улица, дом" или "посёлок город, улица, дом"
+            // 2. "улица название, номер дома, доп. инфо..."
+            // 3. "Советская улица 13" (без запятых)
             String[] parts = addressLine.split(",");
             
-            if (parts.length >= 3) {
-                // Город (может быть с префиксом "посёлок")
-                String city = parts[0].trim();
-                city = city.replaceAll("^посёлок\\s+", "");
-                builder.city(city);
+            if (parts.length >= 2) {
+                // Первая часть - может быть город или улица
+                String firstPart = parts[0].trim();
                 
-                // Улица
-                String street = parts[1].trim();
-                street = street.replaceAll("^улица\\s+", "");
-                builder.street(street);
-                
-                // Дом (может быть с "д." или "дом")
-                String house = parts[2].trim();
-                house = house.replaceAll("^д\\.\\s*", "");
-                house = house.replaceAll("^дом\\s+", "");
-                builder.house(house);
+                // Если начинается с "улица" - это улица, город берем из общего текста
+                if (firstPart.toLowerCase().startsWith("улица")) {
+                    String street = firstPart.replaceAll("^улица\\s+", "");
+                    builder.street(street);
+                    
+                    // Второй элемент - дом
+                    if (parts.length >= 2) {
+                        String house = parts[1].trim();
+                        house = house.split("\\s+")[0];
+                        builder.house(house);
+                    }
+                    
+                    String city = parseCity(text);
+                    if (city != null) builder.city(city);
+                } else if (parts.length >= 3) {
+                    // Формат: "город, улица, дом"
+                    String city = firstPart.replaceAll("^посёлок\\s+", "");
+                    builder.city(city);
+                    
+                    String street = parts[1].trim().replaceAll("^улица\\s+", "");
+                    builder.street(street);
+                    
+                    String house = parts[2].trim()
+                            .replaceAll("^д\\.\\s*", "")
+                            .replaceAll("^дом\\s+", "");
+                    house = house.split("\\s+")[0];
+                    builder.house(house);
+                }
+            } else if (parts.length == 1) {
+                // Формат без запятых: "Советская улица 13", "улица Советская 13"
+                String singleLine = parts[0].trim();
+                // Ищем номер дома в конце (цифры, возможно с буквами: 13, 13к1, 2А)
+                Pattern streetHousePattern = Pattern.compile("(.+?)\\s+(\\d+[a-zA-Zа-яА-ЯкК]*)\\s*$");
+                Matcher m = streetHousePattern.matcher(singleLine);
+                if (m.find()) {
+                    String street = m.group(1).trim().replaceAll("^улица\\s+", "");
+                    builder.street(street);
+                    builder.house(m.group(2));
+                } else {
+                    builder.street(singleLine.replaceAll("^улица\\s+", ""));
+                }
+                String city = parseCity(text);
+                if (city != null) builder.city(city);
             }
         }
         
-        // Парсим квартиру
+        // Парсим квартиру (Квартира: 62 или кв. 62)
         Pattern flatPattern = Pattern.compile("(?:кв\\.|квартира)[:\\s]*(\\d+)", Pattern.CASE_INSENSITIVE);
         Matcher flatMatcher = flatPattern.matcher(text);
         if (flatMatcher.find()) {
             builder.flat(flatMatcher.group(1));
         }
         
-        // Парсим подъезд
-        Pattern entrancePattern = Pattern.compile("(?:подъезд)[:\\s]*(\\d+)", Pattern.CASE_INSENSITIVE);
+        // Парсим подъезд (15 подъезд или Подъезд: 15)
+        Pattern entrancePattern = Pattern.compile("(?:подъезд[:\\s]+(\\d+)|(\\d+)\\s+подъезд)", Pattern.CASE_INSENSITIVE);
         Matcher entranceMatcher = entrancePattern.matcher(text);
         if (entranceMatcher.find()) {
-            builder.entrance(entranceMatcher.group(1));
+            String entrance = entranceMatcher.group(1) != null ? entranceMatcher.group(1) : entranceMatcher.group(2);
+            builder.entrance(entrance);
         }
         
-        // Парсим этаж
-        Pattern floorPattern = Pattern.compile("(?:этаж)[:\\s]*(\\d+)", Pattern.CASE_INSENSITIVE);
+        // Парсим этаж (1 этаж или Этаж: 1)
+        Pattern floorPattern = Pattern.compile("(?:этаж[:\\s]+(\\d+)|(\\d+)\\s+этаж)", Pattern.CASE_INSENSITIVE);
         Matcher floorMatcher = floorPattern.matcher(text);
         if (floorMatcher.find()) {
-            builder.floor(floorMatcher.group(1));
+            String floor = floorMatcher.group(1) != null ? floorMatcher.group(1) : floorMatcher.group(2);
+            builder.floor(floor);
+        }
+        
+        // Парсим домофон
+        Pattern doorphonePattern = Pattern.compile("(\\d+)\\s+домофон", Pattern.CASE_INSENSITIVE);
+        Matcher doorphoneMatcher = doorphonePattern.matcher(text);
+        if (doorphoneMatcher.find()) {
+            builder.doorphone(doorphoneMatcher.group(1));
         }
         
         return builder.build();

@@ -1,6 +1,8 @@
 package ru.sushi.delivery.kds.domain.controller;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,8 +13,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.sushi.delivery.kds.domain.service.OrderService;
+import ru.sushi.delivery.kds.dto.ImportOrderRequest;
+import ru.sushi.delivery.kds.dto.ImportOrderResponse;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.dto.OrderTimelineDto;
+import ru.sushi.delivery.kds.service.ImportOrderService;
 import ru.sushi.delivery.kds.service.ViewService;
 
 import java.util.List;
@@ -26,6 +31,7 @@ public class OrderController {
 
     private final ViewService viewService; //do not use view
     private final OrderService orderService;
+    private final ImportOrderService importOrderService;
 
     @GetMapping("{screenId}")
     public ResponseEntity<List<OrderShortDto>> getScreenOrderItems(@PathVariable Long screenId) {
@@ -80,5 +86,17 @@ public class OrderController {
     public ResponseEntity<Void> cancelOrder(@PathVariable Long orderId) {
         orderService.cancelOrder(orderId);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Создание заказа из текста (импорт извне).
+     * Тело — текст заказа, парсится тем же парсером, что и в UI.
+     * Ожидается в тексте: тип заказа, время, состав, город, адрес (если доставка), телефон, комментарий.
+     * Опционально в JSON: city (PARNAS/UKHTA), orderNumber.
+     */
+    @PostMapping("import")
+    public ResponseEntity<ImportOrderResponse> importOrder(@Valid @RequestBody ImportOrderRequest request) {
+        ImportOrderResponse response = importOrderService.importOrder(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

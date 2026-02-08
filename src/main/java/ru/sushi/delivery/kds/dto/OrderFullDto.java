@@ -28,6 +28,7 @@ public class OrderFullDto {
     private OrderAddressDto address;
     private String customerPhone;
     private PaymentType paymentType;
+    private Instant deliveryTime;
 
     public static OrderFullDto of(Order order, List<OrderItemDto> orderItems) {
         return OrderFullDto.builder()
@@ -42,6 +43,7 @@ public class OrderFullDto {
                 .address(OrderAddressDto.of(order.getAddress()))
                 .customerPhone(order.getCustomerPhone())
                 .paymentType(order.getPaymentType())
+                .deliveryTime(order.getDeliveryTime())
                 .build();
     }
 }

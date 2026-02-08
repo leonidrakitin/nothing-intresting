@@ -73,7 +73,8 @@ public class CreateOrderView extends VerticalLayout {
     private Instant selectedKitchenStart = null;
     private final Span kitchenStartDisplay = new Span("Время начала приготовления: Сейчас");
     private final Button changeKitchenStartButton = new Button("изменить");
-    private final DateTimePicker finishPicker = new DateTimePicker("Время готовности/доставки");
+    private final DateTimePicker finishPicker = new DateTimePicker("Время готовности");
+    private final DateTimePicker deliveryTimePicker = new DateTimePicker("Доставить к");
     private final Checkbox isYandexOrder = new Checkbox("Заказ Яндекс");
     private final ComboBox<OrderType> orderTypeCombo = new ComboBox<>("Тип заказа");
     private final TextField customerPhoneField = new TextField("Телефон клиента");
@@ -228,6 +229,8 @@ public class CreateOrderView extends VerticalLayout {
         datePicker.setId("order-create-picker");
         datePicker.setWidth("300px"); // Устанавливаем явную ширину для видимости
         finishPicker.setLocale(Locale.of("ru", "RU"));
+        deliveryTimePicker.setLocale(Locale.of("ru", "RU"));
+        deliveryTimePicker.setVisible(false);
 
         orderTypeCombo.setItems(OrderType.PICKUP, OrderType.DELIVERY);
         orderTypeCombo.setItemLabelGenerator(t -> t == OrderType.PICKUP ? "Самовывоз" : "Доставка");
@@ -265,9 +268,14 @@ public class CreateOrderView extends VerticalLayout {
         orderTypeCombo.addValueChangeListener(e -> {
             boolean isDelivery = OrderType.DELIVERY.equals(e.getValue());
             addressLayout.setVisible(isDelivery);
+            deliveryTimePicker.setVisible(isDelivery);
             if (isDelivery) {
-                finishPicker.setValue(LocalDateTime.now().plusHours(1));
+                // Для доставки: время доставки по умолчанию +50 минут
+                deliveryTimePicker.setValue(LocalDateTime.now().plusMinutes(50));
+                // Время готовности рассчитывается автоматически
+                updateTotalTime();
             } else {
+                // Для самовывоза: время готовности рассчитывается автоматически
                 updateTotalTime();
             }
         });
@@ -619,6 +627,7 @@ public class CreateOrderView extends VerticalLayout {
 
         VerticalLayout orderDetailsLayout = new VerticalLayout(
                 orderTypeCombo,
+                deliveryTimePicker,
                 customerPhoneField,
                 paymentTypeCombo,
                 addressLayout
@@ -681,7 +690,10 @@ public class CreateOrderView extends VerticalLayout {
 
             // Проверяем наличие приборов (productType = 7)
             boolean hasInstruments = cartItems.stream()
-                    .anyMatch(cartItem -> cartItem.getMenuItem().getProductType().getId() == 7);
+                    .anyMatch(cartItem -> {
+                        var productType = cartItem.getMenuItem().getProductType();
+                        return productType != null && productType.getId() == 7;
+                    });
 
             if (!hasInstruments) {
                 // Показываем диалог подтверждения
@@ -721,6 +733,8 @@ public class CreateOrderView extends VerticalLayout {
             customerPhoneField.clear();
             paymentTypeCombo.setValue(PaymentType.CASHLESS);
             addressLayout.setVisible(false);
+            deliveryTimePicker.setVisible(false);
+            deliveryTimePicker.clear();
             addressStreetField.clear();
             addressHouseField.clear();
             addressFlatField.clear();
@@ -1230,7 +1244,11 @@ public class CreateOrderView extends VerticalLayout {
         // Подсчитываем количество позиций, исключая ProductType с id 7, 8, 9
         int mainItemsCount = cartItems.stream()
                 .mapToInt(cartItem -> {
-                    Long productTypeId = cartItem.getMenuItem().getProductType().getId();
+                    var productType = cartItem.getMenuItem().getProductType();
+                    if (productType == null) {
+                        return 0;
+                    }
+                    Long productTypeId = productType.getId();
                     // Исключаем ProductType с id 7, 8, 9
                     if (productTypeId == 7 || productTypeId == 8 || productTypeId == 9) {
                         return 0;
@@ -1277,6 +1295,7 @@ public class CreateOrderView extends VerticalLayout {
         boolean yandexOrder = isYandexOrder.getValue();
         OrderType orderType = orderTypeCombo.getValue() != null ? orderTypeCombo.getValue() : OrderType.PICKUP;
         OrderAddressDto address = null;
+        Instant deliveryTime = null;
         if (orderType == OrderType.DELIVERY) {
             address = OrderAddressDto.builder()
                     .street(addressStreetField.getValue())
@@ -1288,9 +1307,13 @@ public class CreateOrderView extends VerticalLayout {
                     .city(addressCityField.getValue())
                     .comment(addressCommentField.getValue())
                     .build();
+            LocalDateTime deliveryDateTime = deliveryTimePicker.getValue();
+            if (deliveryDateTime != null) {
+                deliveryTime = deliveryDateTime.atZone(ZoneId.systemDefault()).toInstant();
+            }
         }
         viewService.createOrder(orderNumber, itemsToCreate, shouldBeFinishedAt, kitchenShouldGetOrderAt,
-                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue());
+                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue(), deliveryTime);
         Notification.show("Заказ создан! Номер: " + orderNumber + ", Позиции: " + itemsToCreate.size() +
                 (yandexOrder ? ", Яндекс заказ" : ""));
 
@@ -1312,6 +1335,8 @@ public class CreateOrderView extends VerticalLayout {
         customerPhoneField.clear();
         paymentTypeCombo.setValue(PaymentType.CASHLESS);
         addressLayout.setVisible(false);
+        deliveryTimePicker.setVisible(false);
+        deliveryTimePicker.clear();
         addressStreetField.clear();
         addressHouseField.clear();
         addressFlatField.clear();
@@ -1625,6 +1650,12 @@ public class CreateOrderView extends VerticalLayout {
             content.add(orderTypeLabel);
         }
 
+        if (parsed.getDeliveryTime() != null) {
+            LocalDateTime deliveryDateTime = LocalDateTime.ofInstant(parsed.getDeliveryTime(), ZoneId.systemDefault());
+            Span deliveryTimeLabel = new Span("Доставить к: " + deliveryDateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+            content.add(deliveryTimeLabel);
+        }
+
         if (parsed.getCustomerPhone() != null && !parsed.getCustomerPhone().isEmpty()) {
             Span phoneLabel = new Span("Телефон: " + parsed.getCustomerPhone());
             content.add(phoneLabel);
@@ -1773,6 +1804,10 @@ public class CreateOrderView extends VerticalLayout {
             // Применяем распарсенные поля к UI
             if (parsed.getOrderType() != null) {
                 orderTypeCombo.setValue(parsed.getOrderType());
+            }
+            if (parsed.getDeliveryTime() != null && parsed.getOrderType() == OrderType.DELIVERY) {
+                LocalDateTime deliveryDateTime = LocalDateTime.ofInstant(parsed.getDeliveryTime(), ZoneId.systemDefault());
+                deliveryTimePicker.setValue(deliveryDateTime);
             }
             if (parsed.getCustomerPhone() != null) {
                 customerPhoneField.setValue(parsed.getCustomerPhone());

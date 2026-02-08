@@ -1,5 +1,7 @@
 package ru.sushi.delivery.kds.view;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.componentfactory.DateRange;
 import com.vaadin.componentfactory.EnhancedDateRangePicker;
 import com.vaadin.flow.component.AttachEvent;
@@ -20,6 +22,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -30,6 +33,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.config.CityProperties;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
@@ -63,7 +67,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Route("create-new")
+@CssImport("./styles/cart-view.css")
 public class CreateNewOrderView extends VerticalLayout {
 
     private final List<CartItem> cartItems = new ArrayList<>();
@@ -78,11 +84,13 @@ public class CreateNewOrderView extends VerticalLayout {
     private Instant selectedKitchenStart = null;
     private final Span kitchenStartDisplay = new Span("Время начала приготовления: Сейчас");
     private final Button changeKitchenStartButton = new Button("изменить");
-    private final DateTimePicker finishPicker = new DateTimePicker("Время готовности/доставки");
+    private final DateTimePicker finishPicker = new DateTimePicker("Время готовности");
+    private final DateTimePicker deliveryTimePicker = new DateTimePicker("Доставить к");
     private final Checkbox isYandexOrder = new Checkbox("Заказ Яндекс");
     private final ComboBox<OrderType> orderTypeCombo = new ComboBox<>("Тип заказа");
     private final TextField customerPhoneField = new TextField("Телефон клиента");
     private final ComboBox<PaymentType> paymentTypeCombo = new ComboBox<>("Тип оплаты");
+    private final H1 cityHeader = new H1("Создание заказа (Мульти-город)");
     private final TextField addressStreetField = new TextField("Улица");
     private final TextField addressHouseField = new TextField("Дом");
     private final TextField addressFlatField = new TextField("Квартира");
@@ -102,7 +110,7 @@ public class CreateNewOrderView extends VerticalLayout {
     private List<ItemCombo> menuItemCombos = new ArrayList<>();
     private List<MenuItem> menuExtras = new ArrayList<>();
 
-    private final Grid<CartItem> chosenGrid = new Grid<>(CartItem.class, false);
+    private final VerticalLayout cartItemsContainer = new VerticalLayout();
     private final Grid<OrderShortDto> ordersGrid = new Grid<>(OrderShortDto.class, false);
     private final Grid<OrderShortDto> activeOrdersGrid = new Grid<>(OrderShortDto.class, false);
     private final TextField orderNumberField = new TextField("Номер заказа");
@@ -221,7 +229,6 @@ public class CreateNewOrderView extends VerticalLayout {
         getStyle().set("gap", "20px");
 
         // Создаем заголовок
-        H1 cityHeader = new H1("Создание заказа (Мульти-город)");
         cityHeader.getStyle()
                 .set("text-align", "center")
                 .set("margin", "0 0 20px 0")
@@ -230,12 +237,11 @@ public class CreateNewOrderView extends VerticalLayout {
                 .set("font-weight", "bold")
                 .set("text-shadow", "2px 2px 4px rgba(0,0,0,0.1)");
 
-        // Загружаем меню для текущего города
-        switchCity(currentCity);
-
         datePicker.setId("order-create-picker");
         datePicker.setWidth("300px"); // Устанавливаем явную ширину для видимости
         finishPicker.setLocale(Locale.of("ru", "RU"));
+        deliveryTimePicker.setLocale(Locale.of("ru", "RU"));
+        deliveryTimePicker.setVisible(false);
 
         orderTypeCombo.setItems(OrderType.PICKUP, OrderType.DELIVERY);
         orderTypeCombo.setItemLabelGenerator(t -> t == OrderType.PICKUP ? "Самовывоз" : "Доставка");
@@ -273,9 +279,14 @@ public class CreateNewOrderView extends VerticalLayout {
         orderTypeCombo.addValueChangeListener(e -> {
             boolean isDelivery = OrderType.DELIVERY.equals(e.getValue());
             addressLayout.setVisible(isDelivery);
+            deliveryTimePicker.setVisible(isDelivery);
             if (isDelivery) {
-                finishPicker.setValue(LocalDateTime.now().plusHours(1));
+                // Для доставки: время доставки по умолчанию +50 минут
+                deliveryTimePicker.setValue(LocalDateTime.now().plusMinutes(50));
+                // Время готовности рассчитывается автоматически
+                updateTotalTime();
             } else {
+                // Для самовывоза: время готовности рассчитывается автоматически
                 updateTotalTime();
             }
         });
@@ -365,22 +376,15 @@ public class CreateNewOrderView extends VerticalLayout {
 
         setsTabLayout.add(setsSearchField, setsGrid);
 
-        // Допы (две колонки)
+        // Допы (одна колонка)
         extrasLayout.setPadding(false);
         extrasLayout.setSpacing(true);
 
-        VerticalLayout extrasListLeft = new VerticalLayout();
-        extrasListLeft.setPadding(false);
-        extrasListLeft.setSpacing(false);
-
-        VerticalLayout extrasListRight = new VerticalLayout();
-        extrasListRight.setPadding(false);
-        extrasListRight.setSpacing(false);
-
-        HorizontalLayout extrasColumns = new HorizontalLayout(extrasListLeft, extrasListRight);
-        extrasColumns.setWidthFull();
-        extrasColumns.setSpacing(true);
-        updateExtrasList(extrasListLeft, extrasListRight, menuExtras);
+        VerticalLayout extrasListSingle = new VerticalLayout();
+        extrasListSingle.setPadding(false);
+        extrasListSingle.setSpacing(false);
+        extrasListSingle.setWidthFull();
+        updateExtrasListSingleColumn(extrasListSingle, menuExtras);
 
         // Набор приборов
         HorizontalLayout instrumentsSetLayout = new HorizontalLayout();
@@ -406,18 +410,24 @@ public class CreateNewOrderView extends VerticalLayout {
         instrumentsSetLayout.add(instrumentsSetName, instrumentsSetRemoveBtn, instrumentsSetQuantity, instrumentsSetAddBtn);
         instrumentsSetLayout.setFlexGrow(1.0, instrumentsSetName);
 
-        extrasLayout.add(new H4("Допы"), extrasColumns, instrumentsSetLayout);
+        extrasLayout.add(new H4("Допы"), extrasListSingle, instrumentsSetLayout);
 
-        VerticalLayout leftLayout = new VerticalLayout(tabsLeft, tabsContentLeft, extrasLayout);
-        leftLayout.setWidth("50%");
-        leftLayout.setPadding(false);
-        leftLayout.setSpacing(true);
-        leftLayout.getStyle()
+        // Загружаем меню для текущего города (после построения layout, т.к. switchCity обращается к extrasLayout)
+        switchCity(currentCity);
+
+        VerticalLayout menuColumn = new VerticalLayout(tabsLeft, tabsContentLeft, extrasLayout);
+        menuColumn.setWidth("350px");
+        menuColumn.setMinWidth("350px");
+        menuColumn.setMaxWidth("350px");
+        menuColumn.setPadding(false);
+        menuColumn.setSpacing(true);
+        menuColumn.getStyle()
                 .set("border", "1px solid #ccc")
                 .set("border-radius", "8px")
-                .set("padding", "20px");
+                .set("padding", "20px")
+                .set("flex-shrink", "0");
 
-        // ПРАВАЯ ЧАСТЬ
+        // КОЛОНКА КОРЗИНЫ
         orderNumberField.setPlaceholder("Введите номер заказа...");
         orderNumberField.setWidthFull();
 
@@ -427,10 +437,43 @@ public class CreateNewOrderView extends VerticalLayout {
         Tabs cityTabs = new Tabs(parnasTab, ukhtaTab);
         cityTabs.setWidthFull();
         cityTabs.addSelectedChangeListener(event -> {
-            if (event.getSelectedTab().equals(parnasTab)) {
-                switchCity(MultiCityViewService.City.PARNAS);
+            MultiCityViewService.City newCity = event.getSelectedTab().equals(parnasTab) 
+                ? MultiCityViewService.City.PARNAS 
+                : MultiCityViewService.City.UKHTA;
+            
+            // Проверяем, есть ли товары в корзине
+            if (!cartItems.isEmpty() && newCity != currentCity) {
+                Dialog confirmDialog = new Dialog();
+                confirmDialog.setHeaderTitle("Подтверждение смены города");
+                
+                VerticalLayout dialogLayout = new VerticalLayout();
+                dialogLayout.add(new Span("В корзине есть товары. При смене города корзина будет очищена. Продолжить?"));
+                
+                Button confirmButton = new Button("Да, сменить город", e -> {
+                    cartItems.clear();
+                    refreshCartItemsContainer();
+                    updateTotalPay();
+                    updateTotalTime();
+                    switchCity(newCity);
+                    confirmDialog.close();
+                });
+                confirmButton.getStyle().set("background-color", "var(--lumo-error-color)");
+                confirmButton.getStyle().set("color", "white");
+                
+                Button cancelButton = new Button("Отмена", e -> {
+                    // Возвращаем выбор на текущий город
+                    cityTabs.setSelectedTab(currentCity == MultiCityViewService.City.PARNAS ? parnasTab : ukhtaTab);
+                    confirmDialog.close();
+                });
+                
+                HorizontalLayout buttonsLayout = new HorizontalLayout(confirmButton, cancelButton);
+                buttonsLayout.setJustifyContentMode(JustifyContentMode.END);
+                
+                dialogLayout.add(buttonsLayout);
+                confirmDialog.add(dialogLayout);
+                confirmDialog.open();
             } else {
-                switchCity(MultiCityViewService.City.UKHTA);
+                switchCity(newCity);
             }
         });
 
@@ -463,19 +506,24 @@ public class CreateNewOrderView extends VerticalLayout {
             }
         });
 
-        VerticalLayout rightLayout = new VerticalLayout(cityTabs, rightTabs, orderNumberField, cartLayout, activeOrdersLayout, allOrdersLayout);
-        rightLayout.setWidth("50%");
-        rightLayout.setPadding(false);
-        rightLayout.setSpacing(true);
-        rightLayout.getStyle()
+        VerticalLayout cartColumn = new VerticalLayout(cityTabs, rightTabs, orderNumberField, cartLayout, activeOrdersLayout, allOrdersLayout);
+        cartColumn.setFlexGrow(1);
+        cartColumn.setMinWidth("300px");
+        cartColumn.setPadding(false);
+        cartColumn.setSpacing(true);
+        cartColumn.getStyle()
                 .set("border", "1px solid #ccc")
                 .set("border-radius", "8px")
                 .set("padding", "20px");
 
-        // Создаем горизонтальный контейнер для основного содержимого
-        HorizontalLayout mainContent = new HorizontalLayout(leftLayout, rightLayout);
+        Div summaryColumn = buildSummaryColumn();
+        summaryColumn.getStyle().set("flex-shrink", "0");
+
+        // Три колонки: Меню | Корзина | К оплате
+        HorizontalLayout mainContent = new HorizontalLayout(menuColumn, cartColumn, summaryColumn);
         mainContent.setSizeFull();
         mainContent.getStyle().set("gap", "20px");
+        mainContent.expand(cartColumn);
 
         add(cityHeader, mainContent);
     }
@@ -492,14 +540,10 @@ public class CreateNewOrderView extends VerticalLayout {
         return new NotAddedEntry(combo, aliasTarget);
     }
 
-    // Метод для обновления списка допов в две колонки
-    private void updateExtrasList(VerticalLayout leftColumn, VerticalLayout rightColumn, List<MenuItem> items) {
-        leftColumn.removeAll();
-        rightColumn.removeAll();
-
-        int halfSize = (items.size() + 1) / 2; // Делим список на две части, округляя вверх
-        for (int i = 0; i < items.size(); i++) {
-            MenuItem item = items.get(i);
+    // Метод для обновления списка допов (одна колонка)
+    private void updateExtrasListSingleColumn(VerticalLayout extrasColumn, List<MenuItem> items) {
+        extrasColumn.removeAll();
+        for (MenuItem item : items) {
             HorizontalLayout itemLayout = new HorizontalLayout();
             itemLayout.setWidthFull();
             itemLayout.setAlignItems(Alignment.CENTER);
@@ -515,14 +559,10 @@ public class CreateNewOrderView extends VerticalLayout {
 
             itemLayout.add(name, price, removeButton, quantity, addButton);
             itemLayout.setFlexGrow(1, name);
-
-            if (i < halfSize) {
-                leftColumn.add(itemLayout);
-            } else {
-                rightColumn.add(itemLayout);
-            }
+            extrasColumn.add(itemLayout);
         }
     }
+
 
     private void addToCart(MenuItem item) {
         CartItem existingItem = cartItems.stream()
@@ -539,12 +579,7 @@ public class CreateNewOrderView extends VerticalLayout {
         updateTotalPay();
         updateTotalTime();
         Notification.show(String.format("Добавлен: %s - %.1f рублей", item.getName(), item.getPrice()));
-        chosenGrid.getDataProvider().refreshAll();
-        updateExtrasList(
-                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
-                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
-                menuExtras
-        ); // Обновляем список допов
+        refreshCartItemsContainer();
     }
 
     private void removeFromCart(MenuItem item, Span quantityLabel) {
@@ -561,8 +596,8 @@ public class CreateNewOrderView extends VerticalLayout {
             }
             updateTotalPay();
             updateTotalTime();
-            chosenGrid.getDataProvider().refreshAll();
-            quantityLabel.setText(String.valueOf(getCartQuantity(item))); // Обновляем количество в списке
+            refreshCartItemsContainer();
+            quantityLabel.setText(String.valueOf(getCartQuantity(item)));
             Notification.show(String.format("Удален: %s", item.getName()));
         }
     }
@@ -579,67 +614,48 @@ public class CreateNewOrderView extends VerticalLayout {
         Div cartLayout = new Div();
         cartLayout.setWidthFull();
 
-        H3 chosenTitle = new H3("Корзина:");
-        chosenGrid.addColumn(cartItem -> cartItem.getMenuItem().getName()).setHeader("Наименование");
-        chosenGrid.addColumn(CartItem::getQuantity).setHeader("Кол-во");
-        chosenGrid.addColumn(cartItem -> cartItem.getMenuItem().getPrice() * cartItem.getQuantity()).setHeader("Цена");
-        chosenGrid.addComponentColumn(cartItem -> {
-            HorizontalLayout buttons = new HorizontalLayout();
-            Button removeBtn = new Button(VaadinIcon.MINUS.create());
-            removeBtn.addClickListener(e -> {
-                if (cartItem.getQuantity() > 1) {
-                    cartItem.decrement();
-                } else {
-                    cartItems.remove(cartItem);
-                }
-                updateTotalPay();
-                updateTotalTime();
-                chosenGrid.getDataProvider().refreshAll();
-                updateExtrasList(
-                        (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
-                        (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
-                        menuExtras
-                );
-            });
-            Button addBtn = new Button(VaadinIcon.PLUS.create());
-            addBtn.addClickListener(e -> {
-                cartItem.increment();
-                updateTotalPay();
-                updateTotalTime();
-                chosenGrid.getDataProvider().refreshAll();
-                updateExtrasList(
-                        (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
-                        (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
-                        menuExtras
-                );
-            });
-            buttons.add(removeBtn);
-            buttons.add(addBtn);
-            return buttons;
-        }).setHeader("Действие");
-        chosenGrid.setItems(cartItems);
+        H3 chosenTitle = new H3("Корзина");
+
+        Span cityIndicator = new Span();
+        cityIndicator.getElement().setAttribute("id", "cart-city-indicator");
+        cityIndicator.addClassName("city-badge");
+        updateCityIndicator(cityIndicator);
+
+        HorizontalLayout cartHeader = new HorizontalLayout(chosenTitle, cityIndicator);
+        cartHeader.setAlignItems(Alignment.CENTER);
+        cartHeader.addClassName("cart-header");
+
+        cartItemsContainer.removeAll();
+        cartItemsContainer.setPadding(false);
+        cartItemsContainer.setSpacing(false);
+        cartItemsContainer.setWidthFull();
+        cartItemsContainer.addClassName("cart-items-column");
+
+        cartLayout.add(cartHeader, cartItemsContainer);
+        refreshCartItemsContainer();
+
+        return cartLayout;
+    }
+
+    private Div buildSummaryColumn() {
+        finishPicker.setValue(LocalDateTime.now().plusMinutes(15));
+        selectedKitchenStart = Instant.now();
+        kitchenStartDisplay.setText("Время начала: " +
+                selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
 
         Button updateTimeButton = new Button("Обновить", VaadinIcon.REFRESH.create());
         updateTimeButton.addClickListener(e -> updateKitchenStartTime());
-
         HorizontalLayout kitchenStartLayout = new HorizontalLayout(kitchenStartDisplay, updateTimeButton, changeKitchenStartButton);
         kitchenStartLayout.setAlignItems(Alignment.CENTER);
         changeKitchenStartButton.addClickListener(e -> openKitchenStartDialog());
 
-
-        finishPicker.setValue(LocalDateTime.now().plusMinutes(15));
-
-        // Инициализируем время начала приготовления актуальным временем
-        selectedKitchenStart = Instant.now();
-        kitchenStartDisplay.setText("Время начала приготовления: " +
-                selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
-
-        HorizontalLayout finishLayout = new HorizontalLayout(finishPicker, isYandexOrder); // Чекбокс рядом с временем готовности
+        HorizontalLayout finishLayout = new HorizontalLayout(finishPicker, isYandexOrder);
         finishLayout.setAlignItems(Alignment.CENTER);
         finishLayout.setWidthFull();
 
         VerticalLayout orderDetailsLayout = new VerticalLayout(
                 orderTypeCombo,
+                deliveryTimePicker,
                 customerPhoneField,
                 paymentTypeCombo,
                 addressLayout
@@ -649,11 +665,33 @@ public class CreateNewOrderView extends VerticalLayout {
         orderDetailsLayout.setWidthFull();
 
         Button createOrderButton = new Button("Создать заказ");
+        createOrderButton.addClassName("cart-summary-btn");
         Button importButton = new Button("Импорт", VaadinIcon.UPLOAD.create());
         Button clearCartButton = new Button("Очистить корзину");
         HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, importButton, clearCartButton);
-        
+        buttonBar.addClassName("cart-button-bar");
+
         importButton.addClickListener(e -> openImportDialog());
+        totalPay.addClassName("cart-total-price");
+
+        VerticalLayout summaryContent = new VerticalLayout(
+                totalPay,
+                totalTime,
+                kitchenStartLayout,
+                finishLayout,
+                orderDetailsLayout,
+                buttonBar
+        );
+        summaryContent.setPadding(false);
+        summaryContent.setSpacing(true);
+        summaryContent.setWidthFull();
+
+        Div summaryBlock = new Div(summaryContent);
+        summaryBlock.addClassName("cart-summary-block");
+
+        Div summaryColumn = new Div(summaryBlock);
+        summaryColumn.addClassName("cart-summary-column");
+        summaryColumn.setWidth("368px");
 
         createOrderButton.addClickListener(e -> {
             if (cartItems.isEmpty()) {
@@ -702,7 +740,10 @@ public class CreateNewOrderView extends VerticalLayout {
 
             // Проверяем наличие приборов (productType = 7)
             boolean hasInstruments = cartItems.stream()
-                    .anyMatch(cartItem -> cartItem.getMenuItem().getProductType().getId() == 7);
+                    .anyMatch(cartItem -> {
+                        var productType = cartItem.getMenuItem().getProductType();
+                        return productType != null && productType.getId() == 7;
+                    });
 
             if (!hasInstruments) {
                 // Показываем диалог подтверждения
@@ -728,12 +769,8 @@ public class CreateNewOrderView extends VerticalLayout {
             cartItems.clear();
             updateTotalPay();
             updateTotalTime();
-            chosenGrid.getDataProvider().refreshAll();
-            updateExtrasList(
-                    (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
-                    (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
-                    menuExtras
-            );
+            refreshCartItemsContainer();
+            updateExtrasListSingleColumn((VerticalLayout) extrasLayout.getComponentAt(1), menuExtras);
             Notification.show("Корзина очищена");
 
             updateKitchenStartTime();
@@ -742,6 +779,8 @@ public class CreateNewOrderView extends VerticalLayout {
             customerPhoneField.clear();
             paymentTypeCombo.setValue(PaymentType.CASHLESS);
             addressLayout.setVisible(false);
+            deliveryTimePicker.setVisible(false);
+            deliveryTimePicker.clear();
             addressStreetField.clear();
             addressHouseField.clear();
             addressFlatField.clear();
@@ -752,9 +791,138 @@ public class CreateNewOrderView extends VerticalLayout {
             addressCommentField.clear();
         });
 
+        return summaryColumn;
+    }
 
-        cartLayout.add(chosenTitle, chosenGrid, kitchenStartLayout, finishLayout, orderDetailsLayout, totalPay, totalTime, buttonBar);
-        return cartLayout;
+    private void updateCityIndicator(Span cityIndicator) {
+        String cityName = currentCity == MultiCityViewService.City.PARNAS ? "Парнас" : "Ухта";
+        cityIndicator.setText("Город: " + cityName);
+
+        if (currentCity == MultiCityViewService.City.PARNAS) {
+            cityIndicator.getStyle()
+                    .set("background-color", "#E3F2FD")
+                    .set("color", "#1976D2")
+                    .set("border", "2px solid #1976D2");
+        } else {
+            cityIndicator.getStyle()
+                    .set("background-color", "#E8F5E9")
+                    .set("color", "#388E3C")
+                    .set("border", "2px solid #388E3C");
+        }
+    }
+
+    private void refreshCartItemsContainer() {
+        cartItemsContainer.removeAll();
+        if (cartItems.isEmpty()) {
+            cartItemsContainer.add(buildEmptyState());
+        } else {
+            for (CartItem cartItem : cartItems) {
+                cartItemsContainer.add(buildCartItemCard(cartItem));
+            }
+        }
+        try {
+            if (extrasLayout.getComponentCount() > 1) {
+                updateExtrasListSingleColumn((VerticalLayout) extrasLayout.getComponentAt(1), menuExtras);
+            }
+        } catch (Exception ex) {
+            log.warn("Failed to update extras list", ex);
+        }
+    }
+
+    private Component buildEmptyState() {
+        Div emptyState = new Div();
+        emptyState.addClassName("cart-empty-state");
+
+        Icon emptyIcon = VaadinIcon.CART.create();
+        emptyIcon.setSize("80px");
+        emptyIcon.getStyle().set("opacity", "0.5");
+        emptyIcon.addClassName("cart-empty-icon");
+
+        Span title = new Span("Корзина пуста");
+        title.addClassName("cart-empty-title");
+
+        Span text = new Span("Добавьте товары из меню слева");
+        text.addClassName("cart-empty-text");
+
+        Button backBtn = new Button("Вернуться в меню", VaadinIcon.ARROW_LEFT.create());
+        backBtn.addClassName("cart-empty-btn");
+        backBtn.addClickListener(e -> {
+            // Фокус уже на меню — просто информируем
+            Notification.show("Выберите товары в меню слева");
+        });
+
+        emptyState.add(emptyIcon, title, text, backBtn);
+        return emptyState;
+    }
+
+    private Component buildCartItemCard(CartItem cartItem) {
+        Div card = new Div();
+        card.addClassName("cart-product-card");
+
+        Div info = new Div();
+        info.addClassName("cart-product-info");
+
+        Span name = new Span(cartItem.getMenuItem().getName());
+        name.addClassName("cart-product-name");
+
+        double lineTotal = cartItem.getMenuItem().getPrice() * cartItem.getQuantity();
+        Span price = new Span(String.format(" - %.0f ₽ -", lineTotal));
+        price.addClassName("cart-product-price");
+
+        Span meta = new Span(String.format("%.0f ₽ × %d шт.", cartItem.getMenuItem().getPrice(), cartItem.getQuantity()));
+        meta.addClassName("cart-product-meta");
+
+        info.add(name, price, meta);
+
+        HorizontalLayout quantitySelector = new HorizontalLayout();
+        quantitySelector.addClassName("cart-quantity-selector");
+        quantitySelector.setAlignItems(Alignment.CENTER);
+        quantitySelector.setSpacing(false);
+
+        Button removeBtn = new Button(VaadinIcon.MINUS.create());
+        removeBtn.addClassName("cart-quantity-btn");
+        removeBtn.addClickListener(e -> {
+            if (cartItem.getQuantity() > 1) {
+                cartItem.decrement();
+            } else {
+                cartItems.remove(cartItem);
+            }
+            updateTotalPay();
+            updateTotalTime();
+            refreshCartItemsContainer();
+        });
+
+        Span quantityValue = new Span(String.valueOf(cartItem.getQuantity()));
+        quantityValue.addClassName("cart-quantity-value");
+
+        Button addBtn = new Button(VaadinIcon.PLUS.create());
+        addBtn.addClassName("cart-quantity-btn");
+        addBtn.addClickListener(e -> {
+            cartItem.increment();
+            updateTotalPay();
+            updateTotalTime();
+            refreshCartItemsContainer();
+        });
+
+        quantitySelector.add(removeBtn, quantityValue, addBtn);
+
+        Button removeFromCartBtn = new Button(VaadinIcon.TRASH.create());
+        removeFromCartBtn.addClassName("cart-remove-btn");
+        removeFromCartBtn.setTooltipText("Удалить из корзины");
+        removeFromCartBtn.addClickListener(e -> {
+            cartItems.remove(cartItem);
+            updateTotalPay();
+            updateTotalTime();
+            refreshCartItemsContainer();
+        });
+
+        HorizontalLayout actions = new HorizontalLayout();
+        actions.setAlignItems(Alignment.CENTER);
+        actions.setSpacing(true);
+        actions.add(quantitySelector, removeFromCartBtn);
+
+        card.add(info, actions);
+        return card;
     }
 
     private void updateTotalPay() {
@@ -1253,7 +1421,11 @@ public class CreateNewOrderView extends VerticalLayout {
         // Подсчитываем количество позиций, исключая ProductType с id 7, 8, 9
         int mainItemsCount = cartItems.stream()
                 .mapToInt(cartItem -> {
-                    Long productTypeId = cartItem.getMenuItem().getProductType().getId();
+                    var productType = cartItem.getMenuItem().getProductType();
+                    if (productType == null) {
+                        return 0;
+                    }
+                    Long productTypeId = productType.getId();
                     // Исключаем ProductType с id 7, 8, 9
                     if (productTypeId == 7 || productTypeId == 8 || productTypeId == 9) {
                         return 0;
@@ -1300,6 +1472,7 @@ public class CreateNewOrderView extends VerticalLayout {
         boolean yandexOrder = isYandexOrder.getValue();
         OrderType orderType = orderTypeCombo.getValue() != null ? orderTypeCombo.getValue() : OrderType.PICKUP;
         OrderAddressDto address = null;
+        Instant deliveryTime = null;
         if (orderType == OrderType.DELIVERY) {
             address = OrderAddressDto.builder()
                     .street(addressStreetField.getValue())
@@ -1311,21 +1484,30 @@ public class CreateNewOrderView extends VerticalLayout {
                     .city(addressCityField.getValue())
                     .comment(addressCommentField.getValue())
                     .build();
+            LocalDateTime deliveryDateTime = deliveryTimePicker.getValue();
+            if (deliveryDateTime != null) {
+                deliveryTime = deliveryDateTime.atZone(ZoneId.systemDefault()).toInstant();
+            }
         }
+        String cityName = currentCity == MultiCityViewService.City.PARNAS ? "Парнас" : "Ухта";
         multiCityOrderService.createOrder(getOrderCity(), orderNumber, itemsToCreate, shouldBeFinishedAt, kitchenShouldGetOrderAt,
-                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue());
-        Notification.show("Заказ создан! Номер: " + orderNumber + ", Позиции: " + itemsToCreate.size() +
-                (yandexOrder ? ", Яндекс заказ" : ""));
+                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue(), deliveryTime);
+        
+        Notification notification = Notification.show(
+                "✓ Заказ создан в городе " + cityName + "! Номер: " + orderNumber + ", Позиции: " + itemsToCreate.size() +
+                (yandexOrder ? ", Яндекс заказ" : ""),
+                5000,
+                Notification.Position.TOP_CENTER
+        );
+        notification.addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_SUCCESS);
+        
+        log.info("Order created: {} in city: {} with {} items", orderNumber, cityName, itemsToCreate.size());
 
         cartItems.clear();
         updateTotalPay();
         updateTotalTime();
-        chosenGrid.getDataProvider().refreshAll();
-        updateExtrasList(
-                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
-                (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
-                menuExtras
-        );
+        refreshCartItemsContainer();
+        updateExtrasListSingleColumn((VerticalLayout) extrasLayout.getComponentAt(1), menuExtras);
         orderNumberField.clear();
 
         updateKitchenStartTime();
@@ -1335,6 +1517,8 @@ public class CreateNewOrderView extends VerticalLayout {
         customerPhoneField.clear();
         paymentTypeCombo.setValue(PaymentType.CASHLESS);
         addressLayout.setVisible(false);
+        deliveryTimePicker.setVisible(false);
+        deliveryTimePicker.clear();
         addressStreetField.clear();
         addressHouseField.clear();
         addressFlatField.clear();
@@ -1642,10 +1826,23 @@ public class CreateNewOrderView extends VerticalLayout {
         content.add(orderNumberFieldDialog);
 
         // Показываем распарсенные данные
+        if (parsed.getCity() != null) {
+            Span cityLabel = new Span("Город: " + parsed.getCity());
+            cityLabel.getStyle().set("font-weight", "bold");
+            cityLabel.getStyle().set("color", "var(--lumo-primary-color)");
+            content.add(cityLabel);
+        }
+
         if (parsed.getOrderType() != null) {
             Span orderTypeLabel = new Span("Тип заказа: " + (parsed.getOrderType() == OrderType.PICKUP ? "Самовывоз" : "Доставка"));
             orderTypeLabel.getStyle().set("font-weight", "bold");
             content.add(orderTypeLabel);
+        }
+
+        if (parsed.getDeliveryTime() != null) {
+            LocalDateTime deliveryDateTime = LocalDateTime.ofInstant(parsed.getDeliveryTime(), ZoneId.systemDefault());
+            Span deliveryTimeLabel = new Span("Доставить к: " + deliveryDateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+            content.add(deliveryTimeLabel);
         }
 
         if (parsed.getCustomerPhone() != null && !parsed.getCustomerPhone().isEmpty()) {
@@ -1793,9 +1990,28 @@ public class CreateNewOrderView extends VerticalLayout {
         confirmButton.addClickListener(e -> {
             confirmDialog.close();
             
+            // Применяем город
+            if (parsed.getCity() != null) {
+                MultiCityViewService.City parsedCity = null;
+                if (parsed.getCity().equals("Ухта")) {
+                    parsedCity = MultiCityViewService.City.UKHTA;
+                } else if (parsed.getCity().equals("Парнас")) {
+                    parsedCity = MultiCityViewService.City.PARNAS;
+                }
+                
+                if (parsedCity != null && parsedCity != currentCity) {
+                    // Переключаем город (очистка корзины произойдет автоматически в switchCity)
+                    switchCity(parsedCity);
+                }
+            }
+            
             // Применяем распарсенные поля к UI
             if (parsed.getOrderType() != null) {
                 orderTypeCombo.setValue(parsed.getOrderType());
+            }
+            if (parsed.getDeliveryTime() != null && parsed.getOrderType() == OrderType.DELIVERY) {
+                LocalDateTime deliveryDateTime = LocalDateTime.ofInstant(parsed.getDeliveryTime(), ZoneId.systemDefault());
+                deliveryTimePicker.setValue(deliveryDateTime);
             }
             if (parsed.getCustomerPhone() != null) {
                 customerPhoneField.setValue(parsed.getCustomerPhone());
@@ -2238,12 +2454,8 @@ public class CreateNewOrderView extends VerticalLayout {
         
         updateTotalPay();
         updateTotalTime();
-        chosenGrid.getDataProvider().refreshAll();
-        updateExtrasList(
-            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
-            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
-            menuExtras
-        );
+        refreshCartItemsContainer();
+        updateExtrasListSingleColumn((VerticalLayout) extrasLayout.getComponentAt(1), menuExtras);
         
         Notification.show("Заказ импортирован в корзину");
     }
@@ -2276,12 +2488,8 @@ public class CreateNewOrderView extends VerticalLayout {
 
         updateTotalPay();
         updateTotalTime();
-        chosenGrid.getDataProvider().refreshAll();
-        updateExtrasList(
-            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
-            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
-            menuExtras
-        );
+        refreshCartItemsContainer();
+        updateExtrasListSingleColumn((VerticalLayout) extrasLayout.getComponentAt(1), menuExtras);
     }
 
     private void removeInstrumentsSet() {
@@ -2360,12 +2568,8 @@ public class CreateNewOrderView extends VerticalLayout {
 
         updateTotalPay();
         updateTotalTime();
-        chosenGrid.getDataProvider().refreshAll();
-        updateExtrasList(
-            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0),
-            (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1),
-            menuExtras
-        );
+        refreshCartItemsContainer();
+        updateExtrasListSingleColumn((VerticalLayout) extrasLayout.getComponentAt(1), menuExtras);
     }
 
     private void updateInstrumentsSetQuantity(Span quantitySpan) {
@@ -2449,8 +2653,30 @@ public class CreateNewOrderView extends VerticalLayout {
 
     private void switchCity(MultiCityViewService.City city) {
         this.currentCity = city;
+        String cityName = city == MultiCityViewService.City.PARNAS ? "Парнас" : "Ухта";
         
         try {
+            // Обновляем заголовок с текущим городом
+            cityHeader.setText("Создание заказа: " + cityName);
+            cityHeader.getStyle().set("color", 
+                city == MultiCityViewService.City.PARNAS ? "#1976D2" : "#388E3C");
+            
+            // Обновляем индикатор города в корзине
+            getUI().ifPresent(ui -> ui.access(() -> {
+                ui.getElement().executeJs(
+                    "const indicator = document.getElementById('cart-city-indicator');" +
+                    "if (indicator) {" +
+                    "  indicator.textContent = 'Город: ' + $0;" +
+                    "  indicator.style.backgroundColor = $1;" +
+                    "  indicator.style.color = $2;" +
+                    "  indicator.style.border = '2px solid ' + $2;" +
+                    "}",
+                    cityName,
+                    city == MultiCityViewService.City.PARNAS ? "#E3F2FD" : "#E8F5E9",
+                    city == MultiCityViewService.City.PARNAS ? "#1976D2" : "#388E3C"
+                );
+            }));
+            
             // Загружаем данные для выбранного города
             menuMenuItems = multiCityViewService.getMenuItems(city);
             menuItemCombos = multiCityViewService.getCombos(city);
@@ -2461,16 +2687,22 @@ public class CreateNewOrderView extends VerticalLayout {
             setsGrid.setItems(menuItemCombos);
             
             // Обновляем список допов
-            VerticalLayout extrasListLeft = (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(0);
-            VerticalLayout extrasListRight = (VerticalLayout) ((HorizontalLayout) extrasLayout.getComponentAt(1)).getComponentAt(1);
-            updateExtrasList(extrasListLeft, extrasListRight, menuExtras);
+            if (extrasLayout.getComponentCount() > 1) {
+                updateExtrasListSingleColumn((VerticalLayout) extrasLayout.getComponentAt(1), menuExtras);
+            }
             
             // Обновляем таблицы заказов, если они видимы
             refreshAllOrdersTables();
             
-            Notification.show("Переключено на: " + (city == MultiCityViewService.City.PARNAS ? "Парнас" : "Ухта"));
+            Notification.show("✓ Переключено на город: " + cityName, 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_SUCCESS);
+            
+            log.info("Switched to city: {}", cityName);
         } catch (Exception e) {
-            Notification.show("Ошибка загрузки данных для " + (city == MultiCityViewService.City.PARNAS ? "Парнас" : "Ухта") + ": " + e.getMessage(), 5000, Notification.Position.MIDDLE);
+            log.error("Error loading data for city: {}", cityName, e);
+            Notification.show("❌ Ошибка загрузки данных для города " + cityName + ": " + e.getMessage(), 
+                5000, Notification.Position.MIDDLE)
+                .addThemeVariants(com.vaadin.flow.component.notification.NotificationVariant.LUMO_ERROR);
         }
     }
 }

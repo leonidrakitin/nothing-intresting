@@ -32,8 +32,7 @@ public class MultiCityViewService {
     public List<MenuItem> getMenuItems(City city) {
         JdbcTemplate template = getTemplate(city);
         String sql = """
-            SELECT mi.id, mi.name, mi.price, mi.product_type_id, mi.flow_id, 
-                   mi.cooking_time_minutes, mi.weight_grams
+            SELECT mi.id, mi.name, mi.price
             FROM menu_item mi
             ORDER BY mi.name
             """;
@@ -52,8 +51,7 @@ public class MultiCityViewService {
     public List<MenuItem> getExtras(City city) {
         JdbcTemplate template = getTemplate(city);
         String sql = """
-            SELECT mi.id, mi.name, mi.price, mi.product_type_id, mi.flow_id, 
-                   mi.cooking_time_minutes, mi.weight_grams
+            SELECT mi.id, mi.name, mi.price
             FROM menu_item mi
             JOIN product_type pt ON mi.product_type_id = pt.id
             WHERE pt.extra = true
@@ -82,8 +80,7 @@ public class MultiCityViewService {
         Map<Long, List<MenuItem>> comboMenuItemsMap = new HashMap<>();
         
         String comboItemsSql = """
-            SELECT icc.item_combo_id, mi.id, mi.name, mi.price, mi.product_type_id, mi.flow_id, 
-                   mi.cooking_time_minutes, mi.weight_grams
+            SELECT icc.item_combo_id, mi.id, mi.name, mi.price
             FROM item_combo_compound icc
             JOIN menu_item mi ON icc.menu_item_id = mi.id
             ORDER BY icc.item_combo_id, mi.name
