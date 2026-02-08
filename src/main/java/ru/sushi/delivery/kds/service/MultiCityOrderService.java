@@ -2,6 +2,7 @@ package ru.sushi.delivery.kds.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -39,6 +40,9 @@ public class MultiCityOrderService {
 
     @Qualifier("ukhtaJdbcTemplate")
     private final JdbcTemplate ukhtaJdbcTemplate;
+
+    @Autowired(required = false)
+    private TelegramNotificationService telegramNotificationService;
 
     public enum City {
         PARNAS,
@@ -159,6 +163,18 @@ public class MultiCityOrderService {
         }
 
         log.info("Created order {} in city {} with {} items", name, city, menuItems.size());
+
+        if (telegramNotificationService != null) {
+            try {
+                telegramNotificationService.notifyNewOrder(
+                        city, name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
+                        orderTypeVal, address, customerPhone, paymentType, deliveryTime
+                );
+            } catch (Exception e) {
+                log.warn("Failed to send Telegram notification for order {}", name, e);
+            }
+        }
+
         return orderId;
     }
 

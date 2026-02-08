@@ -44,6 +44,15 @@ ukhta:
     username: ${UKHTA_DATASOURCE_USERNAME:adm}
     password: ${UKHTA_DATASOURCE_PASSWORD:12341234s}
 
+# Telegram-бот для уведомлений курьеров о новых заказах
+# Создайте бота через @BotFather, добавьте его в чат курьеров
+# Chat ID получите через @userinfobot после добавления бота в чат (id для группы или пользователя)
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:7756988657:AAHhXx-VCvzrTOfpwSgWroG89FYaCVJQLYQ}   # Токен от @BotFather
+    chat-id: ${TELEGRAM_CHAT_ID:-5288430241}   # Один чат (для обратной совместимости)
+    chat-ids: ${TELEGRAM_CHAT_IDS:} # Несколько чатов через запятую: -1001,-1002,-1003
+
 spring:
   datasource:
     url: ${SQL_URL:jdbc:postgresql://217.18.61.192:5432/kds-spb}
