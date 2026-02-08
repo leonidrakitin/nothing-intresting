@@ -38,6 +38,12 @@ public class MainView extends VerticalLayout {
         );
         add(goToCreateScreen);
 
+        Button goToCreateOperatorScreen = new Button("Создать мульти-городский заказ");
+        goToCreateOperatorScreen.addClickListener(e ->
+            UI.getCurrent().navigate("create-new")
+        );
+        add(goToCreateOperatorScreen);
+
         Button goToCollectorScreen = new Button("Сборщик");
         goToCollectorScreen.addClickListener(e ->
             UI.getCurrent().navigate("collector")

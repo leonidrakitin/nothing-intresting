@@ -416,9 +416,9 @@ public class CreateNewOrderView extends VerticalLayout {
         switchCity(currentCity);
 
         VerticalLayout menuColumn = new VerticalLayout(tabsLeft, tabsContentLeft, extrasLayout);
-        menuColumn.setWidth("350px");
-        menuColumn.setMinWidth("350px");
-        menuColumn.setMaxWidth("350px");
+        menuColumn.setWidth("450px");
+        menuColumn.setMinWidth("450px");
+        menuColumn.setMaxWidth("450px");
         menuColumn.setPadding(false);
         menuColumn.setSpacing(true);
         menuColumn.getStyle()
@@ -866,7 +866,7 @@ public class CreateNewOrderView extends VerticalLayout {
         name.addClassName("cart-product-name");
 
         double lineTotal = cartItem.getMenuItem().getPrice() * cartItem.getQuantity();
-        Span price = new Span(String.format(" - %.0f ₽ -", lineTotal));
+        Span price = new Span(String.format("%.0f ₽", lineTotal));
         price.addClassName("cart-product-price");
 
         Span meta = new Span(String.format("%.0f ₽ × %d шт.", cartItem.getMenuItem().getPrice(), cartItem.getQuantity()));
