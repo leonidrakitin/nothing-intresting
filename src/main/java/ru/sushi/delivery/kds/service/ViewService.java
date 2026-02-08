@@ -17,6 +17,7 @@ import ru.sushi.delivery.kds.domain.service.ScreenService;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
+import ru.sushi.delivery.kds.dto.OrderTimelineDto;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -208,5 +209,9 @@ public class ViewService {
 
     public void updateItemToCollecting(Long orderItemId) {
         this.orderService.updateItemToCollecting(orderItemId);
+    }
+
+    public Optional<OrderTimelineDto> getOrderTimeline(String orderName) {
+        return this.orderService.getOrderTimeline(orderName);
     }
 }

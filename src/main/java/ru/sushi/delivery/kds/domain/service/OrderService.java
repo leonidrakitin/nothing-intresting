@@ -13,10 +13,12 @@ import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderItemRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.OrderRepository;
+import ru.sushi.delivery.kds.domain.persist.repository.OrderTimelineRepository;
 import ru.sushi.delivery.kds.domain.persist.repository.flow.ScreenRepository;
 import ru.sushi.delivery.kds.dto.IngredientCompactDTO;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
+import ru.sushi.delivery.kds.dto.OrderTimelineDto;
 import ru.sushi.delivery.kds.dto.PackageDto;
 import ru.sushi.delivery.kds.model.FlowStepType;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
@@ -35,6 +37,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -51,6 +54,7 @@ public class OrderService {
     private final OrderChangesListener orderChangesListener;
     private final AsyncOrderService asyncOrderService;
     private final OrderRepository orderRepository;
+    private final OrderTimelineRepository orderTimelineRepository;
     private final RecipeService recipeService;
     private final ScreenRepository screenRepository; //todo to service
     private final ProductPackageService productPackageService;
@@ -601,5 +605,9 @@ public class OrderService {
         }
         
         this.wsMessageSender.sendRefreshAll();
+    }
+
+    public Optional<OrderTimelineDto> getOrderTimeline(String orderName) {
+        return orderTimelineRepository.findTimelineByOrderName(orderName);
     }
 }

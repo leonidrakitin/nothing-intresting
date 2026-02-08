@@ -8,11 +8,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
+import ru.sushi.delivery.kds.dto.OrderTimelineDto;
 import ru.sushi.delivery.kds.service.ViewService;
 
 import java.util.List;
+import java.util.Optional;
 
 @AllArgsConstructor
 @CrossOrigin(origins = "*")
@@ -47,6 +50,13 @@ public class OrderController {
     @GetMapping("/history")
     public ResponseEntity<List<OrderShortDto>> getAllHistoryOrdersToday() {
         return ResponseEntity.ok(viewService.getAllHistoryOrdersWithItemsToday());
+    }
+
+    @GetMapping("/timeline")
+    public ResponseEntity<OrderTimelineDto> getOrderTimeline(@RequestParam String orderName) {
+        Optional<OrderTimelineDto> result = viewService.getOrderTimeline(orderName);
+        return result.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("{orderId}/returnItems")
