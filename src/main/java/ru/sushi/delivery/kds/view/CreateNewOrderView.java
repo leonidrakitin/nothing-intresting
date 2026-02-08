@@ -35,11 +35,14 @@ import ru.sushi.delivery.kds.config.CityProperties;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.domain.service.MenuItemAliasService;
+import ru.sushi.delivery.kds.dto.OrderAddressDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.dto.ParsedOrderDto;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
+import ru.sushi.delivery.kds.model.OrderType;
+import ru.sushi.delivery.kds.model.PaymentType;
 import ru.sushi.delivery.kds.service.MultiCityOrderService;
 import ru.sushi.delivery.kds.service.MultiCityViewService;
 import ru.sushi.delivery.kds.service.OrderTextParserService;
@@ -75,8 +78,20 @@ public class CreateNewOrderView extends VerticalLayout {
     private Instant selectedKitchenStart = null;
     private final Span kitchenStartDisplay = new Span("Время начала приготовления: Сейчас");
     private final Button changeKitchenStartButton = new Button("изменить");
-    private final DateTimePicker finishPicker = new DateTimePicker("Время готовности");
+    private final DateTimePicker finishPicker = new DateTimePicker("Время готовности/доставки");
     private final Checkbox isYandexOrder = new Checkbox("Заказ Яндекс");
+    private final ComboBox<OrderType> orderTypeCombo = new ComboBox<>("Тип заказа");
+    private final TextField customerPhoneField = new TextField("Телефон клиента");
+    private final ComboBox<PaymentType> paymentTypeCombo = new ComboBox<>("Тип оплаты");
+    private final TextField addressStreetField = new TextField("Улица");
+    private final TextField addressHouseField = new TextField("Дом");
+    private final TextField addressFlatField = new TextField("Квартира");
+    private final TextField addressFloorField = new TextField("Этаж");
+    private final TextField addressEntranceField = new TextField("Подъезд");
+    private final TextField addressDoorphoneField = new TextField("Домофон");
+    private final TextField addressCityField = new TextField("Город");
+    private final TextArea addressCommentField = new TextArea("Комментарий к адресу");
+    private final VerticalLayout addressLayout = new VerticalLayout();
     private final VerticalLayout rollsTabLayout = new VerticalLayout();
     private final VerticalLayout setsTabLayout = new VerticalLayout();
     private final VerticalLayout extrasLayout = new VerticalLayout();
@@ -221,6 +236,49 @@ public class CreateNewOrderView extends VerticalLayout {
         datePicker.setId("order-create-picker");
         datePicker.setWidth("300px"); // Устанавливаем явную ширину для видимости
         finishPicker.setLocale(Locale.of("ru", "RU"));
+
+        orderTypeCombo.setItems(OrderType.PICKUP, OrderType.DELIVERY);
+        orderTypeCombo.setItemLabelGenerator(t -> t == OrderType.PICKUP ? "Самовывоз" : "Доставка");
+        orderTypeCombo.setValue(OrderType.PICKUP);
+        orderTypeCombo.setWidthFull();
+
+        paymentTypeCombo.setItems(PaymentType.CASHLESS, PaymentType.CASH, PaymentType.CARD);
+        paymentTypeCombo.setItemLabelGenerator(t -> switch (t) {
+            case CASHLESS -> "Безналичные";
+            case CASH -> "Наличные";
+            case CARD -> "Карта";
+        });
+        paymentTypeCombo.setValue(PaymentType.CASHLESS);
+        paymentTypeCombo.setWidthFull();
+
+        customerPhoneField.setPlaceholder("+7...");
+        customerPhoneField.setWidthFull();
+
+        addressStreetField.setWidthFull();
+        addressHouseField.setWidthFull();
+        addressFlatField.setWidthFull();
+        addressFloorField.setWidthFull();
+        addressEntranceField.setWidthFull();
+        addressDoorphoneField.setWidthFull();
+        addressCityField.setWidthFull();
+        addressCommentField.setWidthFull();
+        addressCommentField.setMaxHeight("60px");
+
+        addressLayout.add(addressCityField, addressStreetField, addressHouseField, addressFlatField,
+                addressFloorField, addressEntranceField, addressDoorphoneField, addressCommentField);
+        addressLayout.setPadding(false);
+        addressLayout.setSpacing(true);
+        addressLayout.setVisible(false);
+
+        orderTypeCombo.addValueChangeListener(e -> {
+            boolean isDelivery = OrderType.DELIVERY.equals(e.getValue());
+            addressLayout.setVisible(isDelivery);
+            if (isDelivery) {
+                finishPicker.setValue(LocalDateTime.now().plusHours(1));
+            } else {
+                updateTotalTime();
+            }
+        });
 
         // ЛЕВАЯ ЧАСТЬ
         Tab tabRolls = new Tab("Роллы");
@@ -580,6 +638,16 @@ public class CreateNewOrderView extends VerticalLayout {
         finishLayout.setAlignItems(Alignment.CENTER);
         finishLayout.setWidthFull();
 
+        VerticalLayout orderDetailsLayout = new VerticalLayout(
+                orderTypeCombo,
+                customerPhoneField,
+                paymentTypeCombo,
+                addressLayout
+        );
+        orderDetailsLayout.setPadding(false);
+        orderDetailsLayout.setSpacing(true);
+        orderDetailsLayout.setWidthFull();
+
         Button createOrderButton = new Button("Создать заказ");
         Button importButton = new Button("Импорт", VaadinIcon.UPLOAD.create());
         Button clearCartButton = new Button("Очистить корзину");
@@ -669,11 +737,23 @@ public class CreateNewOrderView extends VerticalLayout {
             Notification.show("Корзина очищена");
 
             updateKitchenStartTime();
-            isYandexOrder.setValue(false); // Сбрасываем чекбокс при очистке
+            isYandexOrder.setValue(false);
+            orderTypeCombo.setValue(OrderType.PICKUP);
+            customerPhoneField.clear();
+            paymentTypeCombo.setValue(PaymentType.CASHLESS);
+            addressLayout.setVisible(false);
+            addressStreetField.clear();
+            addressHouseField.clear();
+            addressFlatField.clear();
+            addressFloorField.clear();
+            addressEntranceField.clear();
+            addressDoorphoneField.clear();
+            addressCityField.clear();
+            addressCommentField.clear();
         });
 
 
-        cartLayout.add(chosenTitle, chosenGrid, kitchenStartLayout, finishLayout, totalPay, totalTime, buttonBar);
+        cartLayout.add(chosenTitle, chosenGrid, kitchenStartLayout, finishLayout, orderDetailsLayout, totalPay, totalTime, buttonBar);
         return cartLayout;
     }
 
@@ -1218,7 +1298,22 @@ public class CreateNewOrderView extends VerticalLayout {
         }
 
         boolean yandexOrder = isYandexOrder.getValue();
-        multiCityOrderService.createOrder(getOrderCity(), orderNumber, itemsToCreate, shouldBeFinishedAt, kitchenShouldGetOrderAt);
+        OrderType orderType = orderTypeCombo.getValue() != null ? orderTypeCombo.getValue() : OrderType.PICKUP;
+        OrderAddressDto address = null;
+        if (orderType == OrderType.DELIVERY) {
+            address = OrderAddressDto.builder()
+                    .street(addressStreetField.getValue())
+                    .house(addressHouseField.getValue())
+                    .flat(addressFlatField.getValue())
+                    .floor(addressFloorField.getValue())
+                    .entrance(addressEntranceField.getValue())
+                    .doorphone(addressDoorphoneField.getValue())
+                    .city(addressCityField.getValue())
+                    .comment(addressCommentField.getValue())
+                    .build();
+        }
+        multiCityOrderService.createOrder(getOrderCity(), orderNumber, itemsToCreate, shouldBeFinishedAt, kitchenShouldGetOrderAt,
+                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue());
         Notification.show("Заказ создан! Номер: " + orderNumber + ", Позиции: " + itemsToCreate.size() +
                 (yandexOrder ? ", Яндекс заказ" : ""));
 
@@ -1236,6 +1331,18 @@ public class CreateNewOrderView extends VerticalLayout {
         updateKitchenStartTime();
         finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
         isYandexOrder.setValue(false);
+        orderTypeCombo.setValue(OrderType.PICKUP);
+        customerPhoneField.clear();
+        paymentTypeCombo.setValue(PaymentType.CASHLESS);
+        addressLayout.setVisible(false);
+        addressStreetField.clear();
+        addressHouseField.clear();
+        addressFlatField.clear();
+        addressFloorField.clear();
+        addressEntranceField.clear();
+        addressDoorphoneField.clear();
+        addressCityField.clear();
+        addressCommentField.clear();
     }
 
     private void openKitchenStartDialog() {
@@ -1534,6 +1641,41 @@ public class CreateNewOrderView extends VerticalLayout {
         orderNumberFieldDialog.setWidthFull();
         content.add(orderNumberFieldDialog);
 
+        // Показываем распарсенные данные
+        if (parsed.getOrderType() != null) {
+            Span orderTypeLabel = new Span("Тип заказа: " + (parsed.getOrderType() == OrderType.PICKUP ? "Самовывоз" : "Доставка"));
+            orderTypeLabel.getStyle().set("font-weight", "bold");
+            content.add(orderTypeLabel);
+        }
+
+        if (parsed.getCustomerPhone() != null && !parsed.getCustomerPhone().isEmpty()) {
+            Span phoneLabel = new Span("Телефон: " + parsed.getCustomerPhone());
+            content.add(phoneLabel);
+        }
+
+        if (parsed.getPaymentType() != null) {
+            String paymentLabel = switch (parsed.getPaymentType()) {
+                case CASHLESS -> "Безналичные";
+                case CASH -> "Наличные";
+                case CARD -> "Карта";
+            };
+            Span paymentSpan = new Span("Оплата: " + paymentLabel);
+            content.add(paymentSpan);
+        }
+
+        if (parsed.getAddress() != null && parsed.getOrderType() == OrderType.DELIVERY) {
+            OrderAddressDto addr = parsed.getAddress();
+            StringBuilder addrStr = new StringBuilder("Адрес: ");
+            if (addr.getCity() != null) addrStr.append(addr.getCity()).append(", ");
+            if (addr.getStreet() != null) addrStr.append(addr.getStreet()).append(", ");
+            if (addr.getHouse() != null) addrStr.append("д. ").append(addr.getHouse());
+            if (addr.getFlat() != null) addrStr.append(", кв. ").append(addr.getFlat());
+            if (addr.getEntrance() != null) addrStr.append(", подъезд ").append(addr.getEntrance());
+            if (addr.getFloor() != null) addrStr.append(", этаж ").append(addr.getFloor());
+            Span addressLabel = new Span(addrStr.toString());
+            content.add(addressLabel);
+        }
+
         if (parsed.getComment() != null && !parsed.getComment().isEmpty()) {
             Span commentLabel = new Span("Комментарий: " + parsed.getComment());
             content.add(commentLabel);
@@ -1650,6 +1792,28 @@ public class CreateNewOrderView extends VerticalLayout {
         Button confirmButton = new Button("Добавить в корзину", VaadinIcon.CHECK.create());
         confirmButton.addClickListener(e -> {
             confirmDialog.close();
+            
+            // Применяем распарсенные поля к UI
+            if (parsed.getOrderType() != null) {
+                orderTypeCombo.setValue(parsed.getOrderType());
+            }
+            if (parsed.getCustomerPhone() != null) {
+                customerPhoneField.setValue(parsed.getCustomerPhone());
+            }
+            if (parsed.getPaymentType() != null) {
+                paymentTypeCombo.setValue(parsed.getPaymentType());
+            }
+            if (parsed.getAddress() != null && parsed.getOrderType() == OrderType.DELIVERY) {
+                OrderAddressDto addr = parsed.getAddress();
+                if (addr.getCity() != null) addressCityField.setValue(addr.getCity());
+                if (addr.getStreet() != null) addressStreetField.setValue(addr.getStreet());
+                if (addr.getHouse() != null) addressHouseField.setValue(addr.getHouse());
+                if (addr.getFlat() != null) addressFlatField.setValue(addr.getFlat());
+                if (addr.getFloor() != null) addressFloorField.setValue(addr.getFloor());
+                if (addr.getEntrance() != null) addressEntranceField.setValue(addr.getEntrance());
+                if (addr.getDoorphone() != null) addressDoorphoneField.setValue(addr.getDoorphone());
+                if (addr.getComment() != null) addressCommentField.setValue(addr.getComment());
+            }
             
             // Собираем список позиций, которые не удалось добавить
             List<NotAddedEntry> notAddedItems = new ArrayList<>();

@@ -9,9 +9,12 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Station;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.dto.OrderAddressDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.model.FlowStepType;
+import ru.sushi.delivery.kds.model.OrderType;
+import ru.sushi.delivery.kds.model.PaymentType;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
 
@@ -79,7 +82,11 @@ public class MultiCityOrderService {
             String name,
             List<MenuItem> menuItems,
             Instant shouldBeFinishedAt,
-            Instant kitchenShouldGetOrderAt
+            Instant kitchenShouldGetOrderAt,
+            OrderType orderType,
+            OrderAddressDto address,
+            String customerPhone,
+            PaymentType paymentType
     ) {
         JdbcTemplate template = getTemplate(city);
 
@@ -88,23 +95,41 @@ public class MultiCityOrderService {
         boolean isPreorder = kitchenShouldGetOrderAt != null &&
                             kitchenShouldGetOrderAt.isAfter(now.plusSeconds(15 * 60));
 
+        OrderType orderTypeVal = orderType != null ? orderType : OrderType.PICKUP;
+        String orderTypeStr = orderTypeVal.name();
+        String paymentTypeStr = paymentType != null ? paymentType.name() : null;
+
         // Создаем заказ
         String insertOrderSql = """
             INSERT INTO orders (name, status, should_be_finished_at, kitchen_should_get_order_at, 
-                              status_update_at, created_at, preorder)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                              status_update_at, created_at, preorder, order_type, customer_phone, payment_type,
+                              address_street, address_flat, address_floor, address_entrance, address_comment,
+                              address_city, address_doorphone, address_house)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         template.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(insertOrderSql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, name);
-            ps.setString(2, OrderStatus.CREATED.name());
-            ps.setTimestamp(3, shouldBeFinishedAt != null ? Timestamp.from(shouldBeFinishedAt) : null);
-            ps.setTimestamp(4, kitchenShouldGetOrderAt != null ? Timestamp.from(kitchenShouldGetOrderAt) : null);
-            ps.setTimestamp(5, Timestamp.from(now));
-            ps.setTimestamp(6, Timestamp.from(now));
-            ps.setBoolean(7, isPreorder);
+            int idx = 1;
+            ps.setString(idx++, name);
+            ps.setString(idx++, OrderStatus.CREATED.name());
+            ps.setTimestamp(idx++, shouldBeFinishedAt != null ? Timestamp.from(shouldBeFinishedAt) : null);
+            ps.setTimestamp(idx++, kitchenShouldGetOrderAt != null ? Timestamp.from(kitchenShouldGetOrderAt) : null);
+            ps.setTimestamp(idx++, Timestamp.from(now));
+            ps.setTimestamp(idx++, Timestamp.from(now));
+            ps.setBoolean(idx++, isPreorder);
+            ps.setString(idx++, orderTypeStr);
+            ps.setString(idx++, customerPhone);
+            ps.setString(idx++, paymentTypeStr);
+            ps.setString(idx++, address != null ? address.getStreet() : null);
+            ps.setString(idx++, address != null ? address.getFlat() : null);
+            ps.setString(idx++, address != null ? address.getFloor() : null);
+            ps.setString(idx++, address != null ? address.getEntrance() : null);
+            ps.setString(idx++, address != null ? address.getComment() : null);
+            ps.setString(idx++, address != null ? address.getCity() : null);
+            ps.setString(idx++, address != null ? address.getDoorphone() : null);
+            ps.setString(idx++, address != null ? address.getHouse() : null);
             return ps;
         }, keyHolder);
 
@@ -143,7 +168,10 @@ public class MultiCityOrderService {
 
         String sql = """
             SELECT o.id, o.name, o.status, o.should_be_finished_at, 
-                   o.kitchen_should_get_order_at, o.kitchen_got_order_at, o.preorder
+                   o.kitchen_should_get_order_at, o.kitchen_got_order_at, o.preorder,
+                   o.order_type, o.customer_phone, o.payment_type,
+                   o.address_street, o.address_flat, o.address_floor, o.address_entrance,
+                   o.address_comment, o.address_city, o.address_doorphone, o.address_house
             FROM orders o
             WHERE o.status IN ('CREATED', 'COOKING', 'COLLECTING')
             ORDER BY o.kitchen_should_get_order_at ASC
@@ -152,18 +180,7 @@ public class MultiCityOrderService {
         return template.query(sql, (rs, rowNum) -> {
             Long orderId = rs.getLong("id");
             List<OrderItemDto> orderItems = getOrderItems(city, orderId);
-            return OrderShortDto.builder()
-                .id(orderId)
-                .name(rs.getString("name") + (rs.getBoolean("preorder") ? "[предзаказ]" : ""))
-                .status(OrderStatus.valueOf(rs.getString("status")))
-                .items(orderItems)
-                .shouldBeFinishedAt(rs.getTimestamp("should_be_finished_at") != null ?
-                    rs.getTimestamp("should_be_finished_at").toInstant() : null)
-                .kitchenShouldGetOrderAt(rs.getTimestamp("kitchen_should_get_order_at") != null ?
-                    rs.getTimestamp("kitchen_should_get_order_at").toInstant() : null)
-                .kitchenGotOrderAt(rs.getTimestamp("kitchen_got_order_at") != null ?
-                    rs.getTimestamp("kitchen_got_order_at").toInstant() : null)
-                .build();
+            return buildOrderShortDto(rs, orderItems);
         });
     }
 
@@ -175,7 +192,10 @@ public class MultiCityOrderService {
 
         String sql = """
             SELECT o.id, o.name, o.status, o.should_be_finished_at, 
-                   o.kitchen_should_get_order_at, o.kitchen_got_order_at, o.preorder
+                   o.kitchen_should_get_order_at, o.kitchen_got_order_at, o.preorder,
+                   o.order_type, o.customer_phone, o.payment_type,
+                   o.address_street, o.address_flat, o.address_floor, o.address_entrance,
+                   o.address_comment, o.address_city, o.address_doorphone, o.address_house
             FROM orders o
             WHERE o.created_at >= ? AND o.created_at < ?
             ORDER BY o.created_at DESC
@@ -184,18 +204,7 @@ public class MultiCityOrderService {
         return template.query(sql, (rs, rowNum) -> {
             Long orderId = rs.getLong("id");
             List<OrderItemDto> orderItems = getOrderItems(city, orderId);
-            return OrderShortDto.builder()
-                .id(orderId)
-                .name(rs.getString("name") + (rs.getBoolean("preorder") ? "[предзаказ]" : ""))
-                .status(OrderStatus.valueOf(rs.getString("status")))
-                .items(orderItems)
-                .shouldBeFinishedAt(rs.getTimestamp("should_be_finished_at") != null ?
-                    rs.getTimestamp("should_be_finished_at").toInstant() : null)
-                .kitchenShouldGetOrderAt(rs.getTimestamp("kitchen_should_get_order_at") != null ?
-                    rs.getTimestamp("kitchen_should_get_order_at").toInstant() : null)
-                .kitchenGotOrderAt(rs.getTimestamp("kitchen_got_order_at") != null ?
-                    rs.getTimestamp("kitchen_got_order_at").toInstant() : null)
-                .build();
+            return buildOrderShortDto(rs, orderItems);
         }, Timestamp.from(from), Timestamp.from(to));
     }
 
@@ -455,6 +464,55 @@ public class MultiCityOrderService {
             OrderStatus.CREATED.name(),
             orderId
         );
+    }
+
+    private OrderShortDto buildOrderShortDto(java.sql.ResultSet rs, List<OrderItemDto> orderItems) throws java.sql.SQLException {
+        OrderAddressDto address = null;
+        if (rs.getString("address_street") != null || rs.getString("address_city") != null || rs.getString("address_house") != null) {
+            address = OrderAddressDto.builder()
+                    .street(rs.getString("address_street"))
+                    .flat(rs.getString("address_flat"))
+                    .floor(rs.getString("address_floor"))
+                    .entrance(rs.getString("address_entrance"))
+                    .comment(rs.getString("address_comment"))
+                    .city(rs.getString("address_city"))
+                    .doorphone(rs.getString("address_doorphone"))
+                    .house(rs.getString("address_house"))
+                    .build();
+        }
+
+        OrderType orderType = null;
+        String orderTypeStr = rs.getString("order_type");
+        if (orderTypeStr != null) {
+            try {
+                orderType = OrderType.valueOf(orderTypeStr);
+            } catch (IllegalArgumentException ignored) {}
+        }
+
+        PaymentType paymentType = null;
+        String paymentTypeStr = rs.getString("payment_type");
+        if (paymentTypeStr != null) {
+            try {
+                paymentType = PaymentType.valueOf(paymentTypeStr);
+            } catch (IllegalArgumentException ignored) {}
+        }
+
+        return OrderShortDto.builder()
+                .id(rs.getLong("id"))
+                .name(rs.getString("name") + (rs.getBoolean("preorder") ? "[предзаказ]" : ""))
+                .status(OrderStatus.valueOf(rs.getString("status")))
+                .items(orderItems)
+                .shouldBeFinishedAt(rs.getTimestamp("should_be_finished_at") != null ?
+                    rs.getTimestamp("should_be_finished_at").toInstant() : null)
+                .kitchenShouldGetOrderAt(rs.getTimestamp("kitchen_should_get_order_at") != null ?
+                    rs.getTimestamp("kitchen_should_get_order_at").toInstant() : null)
+                .kitchenGotOrderAt(rs.getTimestamp("kitchen_got_order_at") != null ?
+                    rs.getTimestamp("kitchen_got_order_at").toInstant() : null)
+                .orderType(orderType)
+                .address(address)
+                .customerPhone(rs.getString("customer_phone"))
+                .paymentType(paymentType)
+                .build();
     }
 
     private JdbcTemplate getTemplate(City city) {

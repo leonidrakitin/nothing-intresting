@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.model.OrderStatus;
+import ru.sushi.delivery.kds.model.OrderType;
+import ru.sushi.delivery.kds.model.PaymentType;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,6 +24,10 @@ public class OrderShortDto {
     private Instant shouldBeFinishedAt;
     private Instant kitchenShouldGetOrderAt;
     private Instant kitchenGotOrderAt;
+    private OrderType orderType;
+    private OrderAddressDto address;
+    private String customerPhone;
+    private PaymentType paymentType;
 
     public static OrderShortDto of(Order order, List<OrderItemDto> orderItems) {
         return OrderShortDto.builder()
@@ -32,6 +38,10 @@ public class OrderShortDto {
                 .shouldBeFinishedAt(order.getShouldBeFinishedAt())
                 .kitchenShouldGetOrderAt(order.getKitchenShouldGetOrderAt())
                 .kitchenGotOrderAt(order.getKitchenGotOrderAt())
+                .orderType(order.getOrderType())
+                .address(OrderAddressDto.of(order.getAddress()))
+                .customerPhone(order.getCustomerPhone())
+                .paymentType(order.getPaymentType())
                 .build();
     }
 }

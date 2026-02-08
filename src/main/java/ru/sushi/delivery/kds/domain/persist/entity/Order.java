@@ -1,5 +1,9 @@
 package ru.sushi.delivery.kds.domain.persist.entity;
 
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -19,6 +23,8 @@ import lombok.Setter;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import ru.sushi.delivery.kds.model.OrderStatus;
+import ru.sushi.delivery.kds.model.OrderType;
+import ru.sushi.delivery.kds.model.PaymentType;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -64,6 +70,27 @@ public class Order {
 
     @Builder.Default
     private Boolean preorder = false;
+
+    @Enumerated(EnumType.STRING)
+    private OrderType orderType;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "street", column = @Column(name = "address_street")),
+        @AttributeOverride(name = "flat", column = @Column(name = "address_flat")),
+        @AttributeOverride(name = "floor", column = @Column(name = "address_floor")),
+        @AttributeOverride(name = "entrance", column = @Column(name = "address_entrance")),
+        @AttributeOverride(name = "comment", column = @Column(name = "address_comment")),
+        @AttributeOverride(name = "city", column = @Column(name = "address_city")),
+        @AttributeOverride(name = "doorphone", column = @Column(name = "address_doorphone")),
+        @AttributeOverride(name = "house", column = @Column(name = "address_house"))
+    })
+    private OrderAddress address;
+
+    private String customerPhone;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentType paymentType;
 
     public static Order of(String name, Instant shouldBeFinishedAt, Instant kitchenShouldGetOrderAt) {
         return Order.builder()

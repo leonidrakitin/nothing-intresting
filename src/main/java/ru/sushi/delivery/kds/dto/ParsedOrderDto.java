@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.model.OrderType;
+import ru.sushi.delivery.kds.model.PaymentType;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,12 +21,19 @@ import java.util.Map;
 public class ParsedOrderDto {
     private String orderNumber;
     private String comment;
+    @Builder.Default
     private List<ParsedItem> items = new ArrayList<>();
+    @Builder.Default
     private List<ParsedCombo> combos = new ArrayList<>();
+    @Builder.Default
     private Map<String, Integer> extras = new java.util.HashMap<>(); // Название -> количество
     private Instant kitchenStartTime; // Может быть null
     private Instant finishTime; // Может быть null
     private Integer instrumentsCount; // Количество приборов
+    private OrderType orderType; // Тип заказа: PICKUP/DELIVERY
+    private String customerPhone; // Телефон клиента
+    private PaymentType paymentType; // Тип оплаты
+    private OrderAddressDto address; // Адрес доставки
     
     @Data
     @Builder

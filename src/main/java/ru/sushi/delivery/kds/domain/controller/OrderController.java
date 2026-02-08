@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.sushi.delivery.kds.domain.service.OrderService;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.dto.OrderTimelineDto;
 import ru.sushi.delivery.kds.service.ViewService;
@@ -24,6 +25,7 @@ import java.util.Optional;
 public class OrderController {
 
     private final ViewService viewService; //do not use view
+    private final OrderService orderService;
 
     @GetMapping("{screenId}")
     public ResponseEntity<List<OrderShortDto>> getScreenOrderItems(@PathVariable Long screenId) {
@@ -71,6 +73,12 @@ public class OrderController {
     @PostMapping("{orderItemId}/updateToCollecting")
     public ResponseEntity<Void> updateItemToCollecting(@PathVariable Long orderItemId) {
         viewService.updateItemToCollecting(orderItemId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(@PathVariable Long orderId) {
+        orderService.cancelOrder(orderId);
         return ResponseEntity.ok().build();
     }
 }

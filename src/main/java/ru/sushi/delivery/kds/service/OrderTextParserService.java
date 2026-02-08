@@ -5,7 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.dto.OrderAddressDto;
 import ru.sushi.delivery.kds.dto.ParsedOrderDto;
+import ru.sushi.delivery.kds.model.OrderType;
+import ru.sushi.delivery.kds.model.PaymentType;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -51,6 +54,25 @@ public class OrderTextParserService {
         // Парсим приборы
         Integer instrumentsCount = parseInstrumentsCount(text);
         builder.instrumentsCount(instrumentsCount);
+        
+        // Парсим тип заказа
+        OrderType orderType = parseOrderType(text);
+        builder.orderType(orderType);
+        
+        // Парсим телефон
+        String customerPhone = parseCustomerPhone(text);
+        builder.customerPhone(customerPhone);
+        
+        // Парсим тип оплаты
+        PaymentType paymentType = parsePaymentType(text);
+        builder.paymentType(paymentType);
+        
+        // Парсим адрес (только для доставки)
+        OrderAddressDto address = null;
+        if (orderType == OrderType.DELIVERY) {
+            address = parseAddress(text);
+        }
+        builder.address(address);
         
         // Парсим сеты
         List<ParsedOrderDto.ParsedCombo> combos = parseCombos(text, allCombos);
@@ -970,6 +992,187 @@ public class OrderTextParserService {
         return name.toLowerCase()
             .replaceAll("\\s+", " ")
             .trim();
+    }
+
+    private OrderType parseOrderType(String text) {
+        // Паттерны для определения типа заказа
+        Pattern[] deliveryPatterns = {
+            Pattern.compile("🚙\\s*Доставка", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Доставка\\s*·", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Доставить", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Адрес доставки\\s*—", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Курьер\\s*—\\s*\\.+", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Статус курьера\\s+Ищем", Pattern.CASE_INSENSITIVE)
+        };
+        
+        Pattern[] pickupPatterns = {
+            Pattern.compile("🥡\\s*С собой", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("С собой\\s*·", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Доставка:\\s*Самовывоз", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Пользователь заберет самостоятельно", Pattern.CASE_INSENSITIVE)
+        };
+        
+        // Сначала проверяем самовывоз (более специфичные паттерны)
+        for (Pattern pattern : pickupPatterns) {
+            if (pattern.matcher(text).find()) {
+                return OrderType.PICKUP;
+            }
+        }
+        
+        // Затем проверяем доставку
+        for (Pattern pattern : deliveryPatterns) {
+            if (pattern.matcher(text).find()) {
+                return OrderType.DELIVERY;
+            }
+        }
+        
+        // По умолчанию - самовывоз
+        return OrderType.PICKUP;
+    }
+
+    private String parseCustomerPhone(String text) {
+        // Паттерны для телефона
+        Pattern[] patterns = {
+            Pattern.compile("Телефон:\\s*([+\\d\\s\\(\\)\\-]+)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Пользователь\\s*—\\s*Client\\s*([+\\d\\s\\(\\)\\-]+)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\+7\\s*\\d{3}\\s*\\d{3}\\s*\\d{2}\\s*\\d{2}"),
+            Pattern.compile("\\+79\\d{9}"),
+            Pattern.compile("8\\s*\\d{3}\\s*\\d{3}\\s*\\d{2}\\s*\\d{2}")
+        };
+        
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                String phone = matcher.group(matcher.groupCount()).trim();
+                // Убираем доп. номера типа "доб. 34931"
+                phone = phone.replaceAll("\\s*доб\\..*$", "").trim();
+                // Нормализуем формат
+                phone = phone.replaceAll("[\\s\\(\\)\\-]", "");
+                return phone;
+            }
+        }
+        
+        return null;
+    }
+
+    private PaymentType parsePaymentType(String text) {
+        // Паттерны для типа оплаты
+        Pattern[] cashlessPatterns = {
+            Pattern.compile("🟢\\s*Оплачено онлайн", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Оплата\\s*—\\s*безналичный платеж", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Оплата:\\s*оплачено онлайн", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Оплата:\\s*оплачен онлайн", Pattern.CASE_INSENSITIVE)
+        };
+        
+        Pattern[] cashPatterns = {
+            Pattern.compile("Оплата:\\s*наличные", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Оплата\\s*—\\s*наличные", Pattern.CASE_INSENSITIVE)
+        };
+        
+        Pattern[] cardPatterns = {
+            Pattern.compile("Оплата:\\s*карта", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Оплата\\s*—\\s*карта", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Оплата:\\s*картой", Pattern.CASE_INSENSITIVE)
+        };
+        
+        for (Pattern pattern : cashlessPatterns) {
+            if (pattern.matcher(text).find()) {
+                return PaymentType.CASHLESS;
+            }
+        }
+        
+        for (Pattern pattern : cashPatterns) {
+            if (pattern.matcher(text).find()) {
+                return PaymentType.CASH;
+            }
+        }
+        
+        for (Pattern pattern : cardPatterns) {
+            if (pattern.matcher(text).find()) {
+                return PaymentType.CARD;
+            }
+        }
+        
+        // По умолчанию - безналичные
+        return PaymentType.CASHLESS;
+    }
+
+    private OrderAddressDto parseAddress(String text) {
+        OrderAddressDto.OrderAddressDtoBuilder builder = OrderAddressDto.builder();
+        
+        // Парсим адрес доставки
+        // Формат 1: "Строительная улица, 2А, Ухта, 1 подъезд, кв. 2"
+        // Формат 2: "Адрес доставки — посёлок Парголово, улица Шишкина, д. 303к1"
+        // Формат 3: "Доставка: посёлок Парголово, улица Михаила Дудина 25к2"
+        
+        Pattern addressPattern = Pattern.compile(
+            "(?:Адрес доставки\\s*—|Доставка:)\\s*([^\\n]+)",
+            Pattern.CASE_INSENSITIVE
+        );
+        Matcher addressMatcher = addressPattern.matcher(text);
+        
+        String addressLine = null;
+        if (addressMatcher.find()) {
+            addressLine = addressMatcher.group(1).trim();
+        } else {
+            // Формат Starter: "Строительная улица, 2А, Ухта, 1 подъезд, кв. 2"
+            // Ищем строку после эмодзи времени
+            Pattern starterAddressPattern = Pattern.compile(
+                "🕒К\\s+\\d{1,2}:\\d{2}\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*\\d{2}\\.\\d{2}\\.\\d{4}\\s*\\n([^\\n]+)",
+                Pattern.CASE_INSENSITIVE
+            );
+            Matcher starterMatcher = starterAddressPattern.matcher(text);
+            if (starterMatcher.find()) {
+                addressLine = starterMatcher.group(1).trim();
+            }
+        }
+        
+        if (addressLine != null) {
+            // Парсим компоненты адреса
+            // Формат: "город, улица, дом" или "посёлок город, улица, дом"
+            String[] parts = addressLine.split(",");
+            
+            if (parts.length >= 3) {
+                // Город (может быть с префиксом "посёлок")
+                String city = parts[0].trim();
+                city = city.replaceAll("^посёлок\\s+", "");
+                builder.city(city);
+                
+                // Улица
+                String street = parts[1].trim();
+                street = street.replaceAll("^улица\\s+", "");
+                builder.street(street);
+                
+                // Дом (может быть с "д." или "дом")
+                String house = parts[2].trim();
+                house = house.replaceAll("^д\\.\\s*", "");
+                house = house.replaceAll("^дом\\s+", "");
+                builder.house(house);
+            }
+        }
+        
+        // Парсим квартиру
+        Pattern flatPattern = Pattern.compile("(?:кв\\.|квартира)[:\\s]*(\\d+)", Pattern.CASE_INSENSITIVE);
+        Matcher flatMatcher = flatPattern.matcher(text);
+        if (flatMatcher.find()) {
+            builder.flat(flatMatcher.group(1));
+        }
+        
+        // Парсим подъезд
+        Pattern entrancePattern = Pattern.compile("(?:подъезд)[:\\s]*(\\d+)", Pattern.CASE_INSENSITIVE);
+        Matcher entranceMatcher = entrancePattern.matcher(text);
+        if (entranceMatcher.find()) {
+            builder.entrance(entranceMatcher.group(1));
+        }
+        
+        // Парсим этаж
+        Pattern floorPattern = Pattern.compile("(?:этаж)[:\\s]*(\\d+)", Pattern.CASE_INSENSITIVE);
+        Matcher floorMatcher = floorPattern.matcher(text);
+        if (floorMatcher.find()) {
+            builder.floor(floorMatcher.group(1));
+        }
+        
+        return builder.build();
     }
 }
 

@@ -5,3 +5,6 @@ databaseChangeLog:
   - include:
       file: orders.ADD_PREORDER.15.01.25.yaml
       relativeToChangelogFile: true
+  - include:
+      file: orders.ADD_ORDER_TYPE_ADDRESS_PHONE_PAYMENT.08.02.26.yaml
+      relativeToChangelogFile: true

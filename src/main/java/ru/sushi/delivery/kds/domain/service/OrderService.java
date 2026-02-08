@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
+import ru.sushi.delivery.kds.domain.persist.entity.OrderAddress;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderItem;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.FlowStep;
 import ru.sushi.delivery.kds.domain.persist.entity.flow.Screen;
@@ -18,11 +19,14 @@ import ru.sushi.delivery.kds.domain.persist.repository.flow.ScreenRepository;
 import ru.sushi.delivery.kds.dto.IngredientCompactDTO;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
+import ru.sushi.delivery.kds.dto.OrderDelayDto;
 import ru.sushi.delivery.kds.dto.OrderTimelineDto;
 import ru.sushi.delivery.kds.dto.PackageDto;
 import ru.sushi.delivery.kds.model.FlowStepType;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
+import ru.sushi.delivery.kds.model.OrderType;
+import ru.sushi.delivery.kds.model.PaymentType;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
@@ -83,7 +87,11 @@ public class OrderService {
             String name,
             List<MenuItem> menuItems,
             Instant shouldBeFinishedAt,
-            Instant kitchenShouldGetOrderAt
+            Instant kitchenShouldGetOrderAt,
+            OrderType orderType,
+            OrderAddress address,
+            String customerPhone,
+            PaymentType paymentType
     ) {
         // Проверяем, является ли заказ предзаказом (время начала больше чем на 15 минут от текущего времени)
         Instant now = Instant.now();
@@ -94,6 +102,12 @@ public class OrderService {
         if (isPreorder) {
             order = order.toBuilder().preorder(true).build();
         }
+        order = order.toBuilder()
+                .orderType(orderType)
+                .address(address)
+                .customerPhone(customerPhone)
+                .paymentType(paymentType)
+                .build();
         order = this.orderRepository.save(order);
         
         List<OrderItem> orderItems = new ArrayList<>();
@@ -609,5 +623,9 @@ public class OrderService {
 
     public Optional<OrderTimelineDto> getOrderTimeline(String orderName) {
         return orderTimelineRepository.findTimelineByOrderName(orderName);
+    }
+
+    public Optional<OrderDelayDto> getOrderDelay(String orderName) {
+        return orderTimelineRepository.findDelayByOrderName(orderName);
     }
 }

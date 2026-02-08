@@ -10,6 +10,5 @@ import lombok.NoArgsConstructor;
 public class OrderTimelineDto {
     private String orderName;
     private String endPoint;
-    private String statusVerb;
-    private String statusDetails;
+    private String status;
 }

@@ -14,10 +14,14 @@ import ru.sushi.delivery.kds.domain.service.ItemComboService;
 import ru.sushi.delivery.kds.domain.service.MenuItemService;
 import ru.sushi.delivery.kds.domain.service.OrderService;
 import ru.sushi.delivery.kds.domain.service.ScreenService;
+import ru.sushi.delivery.kds.domain.persist.entity.OrderAddress;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
+import ru.sushi.delivery.kds.dto.OrderAddressDto;
 import ru.sushi.delivery.kds.dto.OrderItemDto;
 import ru.sushi.delivery.kds.dto.OrderShortDto;
 import ru.sushi.delivery.kds.dto.OrderTimelineDto;
+import ru.sushi.delivery.kds.model.OrderType;
+import ru.sushi.delivery.kds.model.PaymentType;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -45,9 +49,15 @@ public class ViewService {
             String name,
             List<MenuItem> menuItems,
             Instant shouldBeFinishedAt,
-            Instant kitchenShouldGetOrderAt
+            Instant kitchenShouldGetOrderAt,
+            OrderType orderType,
+            OrderAddressDto address,
+            String customerPhone,
+            PaymentType paymentType
     ) {
-        this.orderService.createOrder(name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt);
+        OrderAddress addressEntity = address != null ? address.toEntity() : null;
+        this.orderService.createOrder(name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
+                orderType != null ? orderType : OrderType.PICKUP, addressEntity, customerPhone, paymentType);
     }
 
     public List<MenuItem> getAllMenuItems() {
