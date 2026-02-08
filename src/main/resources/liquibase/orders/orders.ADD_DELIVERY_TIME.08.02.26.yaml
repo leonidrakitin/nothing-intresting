@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: orders.ADD_DELIVERY_TIME.08.02.26
+      author: system
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: delivery_time
+                  type: TIMESTAMPTZ
+
+  - changeSet:
+      id: orders_aud.ADD_DELIVERY_TIME.08.02.26
+      author: system
+      changes:
+        - addColumn:
+            tableName: orders_aud
+            columns:
+              - column:
+                  name: delivery_time
+                  type: TIMESTAMPTZ
