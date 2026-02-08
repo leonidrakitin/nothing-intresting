@@ -1,0 +1,227 @@
+/**
+ * Cart View — Redesigned UI
+ * Two-column layout: products left, sticky summary right
+ */
+
+/* ===== Two-column layout ===== */
+.cart-two-column {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .cart-two-column {
+    flex-direction: column;
+  }
+}
+
+/* ===== Left column: Product list ===== */
+.cart-items-column {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== Right column: Sticky Summary (3-column layout: Menu | Cart | Summary) ===== */
+.cart-summary-column {
+  flex: 0 0 368px;
+  min-width: 322px;
+  position: sticky;
+  top: 16px;
+  align-self: flex-start;
+}
+
+@media (max-width: 768px) {
+  .cart-summary-column {
+    flex: 1 1 auto;
+    width: 100%;
+    position: sticky;
+    bottom: 0;
+    top: auto;
+    margin-top: auto;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* ===== Summary block ===== */
+.cart-summary-block {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* ===== Product card ===== */
+.cart-product-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  margin-bottom: 10px;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.cart-product-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.cart-product-card .cart-product-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cart-product-card .cart-product-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  margin: 0 0 2px 0;
+}
+
+.cart-product-card .cart-product-price {
+  font-weight: 600;
+  color: var(--lumo-primary-color, #1976d2);
+  font-size: 0.9rem;
+}
+
+.cart-product-card .cart-product-meta {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* ===== Quantity selector ===== */
+.cart-quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 2px;
+}
+
+.cart-quantity-btn {
+  min-width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  transition: background 0.15s ease, transform 0.1s ease !important;
+}
+
+.cart-quantity-btn:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+.cart-quantity-btn:active {
+  transform: scale(0.96);
+}
+
+.cart-quantity-value {
+  min-width: 32px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* ===== Remove button ===== */
+.cart-remove-btn {
+  color: #9ca3af !important;
+  transition: color 0.15s ease, background 0.15s ease !important;
+}
+
+.cart-remove-btn:hover {
+  color: var(--lumo-error-color, #dc2626) !important;
+}
+
+/* ===== Empty state ===== */
+.cart-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border: 1px dashed #e5e7eb;
+}
+
+.cart-empty-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.cart-empty-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+}
+
+.cart-empty-text {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0 0 24px 0;
+}
+
+.cart-empty-btn {
+  transition: transform 0.15s ease, box-shadow 0.2s ease !important;
+}
+
+.cart-empty-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.25) !important;
+}
+
+/* ===== Buttons in summary ===== */
+.cart-summary-btn {
+  transition: transform 0.1s ease, box-shadow 0.2s ease !important;
+}
+
+.cart-summary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+.cart-summary-btn:active {
+  transform: translateY(0);
+}
+
+/* ===== Total price accent ===== */
+.cart-total-price {
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+  color: var(--lumo-primary-color, #1976d2) !important;
+}
+
+/* ===== Cart header ===== */
+.cart-header {
+  margin-bottom: 20px;
+}
+
+.cart-header .city-badge {
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: inline-block;
+  margin-left: 12px;
+}
+
+/* ===== Button bar ===== */
+.cart-button-bar vaadin-button {
+  transition: background 0.15s ease, transform 0.1s ease !important;
+}
+
+.cart-button-bar vaadin-button:hover {
+  transform: translateY(-1px);
+}
