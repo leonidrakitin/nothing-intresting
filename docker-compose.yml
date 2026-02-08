@@ -18,6 +18,7 @@ services:
     image: kds-app_kds-app:latest
     container_name: kds-app
     environment:
+      - VAADIN_PRODUCTION_MODE=true
       - SQL_URL=jdbc:postgresql://kds-db:5432/kds
       - SQL_USERNAME=root
       - SQL_PASSWORD=123456

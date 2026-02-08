@@ -32,7 +32,7 @@ jobs:
             export SQL_PASSWORD="$SQL_PASSWORD"
             cd kds-app
             git pull
-            ./gradlew clean build -x test
+            ./gradlew clean build -x test -Pvaadin.production
             echo "Successfully built app"
           
             # Останавливаем и удаляем старый контейнер
@@ -52,6 +52,7 @@ jobs:
               --name kds-app \
               --network kds-network \
               -p 8000:8000 \
+              -e VAADIN_PRODUCTION_MODE=true \
               -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
               -e SQL_USERNAME="$SQL_USERNAME" \
               -e SQL_PASSWORD="$SQL_PASSWORD" \
