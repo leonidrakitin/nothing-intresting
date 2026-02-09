@@ -688,11 +688,16 @@ public class CreateOrderView extends VerticalLayout {
                 return;
             }
 
-            // Проверяем наличие приборов (productType = 7)
+            // Проверяем наличие приборов: productType = 7 или название содержит палочки/соевый/васаби/имбирь/приборы
             boolean hasInstruments = cartItems.stream()
                     .anyMatch(cartItem -> {
-                        var productType = cartItem.getMenuItem().getProductType();
-                        return productType != null && productType.getId() == 7;
+                        var pt = cartItem.getMenuItem().getProductType();
+                        if (pt != null && pt.getId() == 7) return true;
+                        String name = cartItem.getMenuItem().getName();
+                        if (name == null) return false;
+                        String lower = name.toLowerCase();
+                        return lower.contains("палочки") || lower.contains("приборы")
+                                || lower.contains("соевый") || lower.contains("васаби") || lower.contains("имбирь");
                     });
 
             if (!hasInstruments) {
