@@ -1,12 +1,13 @@
 package ru.sushi.delivery.kds.config;
 
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 
-@Slf4j
+@Log4j2
 @Component
 public class AsyncExceptionHandler implements AsyncUncaughtExceptionHandler {
 

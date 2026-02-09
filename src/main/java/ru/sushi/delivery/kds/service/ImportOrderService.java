@@ -1,6 +1,7 @@
 package ru.sushi.delivery.kds.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
@@ -22,7 +23,7 @@ import java.util.UUID;
 /**
  * Создание заказа из текста (импорт): парсинг тем же парсером, что и в UI, и сохранение через MultiCityOrderService.
  */
-@Slf4j
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class ImportOrderService {

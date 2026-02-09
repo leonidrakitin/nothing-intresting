@@ -1,6 +1,7 @@
 package ru.sushi.delivery.kds.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
@@ -29,7 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class ViewService {

@@ -1,5 +1,6 @@
 package ru.sushi.delivery.kds.service;
 
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,7 +33,7 @@ import java.time.format.DateTimeFormatter;
  * Telegram не даёт боту получить список чатов автоматически — при добавлении бота в новый чат
  * нужно получить его Chat ID и добавить в конфиг.
  */
-@Slf4j
+@Log4j2
 @Service
 @ConditionalOnProperty(name = "telegram.bot.token", matchIfMissing = false)
 public class TelegramNotificationService {

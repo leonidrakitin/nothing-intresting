@@ -1,6 +1,7 @@
 package ru.sushi.delivery.kds.domain.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,7 +18,7 @@ import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
 
-@Slf4j
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class WriteOffService {

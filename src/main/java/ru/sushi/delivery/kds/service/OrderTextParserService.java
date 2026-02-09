@@ -1,6 +1,7 @@
 package ru.sushi.delivery.kds.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
@@ -26,7 +27,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Slf4j
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class OrderTextParserService {
