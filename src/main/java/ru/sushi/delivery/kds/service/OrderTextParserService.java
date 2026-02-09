@@ -1259,21 +1259,15 @@ public class OrderTextParserService {
             String[] parts = addressLine.split(",");
             
             if (parts.length >= 2) {
-                // Первая часть - может быть город или улица
+                // Первая часть - может быть город или улица (улица, проспект, переулок, бульвар, шоссе)
                 String firstPart = parts[0].trim();
+                boolean isStreetPrefix = firstPart.toLowerCase().matches("^(улица|проспект|пр\\.|переулок|пер\\.|бульвар|шоссе)\\s+.+");
                 
-                // Если начинается с "улица" - это улица, город берем из общего текста
-                if (firstPart.toLowerCase().startsWith("улица")) {
-                    String street = firstPart.replaceAll("^улица\\s+", "");
-                    builder.street(street);
-                    
-                    // Второй элемент - дом
-                    if (parts.length >= 2) {
-                        String house = parts[1].trim();
-                        house = house.split("\\s+")[0];
-                        builder.house(house);
-                    }
-                    
+                // Если начинается с типа улицы — это улица, второй токен — дом, город из текста (Кухня Ухта и т.д.)
+                if (isStreetPrefix) {
+                    builder.street(firstPart);
+                    String house = parts[1].trim().split("\\s+")[0];
+                    builder.house(house);
                     String city = parseCity(text);
                     if (city != null) builder.city(city);
                 } else if (parts.length >= 3 && isKnownCity(parts[2].trim()) && looksLikeHouseNumber(parts[1].trim())) {
