@@ -84,6 +84,10 @@ public class OrderTextParserService {
             address = parseAddress(text);
         }
         builder.address(address);
+
+        // Парсим сообщение "💳Картой курьеру: {сумма} P🔸Возьмите терминал"
+        String cardToCourierMessage = parseCardToCourierMessage(text);
+        builder.cardToCourierMessage(cardToCourierMessage);
         
         // Парсим сеты
         List<ParsedOrderDto.ParsedCombo> combos = parseCombos(text, allCombos);
@@ -132,6 +136,24 @@ public class OrderTextParserService {
         builder.extras(extras);
         
         return builder.build();
+    }
+
+    /**
+     * Парсит сообщение вида "💳Картой курьеру: 3030 P🔸Возьмите терминал".
+     * Учитывает латинскую P и кириллическую Р, переносы строк между суммой и "Возьмите".
+     */
+    private String parseCardToCourierMessage(String text) {
+        Pattern[] patterns = {
+            Pattern.compile("💳Картой курьеру:\\s*(\\d+)\\s*[PР][\\s\\S]*?Возьмите терминал", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Картой курьеру:\\s*(\\d+)\\s*[PР][\\s\\S]*?Возьмите терминал", Pattern.CASE_INSENSITIVE)
+        };
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                return "💳Картой курьеру: " + matcher.group(1) + " P🔸Возьмите терминал";
+            }
+        }
+        return null;
     }
 
     private String parseOrderNumber(String text) {
@@ -1069,6 +1091,16 @@ public class OrderTextParserService {
         return null;
     }
 
+    private boolean isKnownCity(String s) {
+        String lower = s.toLowerCase();
+        return lower.equals("ухта") || lower.equals("парнас") || lower.equals("парголово");
+    }
+
+    private boolean looksLikeHouseNumber(String s) {
+        String firstWord = s.split("\\s+")[0];
+        return firstWord.matches("\\d+[a-zA-Zа-яА-ЯкК]*");
+    }
+
     private OrderType parseOrderType(String text) {
         // Паттерны для определения типа заказа
         Pattern[] deliveryPatterns = {
@@ -1135,6 +1167,7 @@ public class OrderTextParserService {
         Pattern[] cashlessPatterns = {
             Pattern.compile("🟢\\s*Оплачено онлайн", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Оплата\\s*—\\s*безналичный платеж", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Оплата\\s*Безналичн\\s*", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Оплата:\\s*оплачено онлайн", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Оплата:\\s*оплачен онлайн", Pattern.CASE_INSENSITIVE)
         };
@@ -1145,9 +1178,11 @@ public class OrderTextParserService {
         };
         
         Pattern[] cardPatterns = {
-            Pattern.compile("Оплата:\\s*карта", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Оплата\\s*карт", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Оплата\\s*—\\s*карта", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("Оплата:\\s*картой", Pattern.CASE_INSENSITIVE)
+            Pattern.compile("Оплата:\\s*картой", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("💳Картой курьеру:", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Картой курьеру:", Pattern.CASE_INSENSITIVE)
         };
         
         for (Pattern pattern : cashlessPatterns) {
@@ -1218,7 +1253,8 @@ public class OrderTextParserService {
             // Формат может быть:
             // 1. "город, улица, дом" или "посёлок город, улица, дом"
             // 2. "улица название, номер дома, доп. инфо..."
-            // 3. "Советская улица 13" (без запятых)
+            // 3. "проспект X, дом, город" — формат Starter: "улица, дом, город"
+            // 4. "Советская улица 13" (без запятых)
             String[] parts = addressLine.split(",");
             
             if (parts.length >= 2) {
@@ -1239,8 +1275,29 @@ public class OrderTextParserService {
                     
                     String city = parseCity(text);
                     if (city != null) builder.city(city);
+                } else if (parts.length >= 3 && isKnownCity(parts[2].trim()) && looksLikeHouseNumber(parts[1].trim())) {
+                    // Формат Starter: "проспект Космонавтов, 12, Ухта" — улица, дом, город
+                    builder.street(firstPart.trim());
+                    
+                    String house = parts[1].trim().split("\\s+")[0];
+                    builder.house(house);
+                    
+                    builder.city(parts[2].trim());
+                } else if (parts.length >= 3 && (firstPart.toLowerCase().startsWith("посёлок") || isKnownCity(firstPart))) {
+                    // Формат: "город, улица, дом" или "посёлок город, улица, дом"
+                    String city = firstPart.replaceAll("^посёлок\\s+", "");
+                    builder.city(city);
+                    
+                    String street = parts[1].trim().replaceAll("^улица\\s+", "");
+                    builder.street(street);
+                    
+                    String house = parts[2].trim()
+                            .replaceAll("^д\\.\\s*", "")
+                            .replaceAll("^дом\\s+", "");
+                    house = house.split("\\s+")[0];
+                    builder.house(house);
                 } else if (parts.length >= 3) {
-                    // Формат: "город, улица, дом"
+                    // Fallback: "город, улица, дом" (если не определили формат Starter)
                     String city = firstPart.replaceAll("^посёлок\\s+", "");
                     builder.city(city);
                     

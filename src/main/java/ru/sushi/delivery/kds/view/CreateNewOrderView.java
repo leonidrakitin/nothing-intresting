@@ -100,6 +100,8 @@ public class CreateNewOrderView extends VerticalLayout {
     private final TextField addressCityField = new TextField("Город");
     private final TextArea addressCommentField = new TextArea("Комментарий к адресу");
     private final VerticalLayout addressLayout = new VerticalLayout();
+    /** Сообщение «Картой курьеру» из импорта — для уведомления в Telegram */
+    private String cardToCourierMessageFromImport = null;
     private final VerticalLayout rollsTabLayout = new VerticalLayout();
     private final VerticalLayout setsTabLayout = new VerticalLayout();
     private final VerticalLayout extrasLayout = new VerticalLayout();
@@ -451,6 +453,7 @@ public class CreateNewOrderView extends VerticalLayout {
                 
                 Button confirmButton = new Button("Да, сменить город", e -> {
                     cartItems.clear();
+                    cardToCourierMessageFromImport = null;
                     refreshCartItemsContainer();
                     updateTotalPay();
                     updateTotalTime();
@@ -767,6 +770,7 @@ public class CreateNewOrderView extends VerticalLayout {
 
         clearCartButton.addClickListener(e -> {
             cartItems.clear();
+            cardToCourierMessageFromImport = null;
             updateTotalPay();
             updateTotalTime();
             refreshCartItemsContainer();
@@ -866,7 +870,7 @@ public class CreateNewOrderView extends VerticalLayout {
         name.addClassName("cart-product-name");
 
         double lineTotal = cartItem.getMenuItem().getPrice() * cartItem.getQuantity();
-        Span price = new Span(String.format("%.0f ₽", lineTotal));
+        Span price = new Span(String.format(" - %.0f ₽ - ", lineTotal));
         price.addClassName("cart-product-price");
 
         Span meta = new Span(String.format("%.0f ₽ × %d шт.", cartItem.getMenuItem().getPrice(), cartItem.getQuantity()));
@@ -1491,7 +1495,7 @@ public class CreateNewOrderView extends VerticalLayout {
         }
         String cityName = currentCity == MultiCityViewService.City.PARNAS ? "Парнас" : "Ухта";
         multiCityOrderService.createOrder(getOrderCity(), orderNumber, itemsToCreate, shouldBeFinishedAt, kitchenShouldGetOrderAt,
-                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue(), deliveryTime);
+                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue(), deliveryTime, cardToCourierMessageFromImport);
         
         Notification notification = Notification.show(
                 "✓ Заказ создан в городе " + cityName + "! Номер: " + orderNumber + ", Позиции: " + itemsToCreate.size() +
@@ -1515,6 +1519,7 @@ public class CreateNewOrderView extends VerticalLayout {
         isYandexOrder.setValue(false);
         orderTypeCombo.setValue(OrderType.PICKUP);
         customerPhoneField.clear();
+        cardToCourierMessageFromImport = null;
         paymentTypeCombo.setValue(PaymentType.CASHLESS);
         addressLayout.setVisible(false);
         deliveryTimePicker.setVisible(false);
@@ -1878,6 +1883,13 @@ public class CreateNewOrderView extends VerticalLayout {
             content.add(commentLabel);
         }
 
+        if (parsed.getCardToCourierMessage() != null) {
+            Span cardLabel = new Span(parsed.getCardToCourierMessage());
+            cardLabel.getStyle().set("font-weight", "bold");
+            cardLabel.getStyle().set("color", "var(--lumo-primary-color)");
+            content.add(cardLabel);
+        }
+
         // Выводим найденные позиции
         Div itemsDiv = new Div();
         itemsDiv.getStyle().set("margin-top", "10px");
@@ -2030,6 +2042,7 @@ public class CreateNewOrderView extends VerticalLayout {
                 if (addr.getDoorphone() != null) addressDoorphoneField.setValue(addr.getDoorphone());
                 if (addr.getComment() != null) addressCommentField.setValue(addr.getComment());
             }
+            cardToCourierMessageFromImport = parsed.getCardToCourierMessage();
             
             // Собираем список позиций, которые не удалось добавить
             List<NotAddedEntry> notAddedItems = new ArrayList<>();

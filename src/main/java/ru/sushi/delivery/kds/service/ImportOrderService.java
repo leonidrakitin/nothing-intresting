@@ -114,6 +114,7 @@ public class ImportOrderService {
         String customerPhone = parsed.getCustomerPhone();
         PaymentType paymentType = parsed.getPaymentType() != null ? parsed.getPaymentType() : PaymentType.CASHLESS;
         Instant deliveryTime = parsed.getDeliveryTime();
+        String cardToCourierMessage = parsed.getCardToCourierMessage();
 
         Long orderId = multiCityOrderService.createOrder(
                 orderCity,
@@ -125,7 +126,8 @@ public class ImportOrderService {
                 address,
                 customerPhone,
                 paymentType,
-                deliveryTime
+                deliveryTime,
+                cardToCourierMessage
         );
 
         log.info("Imported order {} in city {} with {} items", orderName, orderCity, itemsToCreate.size());

@@ -28,6 +28,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -91,7 +92,8 @@ public class MultiCityOrderService {
             OrderAddressDto address,
             String customerPhone,
             PaymentType paymentType,
-            Instant deliveryTime
+            Instant deliveryTime,
+            String cardToCourierMessage
     ) {
         JdbcTemplate template = getTemplate(city);
 
@@ -139,7 +141,13 @@ public class MultiCityOrderService {
             return ps;
         }, keyHolder);
 
-        Long orderId = keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null;
+        // PostgreSQL returns all columns with RETURN_GENERATED_KEYS; extract id from the keys map
+        Long orderId = null;
+        Map<String, Object> keys = keyHolder.getKeys();
+        if (keys != null && keys.containsKey("id")) {
+            Object idVal = keys.get("id");
+            orderId = idVal instanceof Number ? ((Number) idVal).longValue() : null;
+        }
         if (orderId == null) {
             throw new RuntimeException("Failed to create order, no ID generated");
         }
@@ -168,7 +176,7 @@ public class MultiCityOrderService {
             try {
                 telegramNotificationService.notifyNewOrder(
                         city, name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
-                        orderTypeVal, address, customerPhone, paymentType, deliveryTime
+                        orderTypeVal, address, customerPhone, paymentType, deliveryTime, cardToCourierMessage
                 );
             } catch (Exception e) {
                 log.warn("Failed to send Telegram notification for order {}", name, e);

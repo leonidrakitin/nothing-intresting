@@ -36,6 +36,8 @@ public class ParsedOrderDto {
     private OrderAddressDto address; // Адрес доставки
     private Instant deliveryTime; // Время доставки (только для доставки)
     private String city; // Город: "Ухта" или "Парнас"
+    /** Сообщение вида "💳Картой курьеру: 3176 P🔸Возьмите терминал" при оплате картой курьеру */
+    private String cardToCourierMessage;
     
     @Data
     @Builder

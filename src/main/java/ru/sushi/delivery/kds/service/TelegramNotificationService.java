@@ -25,8 +25,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Сервис отправки уведомлений о новых заказах в Telegram-чаты для курьеров.
@@ -85,8 +83,14 @@ public class TelegramNotificationService {
             OrderAddressDto address,
             String customerPhone,
             PaymentType paymentType,
-            Instant deliveryTime
+            Instant deliveryTime,
+            String cardToCourierMessage
     ) {
+        if (orderType == null || orderType == OrderType.PICKUP) {
+            log.debug("Самовывоз — не отправляем уведомление в Telegram.");
+            return;
+        }
+
         List<String> chatIds = getChatIds();
         if (botToken == null || botToken.isBlank() || chatIds.isEmpty()) {
             log.debug("Telegram not configured (token or chat-ids missing). Skipping notification.");
@@ -96,7 +100,7 @@ public class TelegramNotificationService {
         String message = buildOrderMessage(
                 city, orderName, menuItems, shouldBeFinishedAt,
                 kitchenShouldGetOrderAt, orderType, address,
-                customerPhone, paymentType, deliveryTime
+                customerPhone, paymentType, deliveryTime, cardToCourierMessage
         );
 
         for (String chatId : chatIds) {
@@ -114,7 +118,8 @@ public class TelegramNotificationService {
             OrderAddressDto address,
             String customerPhone,
             PaymentType paymentType,
-            Instant deliveryTime
+            Instant deliveryTime,
+            String cardToCourierMessage
     ) {
         String cityName = city == City.PARNAS ? "Парнас" : "Ухта";
         String orderTypeStr = orderType == OrderType.DELIVERY ? "Доставка" : "Самовывоз";
@@ -132,10 +137,11 @@ public class TelegramNotificationService {
             if (address.getFlat() != null) sb.append(", кв. ").append(address.getFlat());
             if (address.getFloor() != null) sb.append(", эт. ").append(address.getFloor());
             if (address.getEntrance() != null) sb.append(", подъезд ").append(address.getEntrance());
-            if (address.getComment() != null && !address.getComment().isBlank()) {
-                sb.append("\n   Комментарий: ").append(address.getComment());
-            }
             sb.append("\n");
+        }
+
+        if (address != null && address.getComment() != null && !address.getComment().isBlank()) {
+            sb.append("📝 Комментарий к заказу: ").append(address.getComment()).append("\n");
         }
 
         if (customerPhone != null && !customerPhone.isBlank()) {
@@ -143,7 +149,10 @@ public class TelegramNotificationService {
         }
 
         if (paymentType != null) {
-            String paymentStr = paymentType == PaymentType.CASH ? "Наличные" : "Безнал";
+            String paymentStr = paymentType == PaymentType.CASH
+                    ? "Наличные"
+                    : paymentType == PaymentType.CASHLESS ? "Оплачено" : "Оплата картой";
+
             sb.append("💳 Оплата: ").append(paymentStr).append("\n");
         }
 
@@ -154,17 +163,12 @@ public class TelegramNotificationService {
             sb.append("✅ Готовность к: ").append(TIME_FORMAT.format(shouldBeFinishedAt)).append("\n");
         }
         if (deliveryTime != null) {
-            sb.append("🚚 Время доставки: ").append(TIME_FORMAT.format(deliveryTime)).append("\n");
+            sb.append("🚚 Время доставки: *").append(TIME_FORMAT.format(deliveryTime)).append("*\n");
         }
 
-        // Группируем позиции по названию
-        Map<String, Long> itemCounts = menuItems.stream()
-                .collect(Collectors.groupingBy(MenuItem::getName, Collectors.counting()));
-
-        sb.append("\n📝 Позиции:\n");
-        itemCounts.forEach((name, count) ->
-                sb.append("  • ").append(count > 1 ? count + " x " : "").append(name).append("\n")
-        );
+        if (cardToCourierMessage != null && !cardToCourierMessage.isBlank()) {
+            sb.append("\n").append(cardToCourierMessage);
+        }
 
         return sb.toString();
     }
@@ -173,6 +177,7 @@ public class TelegramNotificationService {
         try {
             String url = String.format(TELEGRAM_API_URL, botToken);
             String body = "chat_id=" + URLEncoder.encode(chatId, StandardCharsets.UTF_8)
+                    + "&parse_mode=Markdown"
                     + "&text=" + URLEncoder.encode(text, StandardCharsets.UTF_8);
 
             HttpRequest request = HttpRequest.newBuilder()
