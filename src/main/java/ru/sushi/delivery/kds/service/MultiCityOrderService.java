@@ -173,7 +173,9 @@ public class MultiCityOrderService {
 
         log.info("Created order {} in city {} with {} items", name, city, menuItems.size());
 
-        if (telegramNotificationService != null) {
+        if (telegramNotificationService == null) {
+            log.info("Telegram уведомления отключены (сервис не создан: не задан telegram.bot.token).");
+        } else {
             try {
                 telegramNotificationService.notifyNewOrder(
                         city, name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,

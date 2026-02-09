@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import jakarta.annotation.PostConstruct;
 
 /**
  * Сервис отправки уведомлений о новых заказах в Telegram-чаты для курьеров.
@@ -39,6 +40,18 @@ import java.time.format.DateTimeFormatter;
 public class TelegramNotificationService {
 
     private static final String TELEGRAM_API_URL = "https://api.telegram.org/bot%s/sendMessage";
+
+    @PostConstruct
+    public void logTelegramConfig() {
+        List<String> chatIds = getChatIds();
+        if (botToken == null || botToken.isBlank()) {
+            log.warn("Telegram: бот не будет отправлять уведомления — токен не задан (TELEGRAM_BOT_TOKEN пустой или отсутствует).");
+        } else if (chatIds.isEmpty()) {
+            log.warn("Telegram: бот не будет отправлять уведомления — нет ни одного chat-id (задайте TELEGRAM_CHAT_ID или TELEGRAM_CHAT_IDS).");
+        } else {
+            log.info("Telegram: уведомления включены, чатов для отправки: {}", chatIds.size());
+        }
+    }
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm dd.MM.yyyy")
             .withZone(ZoneId.systemDefault());
 
@@ -94,7 +107,7 @@ public class TelegramNotificationService {
 
         List<String> chatIds = getChatIds();
         if (botToken == null || botToken.isBlank() || chatIds.isEmpty()) {
-            log.debug("Telegram not configured (token or chat-ids missing). Skipping notification.");
+            log.info("Telegram: уведомление не отправлено — не настроен токен или список чатов (chat-id/chat-ids).");
             return;
         }
 
@@ -193,7 +206,7 @@ public class TelegramNotificationService {
             if (response.statusCode() != 200) {
                 log.error("Telegram API error for chat {}: {} - {}", chatId, response.statusCode(), response.body());
             } else {
-                log.debug("Telegram notification sent to chat {}", chatId);
+                log.info("Telegram: уведомление отправлено в чат {}", chatId);
             }
         } catch (Exception e) {
             log.error("Failed to send Telegram notification to chat {}", chatId, e);

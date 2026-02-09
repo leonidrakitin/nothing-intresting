@@ -22,6 +22,8 @@ jobs:
           SQL_URL: ${{ secrets.SQL_URL }}
           SQL_USERNAME: ${{ secrets.SQL_USERNAME }}
           SQL_PASSWORD: ${{ secrets.SQL_PASSWORD }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/kds_rsa
@@ -48,6 +50,10 @@ jobs:
             docker-compose build kds-app
             echo "Build new image"
 
+            # Telegram: передаём в контейнер только если секреты заданы (иначе не переопределяем дефолты из application.yaml)
+            TG_ENV=""
+            [ -n "$TELEGRAM_BOT_TOKEN" ] && TG_ENV="$TG_ENV -e TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN"
+            [ -n "$TELEGRAM_CHAT_ID" ] && TG_ENV="$TG_ENV -e TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID"
             docker run -d \
               --name kds-app \
               --network kds-network \
@@ -56,6 +62,7 @@ jobs:
               -e SQL_URL=jdbc:postgresql://kds-db:5432/kds \
               -e SQL_USERNAME="$SQL_USERNAME" \
               -e SQL_PASSWORD="$SQL_PASSWORD" \
+              $TG_ENV \
               kds-app_kds-app:latest
         
             echo "Deployment successful"
