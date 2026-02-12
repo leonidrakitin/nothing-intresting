@@ -111,6 +111,10 @@ public class ViewService {
         return this.orderService.getAllOrdersWithItemsBetweenDates(from, to);
     }
 
+    public List<OrderShortDto> getDeliveryOrdersWithItemsBetweenDates(Instant from, Instant to) {
+        return this.orderService.getAllDeliveryOrdersWithItemsBetweenDates(from, to);
+    }
+
     public List<OrderShortDto> getAllKitchenOrdersWithItems() {
         return this.orderService.getAllKitchenOrdersWithItems();
     }
@@ -165,6 +169,18 @@ public class ViewService {
 
     public void updateOrderName(Long orderId, String newName) {
         orderService.updateOrderName(orderId, newName);
+    }
+
+    public void updateOrderYandexClaimId(Long orderId, String claimId) {
+        orderService.updateOrderYandexClaimId(orderId, claimId);
+    }
+
+    public void updateOrdersYandexClaimId(java.util.List<Long> orderIds, String claimId) {
+        orderService.updateOrdersYandexClaimId(orderIds, claimId);
+    }
+
+    public void updateOrderTelegramNotified(Long orderId) {
+        orderService.updateOrderTelegramNotified(orderId);
     }
 
     public void setPriorityForOrder(Long orderId, OrderShortDto firstCookingOrder) {

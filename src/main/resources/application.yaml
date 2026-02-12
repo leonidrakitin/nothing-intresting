@@ -50,8 +50,23 @@ ukhta:
 telegram:
   bot:
     token: ${TELEGRAM_BOT_TOKEN:7756988657:AAHhXx-VCvzrTOfpwSgWroG89FYaCVJQLYQ}   # Токен от @BotFather
-    chat-id: ${TELEGRAM_CHAT_ID:-5288430241}   # Один чат (для обратной совместимости)
+    chat-id: ${TELEGRAM_CHAT_ID:-5060560706}   # Один чат (для обратной совместимости)
     chat-ids: ${TELEGRAM_CHAT_IDS:} # Несколько чатов через запятую: -1001,-1002,-1003
+
+# Яндекс Доставка — API для вызова курьера
+# enabled: true = авто-режим — заказы на доставку всегда уходят в ТГ при создании, вкладка «Доставки» скрыта.
+# enabled: false = вкладка «Доставки» доступна (ручная отправка в ТГ, вызов Яндекса, расчёт стоимости).
+yandex:
+  delivery:
+    enabled: ${YANDEX_DELIVERY_ENABLED:false}
+    token: ${YANDEX_DELIVERY_TOKEN:y0_AgAAAAB68220AAc6MQAAAAEdFYd9AADHi5KWvRpHn6jqndGq5mIEGq_mJg}
+    # Обязательно для расчёта стоимости и вызова курьера — полный адрес ресторана (точка забора)
+    source-address: ${YANDEX_DELIVERY_SOURCE_ADDRESS:Санкт-Петербург, посёлок Парголово, улица Валерия Гаврилина, 11к1}
+    source-comment: ${YANDEX_DELIVERY_SOURCE_COMMENT:Ресторан я есть суши}   # комментарий к адресу точки забора для курьера
+    source-phone: ${YANDEX_DELIVERY_SOURCE_PHONE:+79819723429}       # телефон ресторана для курьера
+  # Геокодер: обязателен для расчёта и заказа доставки (иначе «Оценка не удалась»). Ключ: https://developer.tech.yandex.ru/
+  geocoder:
+    apikey: ${YANDEX_GEOCODER_APIKEY:a3ec0b63-247f-48c9-88a6-48f7c5bda955}
 
 spring:
   datasource:

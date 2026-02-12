@@ -11,3 +11,9 @@ databaseChangeLog:
   - include:
       file: orders.ADD_DELIVERY_TIME.08.02.26.yaml
       relativeToChangelogFile: true
+  - include:
+      file: orders.ADD_YANDEX_TELEGRAM.10.02.26.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: orders.ADD_ADDRESS_COORDINATES.10.02.26.yaml
+      relativeToChangelogFile: true

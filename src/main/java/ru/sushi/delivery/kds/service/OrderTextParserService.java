@@ -42,8 +42,8 @@ public class OrderTextParserService {
         String orderNumber = parseOrderNumber(text);
         builder.orderNumber(orderNumber);
         
-        // Парсим комментарий
-        String comment = parseComment(text);
+        // Парсим комментарий (основной + комментарий после адреса, например «Строение 1» в конце строки адреса)
+        String comment = mergeComments(parseComment(text), parseCommentFromAddressLine(text));
         builder.comment(comment);
         
         // Парсим время начала и готовности
@@ -201,6 +201,66 @@ public class OrderTextParserService {
             }
         }
         
+        return null;
+    }
+
+    /**
+     * Извлекает комментарий, идущий в конце строки адреса в кавычках-ёлочках «...»
+     * (например: "кв. 71 «Строение 1»" → "Строение 1").
+     */
+    private String parseCommentFromAddressLine(String text) {
+        String addressLine = getAddressLineForParsing(text);
+        if (addressLine == null || addressLine.isEmpty()) {
+            return null;
+        }
+        // Ищем все вхождения «...» и склеиваем в один комментарий
+        Pattern guillemetPattern = Pattern.compile("«([^»]+)»");
+        Matcher m = guillemetPattern.matcher(addressLine);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(m.group(1).trim());
+        }
+        return sb.length() > 0 ? sb.toString() : null;
+    }
+
+    /** Объединяет два комментария в один (через пробел), пустые пропускает. */
+    private static String mergeComments(String mainComment, String addressLineComment) {
+        if (mainComment == null || mainComment.isBlank()) {
+            return addressLineComment != null && !addressLineComment.isBlank() ? addressLineComment : null;
+        }
+        if (addressLineComment == null || addressLineComment.isBlank()) {
+            return mainComment;
+        }
+        return mainComment.trim() + " " + addressLineComment.trim();
+    }
+
+    /** Возвращает строку адреса (та же логика, что и в parseAddress) для извлечения комментария и т.п. */
+    private String getAddressLineForParsing(String text) {
+        Pattern addressPattern = Pattern.compile(
+            "(?:Адрес доставки\\s*[—-]?\\s*|Доставка:\\s*)([^\\n]+)",
+            Pattern.CASE_INSENSITIVE
+        );
+        Matcher addressMatcher = addressPattern.matcher(text);
+        if (addressMatcher.find()) {
+            return addressMatcher.group(1).trim();
+        }
+        Pattern[] starterAddressPatterns = {
+            Pattern.compile(
+                "🕒К\\s+\\d{1,2}:\\d{2}\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*\\d{2}\\.\\d{2}\\.\\d{4}\\s*\\n([^\\n]+)",
+                Pattern.CASE_INSENSITIVE
+            ),
+            Pattern.compile(
+                "⏰Предзаказ\\s+к\\s+\\d{1,2}:\\d{2}\\s*[–-]\\s*\\d{1,2}:\\d{2},\\s*\\d{2}\\.\\d{2}\\.\\d{4}\\s*\\n([^\\n]+)",
+                Pattern.CASE_INSENSITIVE
+            )
+        };
+        for (Pattern pattern : starterAddressPatterns) {
+            Matcher starterMatcher = pattern.matcher(text);
+            if (starterMatcher.find()) {
+                return starterMatcher.group(1).trim();
+            }
+        }
         return null;
     }
 
@@ -1097,6 +1157,26 @@ public class OrderTextParserService {
         return lower.equals("ухта") || lower.equals("парнас") || lower.equals("парголово");
     }
 
+    /** Проверяет, что часть адреса — город или "посёлок + город" (например "посёлок Парголово"). */
+    private boolean isCityPart(String part) {
+        String trimmed = part.trim();
+        if (isKnownCity(trimmed)) return true;
+        if (trimmed.toLowerCase().startsWith("посёлок")) {
+            String cityName = trimmed.replaceFirst("^посёлок\\s+", "").trim();
+            return isKnownCity(cityName);
+        }
+        return false;
+    }
+
+    /** Извлекает название города из части адреса; "Парголово" нормализует в "Парнас" для единообразия с parseCity(). */
+    private String extractCityFromPart(String part) {
+        String city = part.toLowerCase().startsWith("посёлок")
+                ? part.replaceFirst("^посёлок\\s+", "").trim()
+                : part.trim();
+        if (city.equalsIgnoreCase("Парголово")) return "Парнас";
+        return city;
+    }
+
     private boolean looksLikeHouseNumber(String s) {
         String firstWord = s.split("\\s+")[0];
         return firstWord.matches("\\d+[a-zA-Zа-яА-ЯкК]*");
@@ -1259,17 +1339,23 @@ public class OrderTextParserService {
             String[] parts = addressLine.split(",");
             
             if (parts.length >= 2) {
-                // Первая часть - может быть город или улица (улица, проспект, переулок, бульвар, шоссе)
+                // Первая часть - может быть город или улица (тип в начале: "улица X", или в конце: "X улица")
                 String firstPart = parts[0].trim();
                 boolean isStreetPrefix = firstPart.toLowerCase().matches("^(улица|проспект|пр\\.|переулок|пер\\.|бульвар|шоссе)\\s+.+");
+                boolean isStreetSuffix = firstPart.toLowerCase().matches(".+\\s+(улица|проспект|пр\\.|переулок|пер\\.|бульвар|шоссе)\\s*$");
                 
-                // Если начинается с типа улицы — это улица, второй токен — дом, город из текста (Кухня Ухта и т.д.)
-                if (isStreetPrefix) {
+                // Если тип улицы в начале или в конце — это улица, второй токен — дом, город из текста (Кухня Парнас и т.д.)
+                if (isStreetPrefix || isStreetSuffix) {
                     builder.street(firstPart);
                     String house = parts[1].trim().split("\\s+")[0];
                     builder.house(house);
                     String city = parseCity(text);
                     if (city != null) builder.city(city);
+                } else if (parts.length >= 4 && parts[2].trim().equalsIgnoreCase("посёлок") && isKnownCity(parts[3].trim()) && looksLikeHouseNumber(parts[1].trim())) {
+                    // Формат: "Заречная улица, 42к1, посёлок, Парголово" — запятая между посёлок и городом
+                    builder.street(firstPart);
+                    builder.house(parts[1].trim().split("\\s+")[0]);
+                    builder.city(extractCityFromPart(parts[3].trim()));
                 } else if (parts.length >= 3 && isKnownCity(parts[2].trim()) && looksLikeHouseNumber(parts[1].trim())) {
                     // Формат Starter: "проспект Космонавтов, 12, Ухта" — улица, дом, город
                     builder.street(firstPart.trim());
@@ -1278,6 +1364,14 @@ public class OrderTextParserService {
                     builder.house(house);
                     
                     builder.city(parts[2].trim());
+                } else if (parts.length >= 3 && looksLikeHouseNumber(parts[1].trim()) && isCityPart(parts[2].trim())) {
+                    // Формат: "улица/проезд, дом, посёлок город" — например "Толубеевский проезд, 26к1, посёлок Парголово"
+                    String street = firstPart.replaceAll("^улица\\s+", "");
+                    builder.street(street);
+                    String house = parts[1].trim().split("\\s+")[0];
+                    builder.house(house);
+                    String city = extractCityFromPart(parts[2].trim());
+                    builder.city(city);
                 } else if (parts.length >= 3 && (firstPart.toLowerCase().startsWith("посёлок") || isKnownCity(firstPart))) {
                     // Формат: "город, улица, дом" или "посёлок город, улица, дом"
                     String city = firstPart.replaceAll("^посёлок\\s+", "");
@@ -1291,6 +1385,13 @@ public class OrderTextParserService {
                             .replaceAll("^дом\\s+", "");
                     house = house.split("\\s+")[0];
                     builder.house(house);
+                } else if (parts.length == 2 && looksLikeHouseNumber(parts[1].trim())) {
+                    // Формат из двух частей: "улица/проезд, дом" (город возьмём из текста через parseCity)
+                    String street = firstPart.replaceAll("^улица\\s+", "");
+                    builder.street(street);
+                    builder.house(parts[1].trim().split("\\s+")[0]);
+                    String city = parseCity(text);
+                    if (city != null) builder.city(city);
                 } else if (parts.length >= 3) {
                     // Fallback: "город, улица, дом" (если не определили формат Starter)
                     String city = firstPart.replaceAll("^посёлок\\s+", "");

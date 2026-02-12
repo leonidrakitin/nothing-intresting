@@ -70,4 +70,17 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startOfDay") Instant startOfDay,
             @Param("startOfTomorrow") Instant startOfTomorrow
     );
+
+    @Query("""
+        select o from Order o
+        left join fetch o.orderItems oi
+        where o.orderType = 'DELIVERY'
+        and o.createdAt >= :from
+        and o.createdAt < :to
+        order by o.deliveryTime asc nulls last, o.createdAt desc
+    """)
+    List<Order> findDeliveryOrdersBetweenDates(
+            @Param("from") Instant from,
+            @Param("to") Instant to
+    );
 }

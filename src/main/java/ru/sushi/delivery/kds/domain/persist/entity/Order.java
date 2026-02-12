@@ -83,7 +83,9 @@ public class Order {
         @AttributeOverride(name = "comment", column = @Column(name = "address_comment")),
         @AttributeOverride(name = "city", column = @Column(name = "address_city")),
         @AttributeOverride(name = "doorphone", column = @Column(name = "address_doorphone")),
-        @AttributeOverride(name = "house", column = @Column(name = "address_house"))
+        @AttributeOverride(name = "house", column = @Column(name = "address_house")),
+        @AttributeOverride(name = "latitude", column = @Column(name = "address_lat")),
+        @AttributeOverride(name = "longitude", column = @Column(name = "address_lon"))
     })
     private OrderAddress address;
 
@@ -93,6 +95,12 @@ public class Order {
     private PaymentType paymentType;
 
     private Instant deliveryTime; // Время доставки (только для доставки)
+
+    /** ID заявки в Яндекс Доставке после «Вызвать Яндекс» */
+    private String yandexClaimId;
+
+    /** Время отправки уведомления в Telegram (наш курьер) */
+    private Instant telegramNotifiedAt;
 
     public static Order of(String name, Instant shouldBeFinishedAt, Instant kitchenShouldGetOrderAt) {
         return Order.builder()

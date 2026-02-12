@@ -10,7 +10,7 @@ import lombok.Setter;
 @Embeddable
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderAddress {
@@ -22,4 +22,8 @@ public class OrderAddress {
     private String city;
     private String doorphone;
     private String house;
+    /** Широта (результат геокодирования при создании заказа). */
+    private Double latitude;
+    /** Долгота (результат геокодирования при создании заказа). */
+    private Double longitude;
 }

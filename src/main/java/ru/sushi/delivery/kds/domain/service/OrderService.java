@@ -4,6 +4,7 @@ import com.vaadin.flow.router.NotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderAddress;
@@ -27,6 +28,8 @@ import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
 import ru.sushi.delivery.kds.model.OrderType;
 import ru.sushi.delivery.kds.model.PaymentType;
+import ru.sushi.delivery.kds.dto.OrderAddressDto;
+import ru.sushi.delivery.kds.service.YandexGeocoderService;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
@@ -64,6 +67,9 @@ public class OrderService {
     private final ProductPackageService productPackageService;
     private final WSMessageSender wsMessageSender;
 
+    @Autowired(required = false)
+    private YandexGeocoderService yandexGeocoderService;
+
     public void calculateOrderBalance(Order order) {
         List<Long> orderMenuItemIds = order.getOrderItems().stream()
                 .map(OrderItem::getMenuItem)
@@ -99,13 +105,27 @@ public class OrderService {
         boolean isPreorder = kitchenShouldGetOrderAt != null && 
                             kitchenShouldGetOrderAt.isAfter(now.plusSeconds(15 * 60));
         
+        // Геокодируем адрес один раз при создании заказа и сохраняем координаты
+        OrderAddress addressToSave = address;
+        if (address != null && yandexGeocoderService != null) {
+            String fullAddress = OrderAddressDto.of(address).toFullAddressString();
+            if (fullAddress != null && !fullAddress.isBlank() && !"Адрес не указан".equals(fullAddress)) {
+                double[] coords = yandexGeocoderService.geocode(fullAddress);
+                if (coords != null && coords.length >= 2) {
+                    addressToSave = address.toBuilder()
+                            .latitude(coords[1])
+                            .longitude(coords[0])
+                            .build();
+                }
+            }
+        }
         Order order = Order.of(name, shouldBeFinishedAt, kitchenShouldGetOrderAt);
         if (isPreorder) {
             order = order.toBuilder().preorder(true).build();
         }
         order = order.toBuilder()
                 .orderType(orderType)
-                .address(address)
+                .address(addressToSave)
                 .customerPhone(customerPhone)
                 .paymentType(paymentType)
                 .deliveryTime(deliveryTime)
@@ -277,6 +297,12 @@ public class OrderService {
                 .map(order -> OrderShortDto.of(order, this.getOrderFullItemData(order)))
                 .toList()
                 .reversed();
+    }
+
+    public List<OrderShortDto> getAllDeliveryOrdersWithItemsBetweenDates(Instant from, Instant to) {
+        return orderRepository.findDeliveryOrdersBetweenDates(from, to).stream()
+                .map(order -> OrderShortDto.of(order, this.getOrderFullItemData(order)))
+                .toList();
     }
 
     public List<OrderShortDto> getAllKitchenOrdersWithItems() {
@@ -539,6 +565,33 @@ public class OrderService {
         orderRepository.save(order);
         
         log.info("Order name updated: orderId={}, newName={}", orderId, newName);
+    }
+
+    @Transactional
+    public void updateOrderYandexClaimId(Long orderId, String claimId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
+        order.setYandexClaimId(claimId);
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void updateOrdersYandexClaimId(java.util.List<Long> orderIds, String claimId) {
+        if (orderIds == null) return;
+        for (Long orderId : orderIds) {
+            orderRepository.findById(orderId).ifPresent(order -> {
+                order.setYandexClaimId(claimId);
+                orderRepository.save(order);
+            });
+        }
+    }
+
+    @Transactional
+    public void updateOrderTelegramNotified(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
+        order.setTelegramNotifiedAt(Instant.now());
+        orderRepository.save(order);
     }
 
     public List<OrderShortDto> getAllHistoryOrdersWithItemsToday() {

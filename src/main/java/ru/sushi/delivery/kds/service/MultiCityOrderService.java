@@ -5,6 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -45,6 +46,12 @@ public class MultiCityOrderService {
 
     @Autowired(required = false)
     private TelegramNotificationService telegramNotificationService;
+
+    @Autowired(required = false)
+    private YandexGeocoderService yandexGeocoderService;
+
+    @Value("${yandex.delivery.enabled:false}")
+    private boolean yandexDeliveryEnabled;
 
     public enum City {
         PARNAS,
@@ -107,16 +114,32 @@ public class MultiCityOrderService {
         String orderTypeStr = orderTypeVal.name();
         String paymentTypeStr = paymentType != null ? paymentType.name() : null;
 
+        // Геокодируем адрес один раз при создании заказа и сохраняем координаты
+        Double addressLat = null;
+        Double addressLon = null;
+        if (address != null && yandexGeocoderService != null) {
+            String fullAddress = address.toFullAddressString();
+            if (fullAddress != null && !fullAddress.isBlank() && !"Адрес не указан".equals(fullAddress)) {
+                double[] coords = yandexGeocoderService.geocode(fullAddress);
+                if (coords != null && coords.length >= 2) {
+                    addressLat = coords[1]; // широта
+                    addressLon = coords[0]; // долгота
+                }
+            }
+        }
+
         // Создаем заказ
         String insertOrderSql = """
             INSERT INTO orders (name, status, should_be_finished_at, kitchen_should_get_order_at, 
                               status_update_at, created_at, preorder, order_type, customer_phone, payment_type,
                               address_street, address_flat, address_floor, address_entrance, address_comment,
-                              address_city, address_doorphone, address_house, delivery_time)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              address_city, address_doorphone, address_house, address_lat, address_lon, delivery_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
+        final Double finalAddressLat = addressLat;
+        final Double finalAddressLon = addressLon;
         template.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(insertOrderSql, Statement.RETURN_GENERATED_KEYS);
             int idx = 1;
@@ -138,6 +161,8 @@ public class MultiCityOrderService {
             ps.setString(idx++, address != null ? address.getCity() : null);
             ps.setString(idx++, address != null ? address.getDoorphone() : null);
             ps.setString(idx++, address != null ? address.getHouse() : null);
+            ps.setObject(idx++, finalAddressLat);
+            ps.setObject(idx++, finalAddressLon);
             ps.setTimestamp(idx++, deliveryTime != null ? Timestamp.from(deliveryTime) : null);
             return ps;
         }, keyHolder);
@@ -173,13 +198,20 @@ public class MultiCityOrderService {
 
         log.info("Created order {} in city {} with {} items", name, city, menuItems.size());
 
-        if (telegramNotificationService == null) {
+        if (yandexDeliveryEnabled) {
+            log.debug("Яндекс Доставка включена — дефолтное уведомление о новом заказе в Telegram не отправляем.");
+        } else if (telegramNotificationService == null) {
             log.info("Telegram уведомления отключены (сервис не создан: не задан telegram.bot.token).");
         } else {
+            // Передаём адрес с сохранёнными координатами, чтобы в ТГ ушла карта и ссылка «Проложить маршрут» по координатам
+            OrderAddressDto addressForTelegram = address;
+            if (address != null && addressLat != null && addressLon != null) {
+                addressForTelegram = address.toBuilder().latitude(addressLat).longitude(addressLon).build();
+            }
             try {
                 telegramNotificationService.notifyNewOrder(
                         city, name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
-                        orderTypeVal, address, customerPhone, paymentType, deliveryTime, cardToCourierMessage
+                        orderTypeVal, addressForTelegram, customerPhone, paymentType, deliveryTime, cardToCourierMessage
                 );
             } catch (Exception e) {
                 log.warn("Failed to send Telegram notification for order {}", name, e);
@@ -196,12 +228,13 @@ public class MultiCityOrderService {
         JdbcTemplate template = getTemplate(city);
 
         String sql = """
-            SELECT o.id, o.name, o.status, o.should_be_finished_at, 
+            SELECT o.id, o.name, o.status, o.should_be_finished_at,
                    o.kitchen_should_get_order_at, o.kitchen_got_order_at, o.preorder,
                    o.order_type, o.customer_phone, o.payment_type,
                    o.address_street, o.address_flat, o.address_floor, o.address_entrance,
                    o.address_comment, o.address_city, o.address_doorphone, o.address_house,
-                   o.delivery_time
+                   o.address_lat, o.address_lon,
+                   o.delivery_time, o.yandex_claim_id, o.telegram_notified_at
             FROM orders o
             WHERE o.status IN ('CREATED', 'COOKING', 'COLLECTING')
             ORDER BY o.kitchen_should_get_order_at ASC
@@ -221,15 +254,42 @@ public class MultiCityOrderService {
         JdbcTemplate template = getTemplate(city);
 
         String sql = """
-            SELECT o.id, o.name, o.status, o.should_be_finished_at, 
+            SELECT o.id, o.name, o.status, o.should_be_finished_at,
                    o.kitchen_should_get_order_at, o.kitchen_got_order_at, o.preorder,
                    o.order_type, o.customer_phone, o.payment_type,
                    o.address_street, o.address_flat, o.address_floor, o.address_entrance,
                    o.address_comment, o.address_city, o.address_doorphone, o.address_house,
-                   o.delivery_time
+                   o.address_lat, o.address_lon,
+                   o.delivery_time, o.yandex_claim_id, o.telegram_notified_at
             FROM orders o
             WHERE o.created_at >= ? AND o.created_at < ?
             ORDER BY o.created_at DESC
+            """;
+
+        return template.query(sql, (rs, rowNum) -> {
+            Long orderId = rs.getLong("id");
+            List<OrderItemDto> orderItems = getOrderItems(city, orderId);
+            return buildOrderShortDto(rs, orderItems);
+        }, Timestamp.from(from), Timestamp.from(to));
+    }
+
+    /**
+     * Получает заказы на доставку за указанный период
+     */
+    public List<OrderShortDto> getDeliveryOrdersWithItemsBetweenDates(City city, Instant from, Instant to) {
+        JdbcTemplate template = getTemplate(city);
+
+        String sql = """
+            SELECT o.id, o.name, o.status, o.should_be_finished_at,
+                   o.kitchen_should_get_order_at, o.kitchen_got_order_at, o.preorder,
+                   o.order_type, o.customer_phone, o.payment_type,
+                   o.address_street, o.address_flat, o.address_floor, o.address_entrance,
+                   o.address_comment, o.address_city, o.address_doorphone, o.address_house,
+                   o.address_lat, o.address_lon,
+                   o.delivery_time, o.yandex_claim_id, o.telegram_notified_at
+            FROM orders o
+            WHERE o.order_type = 'DELIVERY' AND o.created_at >= ? AND o.created_at < ?
+            ORDER BY o.delivery_time ASC NULLS LAST, o.created_at DESC
             """;
 
         return template.query(sql, (rs, rowNum) -> {
@@ -500,6 +560,14 @@ public class MultiCityOrderService {
     private OrderShortDto buildOrderShortDto(java.sql.ResultSet rs, List<OrderItemDto> orderItems) throws java.sql.SQLException {
         OrderAddressDto address = null;
         if (rs.getString("address_street") != null || rs.getString("address_city") != null || rs.getString("address_house") != null) {
+            Double lat = null;
+            Double lon = null;
+            try {
+                Object latObj = rs.getObject("address_lat");
+                Object lonObj = rs.getObject("address_lon");
+                if (latObj instanceof Number) lat = ((Number) latObj).doubleValue();
+                if (lonObj instanceof Number) lon = ((Number) lonObj).doubleValue();
+            } catch (Exception ignored) { /* колонки могут отсутствовать до миграции */ }
             address = OrderAddressDto.builder()
                     .street(rs.getString("address_street"))
                     .flat(rs.getString("address_flat"))
@@ -509,6 +577,8 @@ public class MultiCityOrderService {
                     .city(rs.getString("address_city"))
                     .doorphone(rs.getString("address_doorphone"))
                     .house(rs.getString("address_house"))
+                    .latitude(lat)
+                    .longitude(lon)
                     .build();
         }
 
@@ -545,7 +615,33 @@ public class MultiCityOrderService {
                 .paymentType(paymentType)
                 .deliveryTime(rs.getTimestamp("delivery_time") != null ?
                     rs.getTimestamp("delivery_time").toInstant() : null)
+                .yandexClaimId(rs.getString("yandex_claim_id"))
+                .telegramNotifiedAt(rs.getTimestamp("telegram_notified_at") != null ?
+                    rs.getTimestamp("telegram_notified_at").toInstant() : null)
                 .build();
+    }
+
+    public void updateOrderYandexClaimId(City city, Long orderId, String claimId) {
+        getTemplate(city).update(
+                "UPDATE orders SET yandex_claim_id = ? WHERE id = ?",
+                claimId, orderId
+        );
+    }
+
+    /** Привязывает один claim_id ко всем указанным заказам (сложный маршрут — один курьер). */
+    public void updateOrdersYandexClaimId(City city, List<Long> orderIds, String claimId) {
+        if (orderIds == null || orderIds.isEmpty()) return;
+        JdbcTemplate t = getTemplate(city);
+        for (Long orderId : orderIds) {
+            t.update("UPDATE orders SET yandex_claim_id = ? WHERE id = ?", claimId, orderId);
+        }
+    }
+
+    public void updateOrderTelegramNotified(City city, Long orderId) {
+        getTemplate(city).update(
+                "UPDATE orders SET telegram_notified_at = ? WHERE id = ?",
+                Timestamp.from(Instant.now()), orderId
+        );
     }
 
     private JdbcTemplate getTemplate(City city) {

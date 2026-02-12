@@ -29,8 +29,10 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import ru.sushi.delivery.kds.config.CityProperties;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
@@ -44,7 +46,9 @@ import ru.sushi.delivery.kds.model.OrderStatus;
 import ru.sushi.delivery.kds.model.OrderType;
 import ru.sushi.delivery.kds.model.PaymentType;
 import ru.sushi.delivery.kds.service.OrderTextParserService;
+import ru.sushi.delivery.kds.service.TelegramNotificationService;
 import ru.sushi.delivery.kds.service.ViewService;
+import ru.sushi.delivery.kds.service.YandexDeliveryService;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
 import ru.sushi.delivery.kds.view.dto.CartItem;
 
@@ -53,6 +57,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -60,6 +65,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 
 @Route("create")
 public class CreateOrderView extends VerticalLayout {
@@ -101,6 +107,15 @@ public class CreateOrderView extends VerticalLayout {
     private final Grid<CartItem> chosenGrid = new Grid<>(CartItem.class, false);
     private final Grid<OrderShortDto> ordersGrid = new Grid<>(OrderShortDto.class, false);
     private final Grid<OrderShortDto> activeOrdersGrid = new Grid<>(OrderShortDto.class, false);
+    private final Grid<OrderShortDto> deliveriesGrid = new Grid<>(OrderShortDto.class, false);
+    /** Стоимость Яндекс доставки по заказу (orderId -> "250") */
+    private final Map<Long, String> deliveryPriceByOrderId = new HashMap<>();
+    /** Статус заявки Яндекс по заказу (orderId -> "Курьер найден") */
+    private final Map<Long, String> deliveryStatusByOrderId = new HashMap<>();
+    private final Span deliveriesTotalCostLabel = new Span("Выбрано: 0. Общая стоимость: —");
+    private final ComboBox<String> yandexTaxiClassCombo = new ComboBox<>("Тип доставки");
+    private final List<OrderShortDto> selectedDeliveriesOrder = new ArrayList<>();
+    private BigDecimal complexRouteTotalPrice = null;
     private final TextField orderNumberField = new TextField("Номер заказа");
     private final H3 totalPay = new H3("К оплате: 0.0 рублей");
     private final H5 totalTime = new H5("Общее время приготовления: 0 минут");
@@ -194,6 +209,15 @@ public class CreateOrderView extends VerticalLayout {
             this.aliasCombo = null;
         }
     }
+
+    @Autowired(required = false)
+    private TelegramNotificationService telegramNotificationService;
+
+    @Autowired(required = false)
+    private YandexDeliveryService yandexDeliveryService;
+
+    @Value("${yandex.delivery.enabled:false}")
+    private boolean yandexDeliveryEnabled;
 
     @Autowired
     public CreateOrderView(ViewService viewService,
@@ -424,33 +448,71 @@ public class CreateOrderView extends VerticalLayout {
         Tab cartTab = new Tab("Корзина");
         Tab activeOrdersTab = new Tab("Активные заказы");
         Tab allOrdersTab = new Tab("Все заказы");
-        Tabs rightTabs = new Tabs(cartTab, activeOrdersTab, allOrdersTab);
-
+        Tabs rightTabs;
         Div cartLayout = buildCartLayout();
         Div activeOrdersLayout = buildActiveOrdersLayout();
         Div allOrdersLayout = buildAllOrdersLayout();
         activeOrdersLayout.setVisible(false);
         allOrdersLayout.setVisible(false);
 
-        rightTabs.addSelectedChangeListener(event -> {
-            if (event.getSelectedTab().equals(cartTab)) {
-                cartLayout.setVisible(true);
-                activeOrdersLayout.setVisible(false);
-                allOrdersLayout.setVisible(false);
-            } else if (event.getSelectedTab().equals(activeOrdersTab)) {
-                cartLayout.setVisible(false);
-                activeOrdersLayout.setVisible(true);
-                allOrdersLayout.setVisible(false);
-                refreshActiveOrdersGrid(null, null);
-            } else {
-                cartLayout.setVisible(false);
-                activeOrdersLayout.setVisible(false);
-                allOrdersLayout.setVisible(true);
-                refreshOrdersGrid(null, null);
-            }
-        });
+        Div deliveriesLayout = null;
+        if (yandexDeliveryEnabled) {
+            rightTabs = new Tabs(cartTab, activeOrdersTab, allOrdersTab);
+            rightTabs.addSelectedChangeListener(event -> {
+                if (event.getSelectedTab().equals(cartTab)) {
+                    cartLayout.setVisible(true);
+                    activeOrdersLayout.setVisible(false);
+                    allOrdersLayout.setVisible(false);
+                } else if (event.getSelectedTab().equals(activeOrdersTab)) {
+                    cartLayout.setVisible(false);
+                    activeOrdersLayout.setVisible(true);
+                    allOrdersLayout.setVisible(false);
+                    refreshActiveOrdersGrid(null, null);
+                } else {
+                    cartLayout.setVisible(false);
+                    activeOrdersLayout.setVisible(false);
+                    allOrdersLayout.setVisible(true);
+                    refreshOrdersGrid(null, null);
+                }
+            });
+        } else {
+            Tab deliveriesTab = new Tab("Доставки");
+            rightTabs = new Tabs(cartTab, activeOrdersTab, allOrdersTab, deliveriesTab);
+            final Div deliveriesLayoutFinal = buildDeliveriesLayout();
+            deliveriesLayout = deliveriesLayoutFinal;
+            deliveriesLayoutFinal.setVisible(false);
+            rightTabs.addSelectedChangeListener(event -> {
+                if (event.getSelectedTab().equals(cartTab)) {
+                    cartLayout.setVisible(true);
+                    activeOrdersLayout.setVisible(false);
+                    allOrdersLayout.setVisible(false);
+                    deliveriesLayoutFinal.setVisible(false);
+                } else if (event.getSelectedTab().equals(activeOrdersTab)) {
+                    cartLayout.setVisible(false);
+                    activeOrdersLayout.setVisible(true);
+                    allOrdersLayout.setVisible(false);
+                    deliveriesLayoutFinal.setVisible(false);
+                    refreshActiveOrdersGrid(null, null);
+                } else if (event.getSelectedTab().equals(allOrdersTab)) {
+                    cartLayout.setVisible(false);
+                    activeOrdersLayout.setVisible(false);
+                    allOrdersLayout.setVisible(true);
+                    deliveriesLayoutFinal.setVisible(false);
+                    refreshOrdersGrid(null, null);
+                } else {
+                    cartLayout.setVisible(false);
+                    activeOrdersLayout.setVisible(false);
+                    allOrdersLayout.setVisible(false);
+                    deliveriesLayoutFinal.setVisible(true);
+                    refreshDeliveriesGrid();
+                }
+            });
+        }
 
         VerticalLayout rightLayout = new VerticalLayout(rightTabs, orderNumberField, cartLayout, activeOrdersLayout, allOrdersLayout);
+        if (deliveriesLayout != null) {
+            rightLayout.add(deliveriesLayout);
+        }
         rightLayout.setWidth("50%");
         rightLayout.setPadding(false);
         rightLayout.setSpacing(true);
@@ -968,6 +1030,274 @@ public class CreateOrderView extends VerticalLayout {
         return ordersLayout;
     }
 
+    private Div buildDeliveriesLayout() {
+        Div layout = new Div();
+        layout.setWidthFull();
+
+        deliveriesGrid.setSelectionMode(Grid.SelectionMode.MULTI);
+        deliveriesGrid.removeAllColumns();
+        deliveriesGrid.addColumn(OrderShortDto::getName).setHeader("Номер").setAutoWidth(true);
+        deliveriesGrid.addColumn(order -> {
+            int idx = selectedDeliveriesOrder.indexOf(order);
+            return idx >= 0 ? String.valueOf(idx + 1) : "—";
+        }).setHeader("Порядок").setAutoWidth(true);
+        deliveriesGrid.addColumn(order -> order.getShouldBeFinishedAt() == null ? "—"
+                : order.getShouldBeFinishedAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("HH:mm dd.MM")))
+                .setHeader("Расч. вр. готовности").setAutoWidth(true);
+        deliveriesGrid.addColumn(order -> order.getDeliveryTime() == null ? "—"
+                : order.getDeliveryTime().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("HH:mm dd.MM")))
+                .setHeader("Время доставки").setAutoWidth(true);
+        deliveriesGrid.addColumn(order -> {
+            if (order.getTelegramNotifiedAt() != null) return "Наш курьер";
+            if (order.getYandexClaimId() != null) {
+                String status = deliveryStatusByOrderId.get(order.getId());
+                return status != null ? "Яндекс: " + status : "Яндекс";
+            }
+            return "—";
+        }).setHeader("Статус курьера").setAutoWidth(true);
+        deliveriesGrid.addColumn(order -> {
+            String price = deliveryPriceByOrderId.get(order.getId());
+            return price != null ? price + " ₽" : "—";
+        }).setHeader("Стоимость").setAutoWidth(true);
+        deliveriesGrid.addComponentColumn(order -> {
+            Button phoneBtn = new Button("📞", VaadinIcon.PHONE.create());
+            phoneBtn.addClickListener(e -> {
+                String phone = order.getCustomerPhone();
+                if (phone != null && !phone.isBlank()) {
+                    Notification.show("Телефон: " + phone, 3000, Notification.Position.MIDDLE);
+                } else {
+                    Notification.show("Телефон не указан", 2000, Notification.Position.MIDDLE);
+                }
+            });
+            return phoneBtn;
+        }).setHeader("Номер клиента").setAutoWidth(true);
+        deliveriesGrid.addComponentColumn(order -> {
+            Button addrBtn = new Button("📍", VaadinIcon.MAP_MARKER.create());
+            addrBtn.addClickListener(e -> {
+                if (order.getAddress() == null) {
+                    Notification.show("Адрес не указан", 2000, Notification.Position.MIDDLE);
+                    return;
+                }
+                OrderAddressDto a = order.getAddress();
+                StringBuilder sb = new StringBuilder();
+                if (a.getCity() != null) sb.append(a.getCity());
+                if (a.getStreet() != null) sb.append(sb.length() > 0 ? ", " : "").append(a.getStreet());
+                if (a.getHouse() != null) sb.append(sb.length() > 0 ? ", " : "").append("д. ").append(a.getHouse());
+                if (a.getFlat() != null) sb.append(", кв. ").append(a.getFlat());
+                if (a.getFloor() != null) sb.append(", эт. ").append(a.getFloor());
+                if (a.getEntrance() != null) sb.append(", под. ").append(a.getEntrance());
+                if (a.getDoorphone() != null) sb.append(", домофон ").append(a.getDoorphone());
+                if (a.getComment() != null && !a.getComment().isBlank()) sb.append(" — ").append(a.getComment());
+                Notification.show(sb.length() > 0 ? sb.toString() : "Адрес не указан", 5000, Notification.Position.MIDDLE);
+            });
+            return addrBtn;
+        }).setHeader("Адрес").setAutoWidth(true);
+        deliveriesGrid.addComponentColumn(order -> {
+            HorizontalLayout btns = new HorizontalLayout();
+            Button tgBtn = new Button("Отправить ТГ");
+            tgBtn.addClickListener(e -> {
+                if (telegramNotificationService == null) {
+                    Notification.show("Telegram не настроен", 3000, Notification.Position.MIDDLE);
+                    return;
+                }
+                try {
+                    telegramNotificationService.notifyExistingOrder(order, cityProperties.getCity());
+                    viewService.updateOrderTelegramNotified(order.getId());
+                    Notification.show("Уведомление отправлено в Telegram", 3000, Notification.Position.MIDDLE);
+                    refreshDeliveriesGrid();
+                } catch (Exception ex) {
+                    Notification.show("Ошибка: " + ex.getMessage(), 5000, Notification.Position.MIDDLE);
+                }
+            });
+            Button yandexBtn = new Button("Вызвать Яндекс");
+            yandexBtn.addClickListener(e -> {
+                if (yandexDeliveryService == null) {
+                    Notification.show("Яндекс Доставка не настроена", 3000, Notification.Position.MIDDLE);
+                    return;
+                }
+                try {
+                    String claimId = yandexDeliveryService.createClaim(order, getYandexTaxiClass());
+                    viewService.updateOrderYandexClaimId(order.getId(), claimId);
+                    Notification.show("Яндекс: заявка создана. " + claimId, 5000, Notification.Position.MIDDLE);
+                    refreshDeliveriesGrid();
+                } catch (Exception ex) {
+                    Notification.show("Ошибка: " + ex.getMessage(), 5000, Notification.Position.MIDDLE);
+                }
+            });
+            btns.add(tgBtn, yandexBtn);
+            if (order.getYandexClaimId() != null) {
+                Button refreshStatusBtn = new Button("Обновить статус");
+                refreshStatusBtn.addClickListener(ev -> {
+                    if (yandexDeliveryService == null) return;
+                    try {
+                        String status = yandexDeliveryService.getClaimStatus(order.getYandexClaimId());
+                        if (status != null) {
+                            deliveryStatusByOrderId.put(order.getId(), status);
+                            deliveriesGrid.getDataProvider().refreshItem(order);
+                        }
+                    } catch (Exception ex) {
+                        Notification.show("Ошибка: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
+                    }
+                });
+                btns.add(refreshStatusBtn);
+            }
+            return btns;
+        }).setHeader("Кнопки").setAutoWidth(true);
+
+        Button calcCostBtn = new Button("Рассчитать стоимость", VaadinIcon.CALC.create());
+        calcCostBtn.addClickListener(e -> {
+            if (yandexDeliveryService == null) {
+                Notification.show("Яндекс Доставка не настроена", 3000, Notification.Position.MIDDLE);
+                return;
+            }
+            if (selectedDeliveriesOrder.size() >= 2) {
+                String priceStr = yandexDeliveryService.calculateComplexRoutePrice(selectedDeliveriesOrder, getYandexTaxiClass());
+                if (priceStr != null) {
+                    try {
+                        complexRouteTotalPrice = new BigDecimal(priceStr);
+                        updateDeliveriesTotalLabel();
+                        Notification.show("Стоимость сложного маршрута (" + selectedDeliveriesOrder.size() + " заказов): " + priceStr + " ₽", 3000, Notification.Position.MIDDLE);
+                    } catch (NumberFormatException ignored) {
+                        complexRouteTotalPrice = null;
+                    }
+                } else {
+                    complexRouteTotalPrice = null;
+                    Notification.show("Не удалось рассчитать стоимость маршрута", 3000, Notification.Position.MIDDLE);
+                }
+            } else {
+                complexRouteTotalPrice = null;
+                List<OrderShortDto> items = new ArrayList<>(((ListDataProvider<OrderShortDto>) deliveriesGrid.getDataProvider()).getItems());
+                BigDecimal total = BigDecimal.ZERO;
+                for (OrderShortDto o : items) {
+                    String priceStr = yandexDeliveryService.calculatePrice(o, getYandexTaxiClass());
+                    if (priceStr != null) {
+                        try {
+                            deliveryPriceByOrderId.put(o.getId(), priceStr);
+                            total = total.add(new BigDecimal(priceStr));
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+                updateDeliveriesTotalLabel();
+                deliveriesGrid.getDataProvider().refreshAll();
+                Notification.show("Рассчитано для " + items.size() + " заказов", 2000, Notification.Position.MIDDLE);
+            }
+        });
+
+        Button refreshStatusBtn = new Button("Обновить статусы", VaadinIcon.REFRESH.create());
+        refreshStatusBtn.addClickListener(e -> {
+            if (yandexDeliveryService == null) return;
+            List<OrderShortDto> items = new ArrayList<>(((ListDataProvider<OrderShortDto>) deliveriesGrid.getDataProvider()).getItems());
+            for (OrderShortDto o : items) {
+                if (o.getYandexClaimId() != null) {
+                    String status = yandexDeliveryService.getClaimStatus(o.getYandexClaimId());
+                    if (status != null) deliveryStatusByOrderId.put(o.getId(), status);
+                }
+            }
+            deliveriesGrid.getDataProvider().refreshAll();
+        });
+
+        deliveriesGrid.getSelectionModel().addSelectionListener(event -> {
+            var newSet = deliveriesGrid.getSelectedItems();
+            var newSetIds = newSet.stream().map(OrderShortDto::getId).collect(Collectors.toSet());
+            selectedDeliveriesOrder.removeIf(o -> !newSetIds.contains(o.getId()));
+            if (selectedDeliveriesOrder.size() < 2) complexRouteTotalPrice = null;
+            var orderIds = selectedDeliveriesOrder.stream().map(OrderShortDto::getId).collect(Collectors.toSet());
+            List<OrderShortDto> gridItems = new ArrayList<>(((ListDataProvider<OrderShortDto>) deliveriesGrid.getDataProvider()).getItems());
+            for (OrderShortDto o : gridItems) {
+                if (newSetIds.contains(o.getId()) && !orderIds.contains(o.getId())) {
+                    selectedDeliveriesOrder.add(o);
+                    orderIds.add(o.getId());
+                }
+            }
+            deliveriesGrid.getDataProvider().refreshAll();
+            updateDeliveriesTotalLabel();
+        });
+
+        HorizontalLayout toolbar = new HorizontalLayout(calcCostBtn, refreshStatusBtn, deliveriesTotalCostLabel);
+        toolbar.setAlignItems(Alignment.CENTER);
+        toolbar.setSpacing(true);
+
+        yandexTaxiClassCombo.setItems("courier", "express");
+        yandexTaxiClassCombo.setItemLabelGenerator(v -> "courier".equals(v) ? "Велокурьер" : "Экспресс");
+        yandexTaxiClassCombo.setValue("express");
+        yandexTaxiClassCombo.setWidth("140px");
+
+        Button complexRouteBtn = new Button("Заказать 1 курьера на заказы", VaadinIcon.TRUCK.create());
+        complexRouteBtn.addClickListener(e -> {
+            if (selectedDeliveriesOrder.isEmpty()) {
+                Notification.show("Выберите заказы для маршрута", 2000, Notification.Position.MIDDLE);
+                return;
+            }
+            if (yandexDeliveryService == null) {
+                Notification.show("Яндекс Доставка не настроена", 3000, Notification.Position.MIDDLE);
+                return;
+            }
+            try {
+                List<OrderShortDto> list = new ArrayList<>(selectedDeliveriesOrder);
+                String claimId = yandexDeliveryService.createComplexRouteClaim(list, getYandexTaxiClass());
+                List<Long> orderIds = list.stream().map(OrderShortDto::getId).toList();
+                viewService.updateOrdersYandexClaimId(orderIds, claimId);
+                Notification.show("Маршрут создан: " + claimId + " (" + list.size() + " заказов)", 5000, Notification.Position.MIDDLE);
+                refreshDeliveriesGrid();
+            } catch (Exception ex) {
+                Notification.show("Ошибка: " + ex.getMessage(), 5000, Notification.Position.MIDDLE);
+            }
+        });
+        Span complexRouteHint = new Span("Заказывает одного курьера Яндекса по выбранным заказам (в порядке колонки «Порядок»)");
+        HorizontalLayout bottomBar = new HorizontalLayout(yandexTaxiClassCombo, complexRouteBtn);
+        bottomBar.setAlignItems(Alignment.CENTER);
+        bottomBar.setSpacing(true);
+
+        layout.add(new H3("Заказы на доставку:"), toolbar, deliveriesGrid, bottomBar, complexRouteHint);
+        refreshDeliveriesGrid();
+        updateDeliveriesTotalLabel();
+        return layout;
+    }
+
+    private String getYandexTaxiClass() {
+        String v = yandexTaxiClassCombo.getValue();
+        return (v != null && !v.isBlank()) ? v : "express";
+    }
+
+    private void updateDeliveriesTotalLabel() {
+        if (selectedDeliveriesOrder.isEmpty()) {
+            deliveriesTotalCostLabel.setText("Выбрано: 0. Общая стоимость: —");
+            return;
+        }
+        if (selectedDeliveriesOrder.size() >= 2 && complexRouteTotalPrice != null) {
+            deliveriesTotalCostLabel.setText("Выбрано: " + selectedDeliveriesOrder.size() + ". Стоимость маршрута: " + complexRouteTotalPrice.stripTrailingZeros().toPlainString() + " ₽");
+            return;
+        }
+        BigDecimal total = BigDecimal.ZERO;
+        for (OrderShortDto o : selectedDeliveriesOrder) {
+            String p = deliveryPriceByOrderId.get(o.getId());
+            if (p != null) {
+                try { total = total.add(new BigDecimal(p)); } catch (NumberFormatException ignored) {}
+            }
+        }
+        deliveriesTotalCostLabel.setText("Выбрано: " + selectedDeliveriesOrder.size() + ". Общая стоимость: " + (total.compareTo(BigDecimal.ZERO) > 0 ? total.stripTrailingZeros().toPlainString() + " ₽" : "—"));
+    }
+
+    private void refreshDeliveriesGrid() {
+        Instant from = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant to = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        List<OrderShortDto> list = viewService.getDeliveryOrdersWithItemsBetweenDates(from, to);
+        list = list.stream()
+//                .filter(o -> o.getStatus() != OrderStatus.CANCELED)
+                .sorted(Comparator.comparing(OrderShortDto::getDeliveryTime, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .toList();
+        deliveriesGrid.setItems(list);
+        syncSelectedDeliveriesOrder(list);
+    }
+
+    private void syncSelectedDeliveriesOrder(List<OrderShortDto> gridItems) {
+        List<Long> idOrder = selectedDeliveriesOrder.stream().map(OrderShortDto::getId).toList();
+        selectedDeliveriesOrder.clear();
+        for (Long id : idOrder) {
+            gridItems.stream().filter(o -> o.getId().equals(id)).findFirst().ifPresent(selectedDeliveriesOrder::add);
+        }
+    }
+
     private void openEditDialog(OrderShortDto orderDto) {
         Dialog editDialog = new Dialog();
         editDialog.setHeaderTitle("Редактировать время начала приготовления");
@@ -1009,13 +1339,14 @@ public class CreateOrderView extends VerticalLayout {
     }
 
     private void refreshAllOrdersTables() {
-        // Обновляем активные заказы если видима их вкладка
         if (activeOrdersGrid.isAttached()) {
             refreshActiveOrdersGrid(null, null);
         }
-        // Обновляем все заказы если видима их вкладка
         if (ordersGrid.isAttached()) {
             refreshOrdersGrid(null, null);
+        }
+        if (deliveriesGrid.isAttached()) {
+            refreshDeliveriesGrid();
         }
     }
 

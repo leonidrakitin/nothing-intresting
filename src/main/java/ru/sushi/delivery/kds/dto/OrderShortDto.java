@@ -29,6 +29,10 @@ public class OrderShortDto {
     private String customerPhone;
     private PaymentType paymentType;
     private Instant deliveryTime;
+    /** ID заявки Яндекс Доставки (если вызывали «Вызвать Яндекс») */
+    private String yandexClaimId;
+    /** Время отправки в ТГ (наш курьер) */
+    private Instant telegramNotifiedAt;
 
     public static OrderShortDto of(Order order, List<OrderItemDto> orderItems) {
         return OrderShortDto.builder()
@@ -44,6 +48,8 @@ public class OrderShortDto {
                 .customerPhone(order.getCustomerPhone())
                 .paymentType(order.getPaymentType())
                 .deliveryTime(order.getDeliveryTime())
+                .yandexClaimId(order.getYandexClaimId())
+                .telegramNotifiedAt(order.getTelegramNotifiedAt())
                 .build();
     }
 }

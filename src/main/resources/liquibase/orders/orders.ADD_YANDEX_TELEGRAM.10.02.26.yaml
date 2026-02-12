@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: orders.ADD_YANDEX_TELEGRAM.10.02.26
+      author: system
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: yandex_claim_id
+                  type: VARCHAR(64)
+              - column:
+                  name: telegram_notified_at
+                  type: TIMESTAMPTZ
+
+  - changeSet:
+      id: orders_aud.ADD_YANDEX_TELEGRAM.10.02.26
+      author: system
+      changes:
+        - addColumn:
+            tableName: orders_aud
+            columns:
+              - column:
+                  name: yandex_claim_id
+                  type: VARCHAR(64)
+              - column:
+                  name: telegram_notified_at
+                  type: TIMESTAMPTZ

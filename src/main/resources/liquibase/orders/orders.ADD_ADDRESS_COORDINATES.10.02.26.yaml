@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: orders.ADD_ADDRESS_COORDINATES.10.02.26
+      author: system
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: address_lat
+                  type: DOUBLE PRECISION
+              - column:
+                  name: address_lon
+                  type: DOUBLE PRECISION
+
+  - changeSet:
+      id: orders_aud.ADD_ADDRESS_COORDINATES.10.02.26
+      author: system
+      changes:
+        - addColumn:
+            tableName: orders_aud
+            columns:
+              - column:
+                  name: address_lat
+                  type: DOUBLE PRECISION
+              - column:
+                  name: address_lon
+                  type: DOUBLE PRECISION
