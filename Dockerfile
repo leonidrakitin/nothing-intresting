@@ -21,4 +21,4 @@ RUN ./gradlew bootJar -Pvaadin.production --no-daemon -x test
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/build/libs/kds-0.0.1-SNAPSHOT.jar app.jar
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${SERVER_PORT} -Dspring.profiles.active=prod -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Duser.timezone=Europe/Moscow -Dserver.port=${SERVER_PORT} -Dspring.profiles.active=prod -jar app.jar"]
