@@ -6,12 +6,15 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.sushi.delivery.kds.dto.KitchenDisplayInfoDto;
 import ru.sushi.delivery.kds.service.ViewService;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Route("")
@@ -21,6 +24,11 @@ public class MainView extends VerticalLayout {
     public MainView(ViewService viewService) {
 
         setSizeFull();
+
+        String currentTime = LocalDate.now().format(
+                DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm (zzz)")
+        );
+        add(new Span("Текущее время: " + currentTime));
 
         H2 headerScreens = new H2("Экраны доступные поваров:");
         add(headerScreens);
