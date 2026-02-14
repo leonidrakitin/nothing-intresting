@@ -27,6 +27,7 @@ import ru.sushi.delivery.kds.model.DiscontinuedReason;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -65,7 +66,7 @@ public class RecipeService {
         item.setAmount(calAmount >= 0 || last ? calAmount : 0);
         if (item.getAmount() <= 0) {
             item.setDiscontinuedReason(DiscontinuedReason.FINISHED);
-            item.setDiscontinuedAt(Instant.now());
+            item.setDiscontinuedAt(ZonedDateTime.now().toInstant());
             if (item.getAmount() == 0) {
                 item.setDiscontinuedComment(String.format(
                         "%s '%s' автоматически был списан системой",

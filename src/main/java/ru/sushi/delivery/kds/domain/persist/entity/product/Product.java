@@ -16,6 +16,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.Measurement;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -50,13 +51,13 @@ public abstract class Product {
 
     @PrePersist
     protected void onCreate() {
-        Instant now = Instant.now();
+        Instant now = ZonedDateTime.now().toInstant();
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = Instant.now();
+        this.updatedAt = ZonedDateTime.now().toInstant();
     }
 }

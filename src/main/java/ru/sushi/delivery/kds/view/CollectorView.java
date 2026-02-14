@@ -23,6 +23,7 @@ import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -224,7 +225,7 @@ public class CollectorView extends VerticalLayout implements BroadcastListener {
         Div stationStatusDiv = new Div(new Text("Статус: " + item.getStatus().getName()));
 
         // Время (секунды с момента createdAt)
-        long seconds = Duration.between(item.getStatusUpdatedAt(), Instant.now()).toSeconds();
+        long seconds = Duration.between(item.getStatusUpdatedAt(), ZonedDateTime.now().toInstant()).toSeconds();
         Div timeDiv = new Div(new Text("В этом статусе: " + seconds + " сек"));
         timeDiv.getStyle().set("font-size", "0.9em");
         timeDiv.getStyle().set("color", "#777");

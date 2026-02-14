@@ -27,6 +27,7 @@ import ru.sushi.delivery.kds.service.listeners.OrderChangesListener;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -160,7 +161,7 @@ public class ChefScreenView extends HorizontalLayout implements HasUrlParameter<
 
         title.getStyle().set("font-weight", "bold");
         // Время готовки: текущее время - время создания
-        long seconds = Duration.between(item.getStatusUpdatedAt(), Instant.now()).toSeconds();
+        long seconds = Duration.between(item.getStatusUpdatedAt(), ZonedDateTime.now().toInstant()).toSeconds();
         Div timer = new Div();
         timer.getStyle().set("font-size", "0.9em");
         timer.getStyle().set("font-weight", "normal");

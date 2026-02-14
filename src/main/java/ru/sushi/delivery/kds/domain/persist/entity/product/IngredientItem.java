@@ -23,6 +23,7 @@ import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @Audited
@@ -54,7 +55,7 @@ public class IngredientItem extends SourceItem {
                 .sourceType(SourceType.INGREDIENT)
                 .amount(itemActDto.getAmount())
                 .barcode(itemActDto.getBarcode())
-                .expirationDate(Instant.now().plus(expiration))
+                .expirationDate(ZonedDateTime.now().toInstant().plus(expiration))
                 .ingredient(ingredient)
                 .build();
     }

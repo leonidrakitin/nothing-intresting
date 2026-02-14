@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -297,7 +298,7 @@ public class OrderTextParserService {
                 try {
                     String timeStr = matcher.group(1);
                     LocalTime time = LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("H:mm"));
-                    LocalDate date = LocalDate.now(); // Используем текущую дату
+                    LocalDate date = ZonedDateTime.now().toLocalDate(); // Используем текущую дату
                     
                     // Если есть полная дата (формат 03.11.2025)
                     if (matcher.groupCount() >= 4 && matcher.group(2) != null && matcher.group(3) != null && matcher.group(4) != null) {
@@ -314,7 +315,7 @@ public class OrderTextParserService {
                     else if (matcher.groupCount() >= 2 && matcher.group(2) != null && matcher.group(2).matches("\\d{1,2}")) {
                         try {
                             int day = Integer.parseInt(matcher.group(2));
-                            date = LocalDate.now().withDayOfMonth(day);
+                            date = ZonedDateTime.now().toLocalDate().withDayOfMonth(day);
                         } catch (Exception e) {
                             // Игнорируем ошибку парсинга дня
                         }
@@ -351,13 +352,13 @@ public class OrderTextParserService {
                 try {
                     String timeStr = matcher.group(1);
                     LocalTime time = LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("H:mm"));
-                    LocalDate date = LocalDate.now();
+                    LocalDate date = ZonedDateTime.now().toLocalDate();
                     
                     // Если есть день и месяц
                     if (matcher.groupCount() >= 2 && matcher.group(2) != null) {
                         try {
                             int day = Integer.parseInt(matcher.group(2));
-                            date = LocalDate.now().withDayOfMonth(day);
+                            date = ZonedDateTime.now().toLocalDate().withDayOfMonth(day);
                         } catch (Exception e) {
                             // Игнорируем
                         }
@@ -1118,7 +1119,7 @@ public class OrderTextParserService {
                         date = LocalDate.of(year, month, day);
                     } else {
                         // Нет даты - используем сегодня
-                        date = LocalDate.now();
+                        date = ZonedDateTime.now().toLocalDate();
                     }
                     
                     LocalDateTime dateTime = LocalDateTime.of(date, LocalTime.of(hour, minute));
@@ -1130,7 +1131,7 @@ public class OrderTextParserService {
         }
         
         // Если время не найдено, возвращаем +50 минут от текущего времени
-        return Instant.now().plusSeconds(50 * 60);
+        return ZonedDateTime.now().toInstant().plusSeconds(50 * 60);
     }
 
     private String parseCity(String text) {

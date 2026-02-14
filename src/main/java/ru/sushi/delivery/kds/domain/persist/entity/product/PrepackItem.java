@@ -26,6 +26,7 @@ import ru.sushi.delivery.kds.dto.act.InvoiceActItemDto;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @Audited
 @AuditOverride(forClass = SourceItem.class)
@@ -59,7 +60,7 @@ public class PrepackItem extends SourceItem {
                 .sourceType(SourceType.PREPACK)
                 .amount(itemAct.getAmount())
                 .barcode(item.getBarcode())
-                .expirationDate(Instant.now().plus(prepack.getExpirationDuration()))
+                .expirationDate(ZonedDateTime.now().toInstant().plus(prepack.getExpirationDuration()))
                 .prepack(prepack)
                 .build();
     }
@@ -70,7 +71,7 @@ public class PrepackItem extends SourceItem {
                 .sourceType(SourceType.PREPACK)
                 .amount(act.getAmount())
                 .barcode(actDto.getBarcode())
-                .expirationDate(Instant.now().plus(prepack.getExpirationDuration()))
+                .expirationDate(ZonedDateTime.now().toInstant().plus(prepack.getExpirationDuration()))
                 .prepack(prepack)
                 .build();
     }

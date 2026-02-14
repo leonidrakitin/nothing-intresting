@@ -27,6 +27,7 @@ import ru.sushi.delivery.kds.model.OrderType;
 import ru.sushi.delivery.kds.model.PaymentType;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,10 +64,10 @@ public class Order {
     private Instant kitchenGotOrderAt;
 
     @Builder.Default
-    private Instant statusUpdateAt = Instant.now();
+    private Instant statusUpdateAt = ZonedDateTime.now().toInstant();
 
     @Builder.Default
-    private Instant createdAt = Instant.now();
+    private Instant createdAt = ZonedDateTime.now().toInstant();
 
     @Builder.Default
     private Boolean preorder = false;

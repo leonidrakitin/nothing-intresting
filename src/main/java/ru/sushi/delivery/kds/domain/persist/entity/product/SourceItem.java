@@ -19,6 +19,7 @@ import ru.sushi.delivery.kds.model.DiscontinuedReason;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -50,10 +51,10 @@ public abstract class SourceItem {
     private DiscontinuedReason discontinuedReason;
 
     @Builder.Default
-    private Instant updatedAt = Instant.now();
+    private Instant updatedAt = ZonedDateTime.now().toInstant();
 
     @Builder.Default
-    private Instant createdAt = Instant.now();
+    private Instant createdAt = ZonedDateTime.now().toInstant();
 
     private String updatedBy;
 

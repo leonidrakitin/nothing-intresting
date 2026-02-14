@@ -17,6 +17,7 @@ import ru.sushi.delivery.kds.model.DiscontinuedReason;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @Log4j2
 @Service
@@ -73,7 +74,7 @@ public class WriteOffService {
     }
 
     public void writeOffSpoiledItem(SourceItem sourceItem, WriteOffRequest writeOffRequest, Long productId) {
-        if (sourceItem.getExpirationDate().isAfter(Instant.now())) {
+        if (sourceItem.getExpirationDate().isAfter(ZonedDateTime.now().toInstant())) {
             log.error("Продукт с id {} не просрочен, списание невозможно", productId);
             throw new IllegalArgumentException("Невозможно списать. Продукт еще не просрочен.");
         }

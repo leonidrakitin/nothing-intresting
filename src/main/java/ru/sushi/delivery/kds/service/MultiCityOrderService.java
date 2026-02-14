@@ -27,6 +27,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -63,7 +64,7 @@ public class MultiCityOrderService {
      */
     public boolean orderExistsByNameToday(City city, String name) {
         JdbcTemplate template = getTemplate(city);
-        Instant now = Instant.now();
+        Instant now = ZonedDateTime.now().toInstant();
         LocalDateTime localDateTime = LocalDateTime.ofInstant(now, ZoneId.systemDefault());
         Instant startOfDay = localDateTime.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant startOfTomorrow = localDateTime.toLocalDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
@@ -106,7 +107,7 @@ public class MultiCityOrderService {
         JdbcTemplate template = getTemplate(city);
 
         // Проверяем, является ли заказ предзаказом
-        Instant now = Instant.now();
+        Instant now = ZonedDateTime.now().toInstant();
         boolean isPreorder = kitchenShouldGetOrderAt != null &&
                             kitchenShouldGetOrderAt.isAfter(now.plusSeconds(15 * 60));
 
@@ -361,7 +362,7 @@ public class MultiCityOrderService {
     public void updateKitchenShouldGetOrderAt(City city, Long orderId, Instant newInstant) {
         JdbcTemplate template = getTemplate(city);
 
-        Instant now = Instant.now();
+        Instant now = ZonedDateTime.now().toInstant();
         boolean isPreorder = newInstant != null && newInstant.isAfter(now.plusSeconds(15 * 60));
 
         String sql = """
@@ -450,7 +451,7 @@ public class MultiCityOrderService {
             VALUES (?, ?, ?, ?, ?, ?)
             """;
 
-        Instant now = Instant.now();
+        Instant now = ZonedDateTime.now().toInstant();
         template.update(sql,
             orderId,
             menuItem.getId(),
@@ -481,7 +482,7 @@ public class MultiCityOrderService {
 
         if (activeOrders.isEmpty()) {
             // Если нет заказов - добавляем 1 минуту к текущему времени
-            Instant priorityTime = Instant.now().plusSeconds(60);
+            Instant priorityTime = ZonedDateTime.now().toInstant().plusSeconds(60);
             updateKitchenShouldGetOrderAt(city, orderId, priorityTime);
             return;
         }
@@ -516,7 +517,7 @@ public class MultiCityOrderService {
             return;
         }
 
-        Instant now = Instant.now();
+        Instant now = ZonedDateTime.now().toInstant();
 
         // Обновляем позиции заказа - сбрасываем на первый шаг
         String updateItemsSql = """
@@ -640,7 +641,7 @@ public class MultiCityOrderService {
     public void updateOrderTelegramNotified(City city, Long orderId) {
         getTemplate(city).update(
                 "UPDATE orders SET telegram_notified_at = ? WHERE id = ?",
-                Timestamp.from(Instant.now()), orderId
+                Timestamp.from(ZonedDateTime.now().toInstant()), orderId
         );
     }
 

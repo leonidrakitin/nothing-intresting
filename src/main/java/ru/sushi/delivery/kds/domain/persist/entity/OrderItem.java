@@ -22,6 +22,7 @@ import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
 import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @Audited
 @Entity
@@ -56,10 +57,10 @@ public class OrderItem {
     private OrderItemStationStatus status = OrderItemStationStatus.ADDED;
 
     @Builder.Default
-    private Instant statusUpdatedAt = Instant.now();
+    private Instant statusUpdatedAt = ZonedDateTime.now().toInstant();
 
     @Builder.Default
-    private Instant stationChangedAt = Instant.now();
+    private Instant stationChangedAt = ZonedDateTime.now().toInstant();
 
     public static OrderItem of(Order order, MenuItem menuItem) {
         return OrderItem.builder()

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import ru.sushi.delivery.kds.domain.service.OrderService;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -15,7 +16,7 @@ public class UpdateKitchenGotOrderAt {
 
     @Scheduled(fixedRate = 2000)
     public void performTask() {
-        this.orderService.checkAndUpdateKitchenGotOrderAt(Instant.now());
+        this.orderService.checkAndUpdateKitchenGotOrderAt(ZonedDateTime.now().toInstant());
     }
 
 }

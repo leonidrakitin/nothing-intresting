@@ -21,6 +21,7 @@ import ru.sushi.delivery.kds.model.DiscontinuedReason;
 import ru.sushi.delivery.kds.model.SourceType;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 
 @Audited
 @Entity
@@ -62,7 +63,7 @@ public class WriteOffItem {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
-    private Instant createdAt = Instant.now();
+    private Instant createdAt = ZonedDateTime.now().toInstant();
 
     public static WriteOffItem of(
             SourceItem sourceItem,

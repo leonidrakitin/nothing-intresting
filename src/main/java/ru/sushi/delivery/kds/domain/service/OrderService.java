@@ -39,6 +39,7 @@ import ru.sushi.delivery.kds.websocket.WSMessageSender;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -79,7 +80,7 @@ public class OrderService {
     }
 
     public boolean orderExistsByNameToday(String name) {
-        Instant now = Instant.now();
+        Instant now = ZonedDateTime.now().toInstant();
         LocalDateTime localDateTime = LocalDateTime.ofInstant(now, ZoneId.systemDefault());
         Instant startOfDay = localDateTime.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant startOfTomorrow = localDateTime.toLocalDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
@@ -101,7 +102,7 @@ public class OrderService {
             Instant deliveryTime
     ) {
         // Проверяем, является ли заказ предзаказом (время начала больше чем на 15 минут от текущего времени)
-        Instant now = Instant.now();
+        Instant now = ZonedDateTime.now().toInstant();
         boolean isPreorder = kitchenShouldGetOrderAt != null && 
                             kitchenShouldGetOrderAt.isAfter(now.plusSeconds(15 * 60));
         
@@ -187,8 +188,8 @@ public class OrderService {
         orderItem = orderItem.toBuilder()
                 .currentFlowStep(0)
                 .status(OrderItemStationStatus.COMPLETED)
-                .statusUpdatedAt(Instant.now())
-                .stationChangedAt(Instant.now())
+                .statusUpdatedAt(ZonedDateTime.now().toInstant())
+                .stationChangedAt(ZonedDateTime.now().toInstant())
                 .build();
         
         this.orderItemRepository.save(orderItem);
@@ -240,11 +241,11 @@ public class OrderService {
         orderItem = switch (orderItem.getStatus()) {
             case ADDED -> orderItem.toBuilder()
                     .status(OrderItemStationStatus.STARTED)
-                    .statusUpdatedAt(Instant.now())
+                    .statusUpdatedAt(ZonedDateTime.now().toInstant())
                     .build();
             case STARTED -> orderItem.toBuilder()
                     .status(OrderItemStationStatus.COMPLETED)
-                    .statusUpdatedAt(Instant.now())
+                    .statusUpdatedAt(ZonedDateTime.now().toInstant())
                     .build();
             case COMPLETED -> orderItem;
 
@@ -258,7 +259,7 @@ public class OrderService {
             orderItem = orderItem.toBuilder()
                     .status(OrderItemStationStatus.ADDED)
                     .currentFlowStep(nextFlowStep.getStepOrder())
-                    .stationChangedAt(Instant.now())
+                    .stationChangedAt(ZonedDateTime.now().toInstant())
                     .build();
 
             if (nextFlowStep.getStepType() != FlowStepType.FINAL_STEP) {
@@ -454,7 +455,7 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Not found order " + orderId));
         
         // Проверяем, нужно ли обновить флаг preorder при изменении времени
-        Instant now = Instant.now();
+        Instant now = ZonedDateTime.now().toInstant();
         boolean isPreorder = newInstant != null && newInstant.isAfter(now.plusSeconds(15 * 60));
         
         this.orderRepository.save(
@@ -537,7 +538,7 @@ public class OrderService {
             updateKitchenShouldGetOrderAt(orderId, priorityTime);
         } else {
             // Если нет заказов в статусе COOKING, просто добавляем 5 минут к текущему времени
-            Instant priorityTime = Instant.now().plusSeconds(60);
+            Instant priorityTime = ZonedDateTime.now().toInstant().plusSeconds(60);
             updateKitchenShouldGetOrderAt(orderId, priorityTime);
         }
     }
@@ -590,12 +591,12 @@ public class OrderService {
     public void updateOrderTelegramNotified(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
-        order.setTelegramNotifiedAt(Instant.now());
+        order.setTelegramNotifiedAt(ZonedDateTime.now().toInstant());
         orderRepository.save(order);
     }
 
     public List<OrderShortDto> getAllHistoryOrdersWithItemsToday() {
-        Instant now = Instant.now();
+        Instant now = ZonedDateTime.now().toInstant();
         LocalDateTime localDateTime = LocalDateTime.ofInstant(now, ZoneId.systemDefault());
         Instant startOfDay = localDateTime.toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endOfDay = localDateTime.toLocalDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
@@ -623,8 +624,8 @@ public class OrderService {
             OrderItem updatedItem = orderItem.toBuilder()
                     .currentFlowStep(firstStepOrder)
                     .status(OrderItemStationStatus.ADDED)
-                    .statusUpdatedAt(Instant.now())
-                    .stationChangedAt(Instant.now())
+                    .statusUpdatedAt(ZonedDateTime.now().toInstant())
+                    .stationChangedAt(ZonedDateTime.now().toInstant())
                     .build();
             
             updatedItems.add(updatedItem);
@@ -651,7 +652,7 @@ public class OrderService {
                     orderId, firstActiveOrder.getId());
         } else {
             // Если нет активных заказов, ставим на текущее время
-            kitchenShouldGetOrderAt = Instant.now();
+            kitchenShouldGetOrderAt = ZonedDateTime.now().toInstant();
         }
         
         order = order.toBuilder()

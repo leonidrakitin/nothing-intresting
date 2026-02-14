@@ -25,7 +25,7 @@ public class MainView extends VerticalLayout {
 
         setSizeFull();
 
-        String currentTime = LocalDate.now().format(
+        String currentTime = ZonedDateTime.now().format(
                 DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm (zzz)")
         );
         add(new Span("Текущее время: " + currentTime));

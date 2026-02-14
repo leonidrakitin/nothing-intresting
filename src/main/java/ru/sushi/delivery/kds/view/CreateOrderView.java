@@ -56,6 +56,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -295,7 +296,7 @@ public class CreateOrderView extends VerticalLayout {
             deliveryTimePicker.setVisible(isDelivery);
             if (isDelivery) {
                 // Для доставки: время доставки по умолчанию +50 минут
-                deliveryTimePicker.setValue(LocalDateTime.now().plusMinutes(50));
+                deliveryTimePicker.setValue(ZonedDateTime.now().toLocalDateTime().plusMinutes(50));
                 // Время готовности рассчитывается автоматически
                 updateTotalTime();
             } else {
@@ -676,10 +677,10 @@ public class CreateOrderView extends VerticalLayout {
         changeKitchenStartButton.addClickListener(e -> openKitchenStartDialog());
 
 
-        finishPicker.setValue(LocalDateTime.now().plusMinutes(15));
+        finishPicker.setValue(ZonedDateTime.now().toLocalDateTime().plusMinutes(15));
 
         // Инициализируем время начала приготовления актуальным временем
-        selectedKitchenStart = Instant.now();
+        selectedKitchenStart = ZonedDateTime.now().toInstant();
         kitchenStartDisplay.setText("Время начала приготовления: " +
                 selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
 
@@ -731,8 +732,8 @@ public class CreateOrderView extends VerticalLayout {
                 return;
             }
 
-            if (selectedKitchenStart.isBefore(Instant.now())) {
-                selectedKitchenStart = Instant.now();
+            if (selectedKitchenStart.isBefore(ZonedDateTime.now().toInstant())) {
+                selectedKitchenStart = ZonedDateTime.now().toInstant();
                 updateTotalTime();
             }
 
@@ -742,7 +743,7 @@ public class CreateOrderView extends VerticalLayout {
                 return;
             }
 
-            Instant kitchenShouldGetOrderAt = (selectedKitchenStart != null) ? selectedKitchenStart : Instant.now();
+            Instant kitchenShouldGetOrderAt = (selectedKitchenStart != null) ? selectedKitchenStart : ZonedDateTime.now().toInstant();
             Instant shouldBeFinishedAt = finishTime.atZone(ZoneId.systemDefault()).toInstant();
 
             if (shouldBeFinishedAt.isBefore(kitchenShouldGetOrderAt)) {
@@ -916,7 +917,7 @@ public class CreateOrderView extends VerticalLayout {
         ordersLayout.setWidthFull();
 
         // Фильтр по датам
-        datePicker.setValue(new DateRange(LocalDate.now(), null));
+        datePicker.setValue(new DateRange(ZonedDateTime.now().toLocalDate(), null));
         datePicker.setWidth("300px");
         datePicker.getStyle().set("display", "inline-block");
 
@@ -1279,8 +1280,8 @@ public class CreateOrderView extends VerticalLayout {
     }
 
     private void refreshDeliveriesGrid() {
-        Instant from = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant();
-        Instant to = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant from = ZonedDateTime.now().toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant to = ZonedDateTime.now().toLocalDate().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
         List<OrderShortDto> list = viewService.getDeliveryOrdersWithItemsBetweenDates(from, to);
         list = list.stream()
 //                .filter(o -> o.getStatus() != OrderStatus.CANCELED)
@@ -1351,8 +1352,8 @@ public class CreateOrderView extends VerticalLayout {
     }
 
     private void refreshOrdersGrid(OrderStatus statusFilter, Span ordersCountLabel) {
-        LocalDate from = datePicker.getValue() != null ? datePicker.getValue().getStartDate() : LocalDate.now();
-        LocalDate to = datePicker.getValue() != null ? datePicker.getValue().getEndDate() : LocalDate.now();
+        LocalDate from = datePicker.getValue() != null ? datePicker.getValue().getStartDate() : ZonedDateTime.now().toLocalDate();
+        LocalDate to = datePicker.getValue() != null ? datePicker.getValue().getEndDate() : ZonedDateTime.now().toLocalDate();
 
         if (to == null) {
             to = from;
@@ -1607,13 +1608,13 @@ public class CreateOrderView extends VerticalLayout {
         totalTime.setText("Общее время приготовления: " + formattedTime);
 
         // Обновляем время готовности (без обновления времени начала, чтобы избежать постоянных перерисовок)
-        Instant startTime = (selectedKitchenStart != null) ? selectedKitchenStart : Instant.now();
+        Instant startTime = (selectedKitchenStart != null) ? selectedKitchenStart : ZonedDateTime.now().toInstant();
         finishPicker.setValue(startTime.atZone(ZoneId.systemDefault()).toLocalDateTime().plusMinutes(totalMinutes));
     }
 
     private void updateKitchenStartTime() {
         // Обновляем время начала приготовления на текущее время
-        selectedKitchenStart = Instant.now();
+        selectedKitchenStart = ZonedDateTime.now().toInstant();
         LocalDateTime currentTime = selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime();
         kitchenStartDisplay.setText("Время начала приготовления: " +
                 currentTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
@@ -1665,7 +1666,7 @@ public class CreateOrderView extends VerticalLayout {
         orderNumberField.clear();
 
         updateKitchenStartTime();
-        finishPicker.setValue(LocalDateTime.now().plusMinutes(30));
+        finishPicker.setValue(ZonedDateTime.now().toLocalDateTime().plusMinutes(30));
         isYandexOrder.setValue(false);
         orderTypeCombo.setValue(OrderType.PICKUP);
         customerPhoneField.clear();
@@ -1692,7 +1693,7 @@ public class CreateOrderView extends VerticalLayout {
 
         picker.setValue(selectedKitchenStart != null
                 ? selectedKitchenStart.atZone(ZoneId.systemDefault()).toLocalDateTime()
-                : LocalDateTime.now());
+                : ZonedDateTime.now().toLocalDateTime());
 
         Button saveBtn = new Button("Сохранить", ev -> {
             LocalDateTime selectedTime = picker.getValue();
@@ -2120,7 +2121,7 @@ public class CreateOrderView extends VerticalLayout {
             startTimePicker.setValue(parsed.getKitchenStartTime()
                 .atZone(ZoneId.systemDefault()).toLocalDateTime());
         } else {
-            startTimePicker.setValue(LocalDateTime.now());
+            startTimePicker.setValue(ZonedDateTime.now().toLocalDateTime());
         }
         startTimePicker.setWidthFull();
         content.add(startTimePicker);

@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -24,15 +25,15 @@ public abstract class Act {
     private String name;
 
     @Builder.Default
-    private LocalDateTime date = LocalDateTime.now();
+    private LocalDateTime date = ZonedDateTime.now().toLocalDateTime();
 
     @Builder.Default
-    private Instant updatedAt = Instant.now();
+    private Instant updatedAt = ZonedDateTime.now().toInstant();
 
     private String updatedBy;
 
     @Builder.Default
-    private Instant createdAt = Instant.now();
+    private Instant createdAt = ZonedDateTime.now().toInstant();
 
     private String createdBy;
 
