@@ -1256,7 +1256,9 @@ public class OrderTextParserService {
         
         Pattern[] cashPatterns = {
             Pattern.compile("Оплата:\\s*наличные", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("Оплата\\s*—\\s*наличные", Pattern.CASE_INSENSITIVE)
+            Pattern.compile("Оплата\\s*—\\s*наличные", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("💵Наличными курьеру:", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Наличными курьеру:", Pattern.CASE_INSENSITIVE)
         };
         
         Pattern[] cardPatterns = {
