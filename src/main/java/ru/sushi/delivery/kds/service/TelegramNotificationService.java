@@ -268,7 +268,7 @@ public class TelegramNotificationService {
 
         if (paymentType != null) {
             String paymentStr = paymentType == PaymentType.CASH
-                    ? "Наличные"
+                    ? "Наличными курьеру"
                     : paymentType == PaymentType.CASHLESS ? "Оплачено" : "Оплата картой";
 
             sb.append("💳 Оплата: ").append(paymentStr).append("\n");
