@@ -143,16 +143,12 @@ public class FoodCostService {
                         prepacksMap,
                         cycle+1
                 );
-                prepackPriceInit = prepackPriceInit * (1 + prepackRecipe.getLossesPercentage());
-                double prepackPrice = prepackPriceInit == 0
-                        ? 0.0
-                        : prepackPriceInit / prepackRecipe.getInitAmount();
-                prepack.setFcPrice(prepackPrice);
+                prepackPriceInit = prepackPriceInit * (1 + prepackRecipe.getLossesPercentage() / 100);
                 if (prepackPriceCache.get(prepackRecipe.getSourceId()) != null) {
                     prepackPriceCache.put(prepackRecipe.getSourceId(), prepackPriceInit);
                 }
-                price += prepackPrice;// * coefAmount;
-                prepackRecipe.setFcPrice(prepackPrice);
+                price += prepackPriceInit;
+                prepackRecipe.setFcPrice(prepackPriceInit);
             } else {
                 double ingredientPriceInit = ingredientPriceCache.getOrDefault(prepackRecipe.getSourceId(), 0.0);
                 double qtyAmount;
