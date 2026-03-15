@@ -10,7 +10,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.data.provider.SortDirection;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +88,7 @@ public class MenuPriceView extends VerticalLayout {
                 .setSortable(true)
                 .setClassNameGenerator(item -> "text-center");
 
-        var diffColumn = menuItemGrid.addComponentColumn(data -> {
+        menuItemGrid.addComponentColumn(data -> {
                     String noData = "—";
                     Double reqMin = requiredMinPrice(data);
                     if (data.getPrice() == null || data.getPrice() == 0 || reqMin == null) {
@@ -153,15 +152,12 @@ public class MenuPriceView extends VerticalLayout {
                 })
                 .setHeader("Статус")
                 .setSortable(true)
-                .setComparator(Comparator.comparingBoolean(this::isBelowMinPrice))
+                .setComparator(Comparator.comparing((MenuItemData data) -> isBelowMinPrice(data)))
                 .setClassNameGenerator(item -> "text-center");
 
         menuItemGrid.addComponentColumn(this::createActionButtons)
                 .setHeader("Действия")
                 .setClassNameGenerator(item -> "text-center");
-
-        // По умолчанию сортировка по разнице с рек. мин. (сначала позиции ниже рек. мин.)
-        menuItemGrid.sort(diffColumn, SortDirection.ASCENDING);
     }
 
     private String rowClassName(MenuItemData item) {
