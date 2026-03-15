@@ -9,7 +9,6 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
-import com.vaadin.flow.component.tooltip.Tooltip;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.data.provider.SortDirection;
 import com.vaadin.flow.router.Route;
@@ -104,7 +103,7 @@ public class MenuPriceView extends VerticalLayout {
                     span.getStyle()
                             .set("color", diff >= 0 ? diff == 0 ? "black" : "green" : "red")
                             .set("text-align", "center");
-                    Tooltip.forComponent(span).setText("Факт: " + formatPrice(data.getPrice()) + ", рек. мин.: " + (reqMin != null ? formatPrice(reqMin) : noData));
+                    span.getElement().setAttribute("title", "Факт: " + formatPrice(data.getPrice()) + ", рек. мин.: " + (reqMin != null ? formatPrice(reqMin) : noData));
                     return span;
                 })
                 .setComparator(Comparator.comparingDouble(data ->
