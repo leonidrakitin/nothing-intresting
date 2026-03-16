@@ -370,7 +370,7 @@ public class PrepackRecipeView extends VerticalLayout {
         double totalFcCost = items.stream()
                 .mapToDouble(item -> item.getFcCost() != null ? item.getFcCost() : 0.0)
                 .sum();
-        double totalFcCostFor1Kg = totalFinalAmount > 0 ? totalFcCost * 1000 / totalFinalAmount : 0.0;
+        double totalFcCostFor1Kg = totalFcCost * 1000 / totalInitAmount;
 
         // Очищаем предыдущие значения
         totalsLayout.removeAll();
@@ -379,7 +379,7 @@ public class PrepackRecipeView extends VerticalLayout {
         totalsLayout.add(
                 new Span("Изнач. кол-во: " + String.format("%.2fг", totalInitAmount)),
                 new Span("Итог. кол-во: " + String.format("%.2fг", totalFinalAmount)),
-                new Span("Потери: " + String.format("%.2fг", totalLossesAmount)),
+                new Span("Потери: " + String.format("%.2f руб", totalLossesAmount)),
                 new Span("Себестоимость: " + String.format("%.2f руб", totalFcCost)),
                 new Span("Себестоимость за 1кг: " + String.format("%.2f руб", totalFcCostFor1Kg))
         );
