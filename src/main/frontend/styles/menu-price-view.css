@@ -1,0 +1,4 @@
+/* Highlight rows where current price is below recommended minimum */
+.menu-price-grid tr.below-min-price td {
+  background-color: rgba(211, 47, 47, 0.08);
+}

@@ -136,23 +136,18 @@ public class FoodCostService {
                     log.warn("Prepack with id {} not found in cache", prepackRecipe.getSourceId());
                     continue;
                 }
-                double prepackPriceInit = this.calculatePrepackFoodCost(
+                this.calculatePrepackFoodCost(
                         sourcePrepack,
                         prepackPriceCache,
                         ingredientPriceCache,
                         prepacksMap,
                         cycle+1
                 );
-                prepackPriceInit = prepackPriceInit * (1 + prepackRecipe.getLossesPercentage());
-                double prepackPrice = prepackPriceInit == 0
-                        ? 0.0
-                        : prepackPriceInit / prepackRecipe.getInitAmount();
-                prepack.setFcPrice(prepackPrice);
-                if (prepackPriceCache.get(prepackRecipe.getSourceId()) != null) {
-                    prepackPriceCache.put(prepackRecipe.getSourceId(), prepackPriceInit);
-                }
-                price += prepackPrice;// * coefAmount;
-                prepackRecipe.setFcPrice(prepackPrice);
+                // В кеше лежит себестоимость за 1 кг заготовки (руб/кг). Стоимость строки = руб/кг * кол-во (кг) * (1 + потери %).
+                double costPerKgSource = prepackPriceCache.getOrDefault(prepackRecipe.getSourceId(), 0.0);
+                double lineCost = costPerKgSource * (prepackRecipe.getInitAmount() / 1000) * (1 + prepackRecipe.getLossesPercentage() / 100);
+                price += lineCost;
+                prepackRecipe.setFcPrice(lineCost);
             } else {
                 double ingredientPriceInit = ingredientPriceCache.getOrDefault(prepackRecipe.getSourceId(), 0.0);
                 double qtyAmount;
