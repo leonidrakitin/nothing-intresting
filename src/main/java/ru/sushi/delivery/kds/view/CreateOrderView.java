@@ -970,7 +970,7 @@ public class CreateOrderView extends VerticalLayout {
             // Добавляем процент готовности для статуса "Готовится"
             if (orderDto.getStatus() == OrderStatus.COOKING) {
                 int progressPercent = calculateOrderProgress(orderDto);
-                return baseStatus + " (" + progressPercent + "%)";
+                return "(" + progressPercent + "%) " + baseStatus;
             }
 
             return baseStatus;
