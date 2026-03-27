@@ -517,6 +517,31 @@ public class OrderTextParserService {
                         .build());
                 }
             }
+
+            // Также ищем сеты в формате "Сет Название  1370 x 1шт. = 1370 руб"
+            Pattern plainNewFormatComboPattern = Pattern.compile(
+                "(Сет\\s+[^\\n]+?)\\s+\\d+\\s*[х×x]\\s*(\\d+)\\s*шт?\\.?\\s*=\\s*\\d+\\s*(?:руб|балл)",
+                Pattern.CASE_INSENSITIVE
+            );
+            Matcher plainNewFormatComboMatcher = plainNewFormatComboPattern.matcher(comboBlock);
+
+            while (plainNewFormatComboMatcher.find()) {
+                String name = plainNewFormatComboMatcher.group(1).trim();
+                int quantity = Integer.parseInt(plainNewFormatComboMatcher.group(2));
+
+                String finalName = name;
+                boolean alreadyAdded = combos.stream()
+                    .anyMatch(c -> c.getName().equalsIgnoreCase(finalName));
+
+                if (!alreadyAdded) {
+                    ItemCombo foundCombo = findComboByName(allCombos, name);
+                    combos.add(ParsedOrderDto.ParsedCombo.builder()
+                        .name(name)
+                        .quantity(quantity)
+                        .combo(foundCombo)
+                        .build());
+                }
+            }
         }
         
         // Также ищем сеты в формате Starter (· 1× Сет Все включено – 2350 P) или (• 1 x Сет Атлантика)
@@ -717,10 +742,50 @@ public class OrderTextParserService {
             items.add(parsedItem);
             processedPositions.put(normalizedName, parsedItem);
         }
+
+        // Формат "Название 690 x 1шт. = 690 руб/балл" (новый формат Chibbis без квадратных скобок)
+        Pattern plainNewFormatPattern = Pattern.compile(
+            "([^\\n]+?)\\s+\\d+\\s*[х×x]\\s*(\\d+)\\s*шт?\\.?\\s*=\\s*\\d+\\s*(?:руб|балл)",
+            Pattern.CASE_INSENSITIVE
+        );
+        Matcher plainNewFormatMatcher = plainNewFormatPattern.matcher(text);
+
+        while (plainNewFormatMatcher.find()) {
+            String name = plainNewFormatMatcher.group(1).trim();
+            int quantity = Integer.parseInt(plainNewFormatMatcher.group(2));
+
+            // Пропускаем сеты (они уже обработаны)
+            if (name.toLowerCase().contains("сет")) {
+                continue;
+            }
+
+            // Пропускаем допы (они обрабатываются отдельно в parseExtras)
+            if (name.toLowerCase().contains("васаби") ||
+                name.toLowerCase().contains("имбирь") ||
+                name.toLowerCase().contains("соевый соус") ||
+                name.toLowerCase().contains("палочки") ||
+                name.toLowerCase().contains("приборы")) {
+                continue;
+            }
+
+            String normalizedName = normalizeName(name);
+            if (processedPositions.containsKey(normalizedName)) {
+                continue;
+            }
+
+            MenuItem foundItem = findMenuItemByName(allMenuItems, name);
+            ParsedOrderDto.ParsedItem parsedItem = ParsedOrderDto.ParsedItem.builder()
+                .name(name)
+                .quantity(quantity)
+                .menuItem(foundItem)
+                .build();
+            items.add(parsedItem);
+            processedPositions.put(normalizedName, parsedItem);
+        }
         
         // Старый формат (обычный)
         Pattern itemPattern = Pattern.compile(
-            "(\\d+)\\s*[х×]\\s*([^\\n]+?)(?:\\s+\\d+\\s+\\d+\\s*₽|\\s*\\d+\\s*₽|\\s+\\d+\\s*руб|\\s+\\d+\\s*балл|$)",
+            "(?:^|\\n|\\r)\\s*(\\d+)\\s*[х×]\\s*([^\\n]+?)(?:\\s+\\d+\\s+\\d+\\s*₽|\\s*\\d+\\s*₽|\\s+\\d+\\s*руб|\\s+\\d+\\s*балл|$)",
             Pattern.CASE_INSENSITIVE
         );
         Matcher itemMatcher = itemPattern.matcher(text);
@@ -774,7 +839,7 @@ public class OrderTextParserService {
         // Ищем по всему тексту, исключая только уже обработанные позиции
         // НЕ ищем паттерны вида "1510 x 1 = 1510 руб" (цена x количество = итого)
         Pattern universalItemPattern = Pattern.compile(
-            "(?:^|\\n|\\r|[•·]|\\s)(\\d+)\\s*[х×x]\\s*([^\\n]+?)(?:\\s+\\d+\\s*г)?(?:\\s*\\n\\s*\\d+\\s*₽|\\s*\\n\\s*\\d+\\s*[×х]\\s*\\d+\\s*₽|\\s+\\d+\\s*₽|\\s*\\d+\\s*руб|\\s*–\\s*[^\\n]*|\\s*$)(?!\\s*[=×х]\\s*\\d)", 
+            "(?:^|\\n|\\r|[•·])\\s*(\\d+)\\s*[х×x]\\s*([^\\n]+?)(?:\\s+\\d+\\s*г)?(?:\\s*\\n\\s*\\d+\\s*₽|\\s*\\n\\s*\\d+\\s*[×х]\\s*\\d+\\s*₽|\\s+\\d+\\s*₽|\\s*\\d+\\s*руб|\\s*–\\s*[^\\n]*|\\s*$)(?!\\s*[=×х]\\s*\\d)", 
             Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.MULTILINE
         );
         Matcher universalItemMatcher = universalItemPattern.matcher(text);
@@ -993,6 +1058,34 @@ public class OrderTextParserService {
                     extras.put(name, extras.getOrDefault(name, 0) + quantity);
                 }
             }
+
+            // Формат "Название 30 x 1шт. = 30 балл" в блоке "Состав:"
+            Pattern compositionPlainItemPattern = Pattern.compile(
+                "([^\\n]+?)\\s+\\d+\\s*[х×x]\\s*(\\d+)\\s*шт?\\.?\\s*=\\s*\\d+\\s*(?:руб|балл)",
+                Pattern.CASE_INSENSITIVE
+            );
+            Matcher compositionPlainItemMatcher = compositionPlainItemPattern.matcher(compositionBlock);
+
+            while (compositionPlainItemMatcher.find()) {
+                String name = compositionPlainItemMatcher.group(1).trim();
+                int quantity = Integer.parseInt(compositionPlainItemMatcher.group(2));
+
+                if (name.toLowerCase().contains("сет")) {
+                    continue;
+                }
+
+                if (name.toLowerCase().contains("васаби") ||
+                    name.toLowerCase().contains("имбирь") ||
+                    name.toLowerCase().contains("соевый соус") ||
+                    name.toLowerCase().contains("палочки") ||
+                    name.toLowerCase().contains("приборы")) {
+                    String normalizedName = normalizeName(name);
+                    if (foundItemNames.contains(normalizedName)) {
+                        continue;
+                    }
+                    extras.put(name, extras.getOrDefault(name, 0) + quantity);
+                }
+            }
         }
         
         // Также ищем отдельные строки с допами (для формата Starter)
@@ -1188,6 +1281,7 @@ public class OrderTextParserService {
         Pattern[] deliveryPatterns = {
             Pattern.compile("🚙\\s*Доставка", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Доставка\\s*·", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Доставка:\\s*(?!Самовывоз)", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Доставить", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Адрес доставки\\s*—", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Курьер\\s*—\\s*\\.+", Pattern.CASE_INSENSITIVE),
@@ -1197,6 +1291,7 @@ public class OrderTextParserService {
         Pattern[] pickupPatterns = {
             Pattern.compile("🥡\\s*С собой", Pattern.CASE_INSENSITIVE),
             Pattern.compile("С собой\\s*·", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Самовывоз\\s*:", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Доставка:\\s*Самовывоз", Pattern.CASE_INSENSITIVE),
             Pattern.compile("Пользователь заберет самостоятельно", Pattern.CASE_INSENSITIVE)
         };

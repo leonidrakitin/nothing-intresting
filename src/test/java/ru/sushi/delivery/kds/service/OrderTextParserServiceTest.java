@@ -5,12 +5,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.sushi.delivery.kds.domain.persist.entity.ItemCombo;
 import ru.sushi.delivery.kds.domain.persist.entity.product.MenuItem;
+import ru.sushi.delivery.kds.model.OrderType;
 import ru.sushi.delivery.kds.model.PaymentType;
 
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(MockitoExtension.class)
 class OrderTextParserServiceTest {
@@ -45,6 +47,77 @@ class OrderTextParserServiceTest {
             Сумма заказа: 2310 P
             """;
 
+    private static final String CHIBBIS_DELIVERY_PLAIN_FORMAT =
+            """
+            Новый заказ № 0HNK8M3QH4MG1
+
+            Заведение: Я есть суши, Ухта, улица Оплеснина, 10
+
+            Состав:
+            Боул с креветкой  690 x 1шт. = 690 руб
+            Лава с креветкой  650 x 1шт. = 650 руб
+            Имбирь  30 x 1шт. = 30 балл
+
+            Стоимость заказа: 1340
+            Итого: 1340
+
+            Телефон: +79042076807
+            Доставка: улица 30 лет Октября 16
+            Квартира: 84
+            Подъезд: 6
+            Этаж: 3
+
+            Оплата: оплачено онлайн
+            Количество персон: 1
+            Комментарий: Клиент указал, что перезванивать для проверки заказа не требуется.
+            """;
+
+    private static final String CHIBBIS_PICKUP_PLAIN_FORMAT =
+            """
+            Новый заказ № 0HNK8M4327KBE
+
+            Заведение: Я есть суши, Ухта, улица Оплеснина, 10
+
+            Состав:
+            Лава с курицей  520 x 1шт. = 520 балл
+            Сет Жар-птица  1370 x 1шт. = 1370 руб
+
+            Стоимость заказа: 1370
+            Итого: 1370
+
+            Телефон: +79048638148
+            Самовывоз: Ухта, улица Оплеснина, 10
+
+            Оплата: оплачено онлайн
+            Количество персон: 3
+            """;
+
+    private static final String CHIBBIS_DELIVERY_BRACKETS_FORMAT =
+            """
+            Новый заказ № 0HNK18G8V4K58
+
+            Заведение: Я есть суши, Ухта, улица Оплеснина, 10
+
+            Состав:
+            Филадельфия [730 руб] | 730 x 1 = 730 руб
+            Лава с курицей [520 балл] | 520 x 1 = 520 балл
+            Лагуна [520 руб] | 520 x 1 = 520 руб
+
+            Стоимость заказа: 1250
+            Итого: 1250
+
+            Телефон: +79225821384
+            Доставка: проспект Космонавтов 5/2
+            Квартира: 176
+            Подъезд: 4
+            Этаж: 4
+
+            Оплата: оплачено онлайн
+            Количество персон: 1
+            Комментарий: 4 этаж на право .
+            Клиент указал, что перезванивать для проверки заказа не требуется.
+            """;
+
     @Test
     void parsePaymentType_cashWhenNalichnymiKurieru() {
         List<MenuItem> menuItems = Collections.emptyList();
@@ -54,5 +127,66 @@ class OrderTextParserServiceTest {
 
         assertEquals(PaymentType.CASH, parsed.getPaymentType(),
                 "Формат «💵Наличными курьеру: 2310 P» из Starter должен парситься как наличные");
+    }
+
+    @Test
+    void parseNewChibbisPlainDeliveryFormat_itemsExtrasAndAddress() {
+        var parsed = parser.parseOrderText(CHIBBIS_DELIVERY_PLAIN_FORMAT, Collections.emptyList(), Collections.emptyList());
+
+        assertEquals("0HNK8M3QH4MG1", parsed.getOrderNumber());
+        assertEquals(OrderType.DELIVERY, parsed.getOrderType());
+        assertEquals(PaymentType.CASHLESS, parsed.getPaymentType());
+        assertEquals("+79042076807", parsed.getCustomerPhone());
+
+        assertEquals(2, parsed.getItems().size());
+        assertHasItem(parsed.getItems(), "Боул с креветкой", 1);
+        assertHasItem(parsed.getItems(), "Лава с креветкой", 1);
+
+        assertEquals(1, parsed.getExtras().getOrDefault("Имбирь", 0));
+
+        assertNotNull(parsed.getAddress());
+        assertEquals("30 лет Октября", parsed.getAddress().getStreet());
+        assertEquals("16", parsed.getAddress().getHouse());
+    }
+
+    @Test
+    void parseNewChibbisPlainPickupFormat_comboAndExtras() {
+        var parsed = parser.parseOrderText(CHIBBIS_PICKUP_PLAIN_FORMAT, Collections.emptyList(), Collections.emptyList());
+
+        assertEquals("0HNK8M4327KBE", parsed.getOrderNumber());
+        assertEquals(OrderType.PICKUP, parsed.getOrderType());
+        assertEquals(PaymentType.CASHLESS, parsed.getPaymentType());
+        assertEquals("+79048638148", parsed.getCustomerPhone());
+
+        assertEquals(1, parsed.getCombos().size());
+        assertEquals("Сет Жар-птица", parsed.getCombos().get(0).getName());
+        assertEquals(1, parsed.getCombos().get(0).getQuantity());
+
+        assertEquals(1, parsed.getItems().size());
+        assertHasItem(parsed.getItems(), "Лава с курицей", 1);
+    }
+
+    @Test
+    void parseNewChibbisBracketFormat_keepsExistingBehavior() {
+        var parsed = parser.parseOrderText(CHIBBIS_DELIVERY_BRACKETS_FORMAT, Collections.emptyList(), Collections.emptyList());
+
+        assertEquals("0HNK18G8V4K58", parsed.getOrderNumber());
+        assertEquals(OrderType.DELIVERY, parsed.getOrderType());
+        assertEquals(PaymentType.CASHLESS, parsed.getPaymentType());
+        assertEquals("+79225821384", parsed.getCustomerPhone());
+
+        assertEquals(3, parsed.getItems().size());
+        assertHasItem(parsed.getItems(), "Филадельфия", 1);
+        assertHasItem(parsed.getItems(), "Лава с курицей", 1);
+        assertHasItem(parsed.getItems(), "Лагуна", 1);
+
+        assertEquals(0, parsed.getExtras().getOrDefault("Имбирь", 0));
+        assertNotNull(parsed.getAddress());
+        assertNotNull(parsed.getAddress().getStreet());
+    }
+
+    private void assertHasItem(List<ru.sushi.delivery.kds.dto.ParsedOrderDto.ParsedItem> items, String name, int qty) {
+        var found = items.stream().filter(i -> name.equals(i.getName())).findFirst().orElseThrow();
+        assertEquals(qty, found.getQuantity());
     }
 }
