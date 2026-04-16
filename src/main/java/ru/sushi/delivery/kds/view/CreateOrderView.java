@@ -20,6 +20,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -2213,28 +2214,14 @@ public class CreateOrderView extends VerticalLayout {
                                                DateTimePicker startTimePicker, Map<String, Integer> extrasToAdd,
                                                List<NotAddedEntry> notAddedItems) {
         Dialog commentDialog = new Dialog();
-        commentDialog.setHeaderTitle("Учли комментарий?");
         commentDialog.setWidth("500px");
-        
-        VerticalLayout content = new VerticalLayout();
-        content.setPadding(true);
-        content.setSpacing(true);
-        
-        Span commentText = new Span(parsed.getComment());
-        commentText.getStyle().set("white-space", "pre-wrap");
-        commentText.getStyle().set("padding", "10px");
-        commentText.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
-        commentText.getStyle().set("border-radius", "4px");
-        content.add(commentText);
-        
-        commentDialog.add(content);
-        
+
         Button backButton = new Button("Назад", e -> {
             commentDialog.close();
             // Возвращаемся к диалогу подтверждения
             showImportConfirmationDialog(parsed);
         });
-        
+
         Button nextButton = new Button("Дальше", e -> {
             commentDialog.close();
             // Проверяем недобавленные позиции
@@ -2245,8 +2232,32 @@ public class CreateOrderView extends VerticalLayout {
                 addParsedOrderToCart(parsed, orderNumberFieldDialog.getValue(), startTimePicker.getValue(), extrasToAdd);
             }
         });
-        
-        commentDialog.getFooter().add(backButton, nextButton);
+
+        H3 title = new H3("Учли комментарий?");
+        title.getStyle().set("color", "#ffffff");
+        title.getStyle().set("margin", "0");
+
+        Span commentText = new Span(parsed.getComment());
+        commentText.getStyle().set("white-space", "pre-wrap");
+        commentText.getStyle().set("padding", "10px");
+        commentText.getStyle().set("background-color", "rgba(255, 255, 255, 0.95)");
+        commentText.getStyle().set("color", "#1a1a1a");
+        commentText.getStyle().set("border-radius", "4px");
+        commentText.getStyle().set("width", "100%");
+        commentText.getStyle().set("box-sizing", "border-box");
+
+        HorizontalLayout footerRow = new HorizontalLayout(backButton, nextButton);
+        footerRow.setWidthFull();
+        footerRow.setJustifyContentMode(JustifyContentMode.END);
+        footerRow.getStyle().set("padding-top", "var(--lumo-space-s)");
+
+        VerticalLayout content = new VerticalLayout(title, commentText, footerRow);
+        content.setPadding(true);
+        content.setSpacing(true);
+        content.getStyle().set("background-color", "#ff1744");
+        content.getStyle().set("box-shadow", "inset 0 0 0 2px #b71c1c");
+
+        commentDialog.add(content);
         commentDialog.open();
     }
     
