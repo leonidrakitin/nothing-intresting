@@ -595,6 +595,14 @@ public class OrderService {
         orderRepository.save(order);
     }
 
+    @Transactional
+    public void updateOrderVkNotified(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
+        order.setVkNotifiedAt(ZonedDateTime.now().toInstant());
+        orderRepository.save(order);
+    }
+
     public List<OrderShortDto> getAllHistoryOrdersWithItemsToday() {
         Instant now = ZonedDateTime.now().toInstant();
         LocalDateTime localDateTime = LocalDateTime.ofInstant(now, ZoneId.systemDefault());

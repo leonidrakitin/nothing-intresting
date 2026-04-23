@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: orders.ADD_VK_NOTIFIED.23.04.26
+      author: system
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: vk_notified_at
+                  type: TIMESTAMPTZ
+
+  - changeSet:
+      id: orders_aud.ADD_VK_NOTIFIED.23.04.26
+      author: system
+      changes:
+        - addColumn:
+            tableName: orders_aud
+            columns:
+              - column:
+                  name: vk_notified_at
+                  type: TIMESTAMPTZ

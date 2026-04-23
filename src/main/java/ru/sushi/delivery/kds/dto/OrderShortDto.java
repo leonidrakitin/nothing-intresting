@@ -33,6 +33,8 @@ public class OrderShortDto {
     private String yandexClaimId;
     /** Время отправки в ТГ (наш курьер) */
     private Instant telegramNotifiedAt;
+    /** Время отправки в VK (наш курьер) */
+    private Instant vkNotifiedAt;
 
     public static OrderShortDto of(Order order, List<OrderItemDto> orderItems) {
         return OrderShortDto.builder()
@@ -50,6 +52,7 @@ public class OrderShortDto {
                 .deliveryTime(order.getDeliveryTime())
                 .yandexClaimId(order.getYandexClaimId())
                 .telegramNotifiedAt(order.getTelegramNotifiedAt())
+                .vkNotifiedAt(order.getVkNotifiedAt())
                 .build();
     }
 }

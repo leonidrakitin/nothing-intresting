@@ -94,7 +94,7 @@ public class TelegramNotificationService {
     /**
      * Отправляет уведомление о новом заказе в Telegram-чат курьеров.
      */
-    public void notifyNewOrder(
+    public boolean notifyNewOrder(
             City city,
             String orderName,
             List<MenuItem> menuItems,
@@ -109,13 +109,13 @@ public class TelegramNotificationService {
     ) {
         if (orderType == null || orderType == OrderType.PICKUP) {
             log.debug("Самовывоз — не отправляем уведомление в Telegram.");
-            return;
+            return false;
         }
 
         List<String> chatIds = getChatIds();
         if (botToken == null || botToken.isBlank() || chatIds.isEmpty()) {
             log.info("Telegram: уведомление не отправлено — не настроен токен или список чатов (chat-id/chat-ids).");
-            return;
+            return false;
         }
 
         String message = buildOrderMessage(
@@ -125,13 +125,15 @@ public class TelegramNotificationService {
         );
 
         Optional<byte[]> mapImage = tryBuildMapImage(address, orderName);
+        boolean sent = false;
         for (String chatId : chatIds) {
             if (mapImage.isPresent()) {
-                sendPhoto(chatId, mapImage.get(), message);
+                sent = sendPhoto(chatId, mapImage.get(), message) || sent;
             } else {
-                sendMessage(chatId, message);
+                sent = sendMessage(chatId, message) || sent;
             }
         }
+        return sent;
     }
 
     /**
@@ -140,25 +142,27 @@ public class TelegramNotificationService {
      * @param order     заказ на доставку
      * @param cityLabel подпись города для сообщения (например «Парнас», «Ухта»); если null — используется город из адреса
      */
-    public void notifyExistingOrder(OrderShortDto order, String cityLabel) {
+    public boolean notifyExistingOrder(OrderShortDto order, String cityLabel) {
         if (order.getOrderType() != OrderType.DELIVERY) {
             log.debug("Заказ не на доставку — не отправляем в Telegram.");
-            return;
+            return false;
         }
         List<String> chatIds = getChatIds();
         if (botToken == null || botToken.isBlank() || chatIds.isEmpty()) {
             log.info("Telegram: уведомление не отправлено — не настроен токен или список чатов.");
-            return;
+            return false;
         }
         String message = buildOrderMessageFromDto(order, cityLabel);
         Optional<byte[]> mapImage = tryBuildMapImage(order.getAddress(), order.getName());
+        boolean sent = false;
         for (String chatId : chatIds) {
             if (mapImage.isPresent()) {
-                sendPhoto(chatId, mapImage.get(), message);
+                sent = sendPhoto(chatId, mapImage.get(), message) || sent;
             } else {
-                sendMessage(chatId, message);
+                sent = sendMessage(chatId, message) || sent;
             }
         }
+        return sent;
     }
 
     /** Строит картинку карты с номером заказа, если в адресе есть сохранённые координаты. */
@@ -298,7 +302,7 @@ public class TelegramNotificationService {
         return "https://yandex.ru/maps/?text=" + URLEncoder.encode(fallbackAddressText != null ? fallbackAddressText : "", StandardCharsets.UTF_8);
     }
 
-    private void sendPhoto(String chatId, byte[] photoBytes, String caption) {
+    private boolean sendPhoto(String chatId, byte[] photoBytes, String caption) {
         try {
             String url = String.format(TELEGRAM_SEND_PHOTO_URL, botToken);
             if (caption != null && caption.length() > CAPTION_MAX_LENGTH) {
@@ -327,11 +331,14 @@ public class TelegramNotificationService {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() != 200) {
                 log.error("Telegram sendPhoto error for chat {}: {} - {}", chatId, response.statusCode(), response.body());
+                return false;
             } else {
                 log.info("Telegram: фото с картой отправлено в чат {}", chatId);
+                return true;
             }
         } catch (Exception e) {
             log.error("Failed to send Telegram photo to chat {}", chatId, e);
+            return false;
         }
     }
 
@@ -345,7 +352,7 @@ public class TelegramNotificationService {
         w.flush();
     }
 
-    private void sendMessage(String chatId, String text) {
+    private boolean sendMessage(String chatId, String text) {
         try {
             String url = String.format(TELEGRAM_SEND_MESSAGE_URL, botToken);
             String body = "chat_id=" + URLEncoder.encode(chatId, StandardCharsets.UTF_8)
@@ -363,11 +370,14 @@ public class TelegramNotificationService {
 
             if (response.statusCode() != 200) {
                 log.error("Telegram API error for chat {}: {} - {}", chatId, response.statusCode(), response.body());
+                return false;
             } else {
                 log.info("Telegram: уведомление отправлено в чат {}", chatId);
+                return true;
             }
         } catch (Exception e) {
             log.error("Failed to send Telegram notification to chat {}", chatId, e);
+            return false;
         }
     }
 }

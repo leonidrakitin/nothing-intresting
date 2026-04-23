@@ -183,6 +183,10 @@ public class ViewService {
         orderService.updateOrderTelegramNotified(orderId);
     }
 
+    public void updateOrderVkNotified(Long orderId) {
+        orderService.updateOrderVkNotified(orderId);
+    }
+
     public void setPriorityForOrder(Long orderId, OrderShortDto firstCookingOrder) {
         if (firstCookingOrder != null) {
             // Устанавливаем время начала приготовления чуть раньше найденного заказа

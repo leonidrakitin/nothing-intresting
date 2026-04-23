@@ -61,6 +61,7 @@ dependencies {
 	implementation 'org.hibernate.orm:hibernate-envers'
 	implementation 'org.liquibase:liquibase-core'
 	implementation 'org.reflections:reflections:0.10.2'  // Или более новая версия
+	implementation 'com.vk.api:sdk:1.0.16'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	compileOnly 'org.projectlombok:lombok'

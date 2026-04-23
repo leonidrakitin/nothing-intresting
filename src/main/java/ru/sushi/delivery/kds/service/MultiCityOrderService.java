@@ -46,7 +46,7 @@ public class MultiCityOrderService {
     private final JdbcTemplate ukhtaJdbcTemplate;
 
     @Autowired(required = false)
-    private TelegramNotificationService telegramNotificationService;
+    private CascadeNotificationService cascadeNotificationService;
 
     @Autowired(required = false)
     private YandexGeocoderService yandexGeocoderService;
@@ -200,22 +200,24 @@ public class MultiCityOrderService {
         log.info("Created order {} in city {} with {} items", name, city, menuItems.size());
 
         if (yandexDeliveryEnabled) {
-            log.debug("Яндекс Доставка включена — дефолтное уведомление о новом заказе в Telegram не отправляем.");
-        } else if (telegramNotificationService == null) {
-            log.info("Telegram уведомления отключены (сервис не создан: не задан telegram.bot.token).");
+            log.debug("Яндекс Доставка включена — дефолтные уведомления курьерам не отправляем.");
+        } else if (cascadeNotificationService == null) {
+            log.info("Каскадные уведомления отключены (сервис не создан).");
         } else {
-            // Передаём адрес с сохранёнными координатами, чтобы в ТГ ушла карта и ссылка «Проложить маршрут» по координатам
-            OrderAddressDto addressForTelegram = address;
+            // Передаём адрес с сохранёнными координатами, чтобы в каналы ушла карта/ссылка по координатам
+            OrderAddressDto addressForNotification = address;
             if (address != null && addressLat != null && addressLon != null) {
-                addressForTelegram = address.toBuilder().latitude(addressLat).longitude(addressLon).build();
+                addressForNotification = address.toBuilder().latitude(addressLat).longitude(addressLon).build();
             }
-            try {
-                telegramNotificationService.notifyNewOrder(
-                        city, name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
-                        orderTypeVal, addressForTelegram, customerPhone, paymentType, deliveryTime, cardToCourierMessage
-                );
-            } catch (Exception e) {
-                log.warn("Failed to send Telegram notification for order {}", name, e);
+            CascadeNotificationResult result = cascadeNotificationService.notifyNewOrder(
+                    city, name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
+                    orderTypeVal, addressForNotification, customerPhone, paymentType, deliveryTime, cardToCourierMessage
+            );
+            if (result.telegramSent()) {
+                updateOrderTelegramNotified(city, orderId);
+            }
+            if (result.vkSent()) {
+                updateOrderVkNotified(city, orderId);
             }
         }
 
@@ -235,7 +237,7 @@ public class MultiCityOrderService {
                    o.address_street, o.address_flat, o.address_floor, o.address_entrance,
                    o.address_comment, o.address_city, o.address_doorphone, o.address_house,
                    o.address_lat, o.address_lon,
-                   o.delivery_time, o.yandex_claim_id, o.telegram_notified_at
+                   o.delivery_time, o.yandex_claim_id, o.telegram_notified_at, o.vk_notified_at
             FROM orders o
             WHERE o.status IN ('CREATED', 'COOKING', 'COLLECTING')
             ORDER BY o.kitchen_should_get_order_at ASC
@@ -261,7 +263,7 @@ public class MultiCityOrderService {
                    o.address_street, o.address_flat, o.address_floor, o.address_entrance,
                    o.address_comment, o.address_city, o.address_doorphone, o.address_house,
                    o.address_lat, o.address_lon,
-                   o.delivery_time, o.yandex_claim_id, o.telegram_notified_at
+                   o.delivery_time, o.yandex_claim_id, o.telegram_notified_at, o.vk_notified_at
             FROM orders o
             WHERE o.created_at >= ? AND o.created_at < ?
             ORDER BY o.created_at DESC
@@ -287,7 +289,7 @@ public class MultiCityOrderService {
                    o.address_street, o.address_flat, o.address_floor, o.address_entrance,
                    o.address_comment, o.address_city, o.address_doorphone, o.address_house,
                    o.address_lat, o.address_lon,
-                   o.delivery_time, o.yandex_claim_id, o.telegram_notified_at
+                   o.delivery_time, o.yandex_claim_id, o.telegram_notified_at, o.vk_notified_at
             FROM orders o
             WHERE o.order_type = 'DELIVERY' AND o.created_at >= ? AND o.created_at < ?
             ORDER BY o.delivery_time ASC NULLS LAST, o.created_at DESC
@@ -619,6 +621,8 @@ public class MultiCityOrderService {
                 .yandexClaimId(rs.getString("yandex_claim_id"))
                 .telegramNotifiedAt(rs.getTimestamp("telegram_notified_at") != null ?
                     rs.getTimestamp("telegram_notified_at").toInstant() : null)
+                .vkNotifiedAt(rs.getTimestamp("vk_notified_at") != null ?
+                        rs.getTimestamp("vk_notified_at").toInstant() : null)
                 .build();
     }
 
@@ -641,6 +645,13 @@ public class MultiCityOrderService {
     public void updateOrderTelegramNotified(City city, Long orderId) {
         getTemplate(city).update(
                 "UPDATE orders SET telegram_notified_at = ? WHERE id = ?",
+                Timestamp.from(ZonedDateTime.now().toInstant()), orderId
+        );
+    }
+
+    public void updateOrderVkNotified(City city, Long orderId) {
+        getTemplate(city).update(
+                "UPDATE orders SET vk_notified_at = ? WHERE id = ?",
                 Timestamp.from(ZonedDateTime.now().toInstant()), orderId
         );
     }

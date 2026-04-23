@@ -103,6 +103,9 @@ public class Order {
     /** Время отправки уведомления в Telegram (наш курьер) */
     private Instant telegramNotifiedAt;
 
+    /** Время отправки уведомления в VK (наш курьер) */
+    private Instant vkNotifiedAt;
+
     public static Order of(String name, Instant shouldBeFinishedAt, Instant kitchenShouldGetOrderAt) {
         return Order.builder()
                 .name(name)

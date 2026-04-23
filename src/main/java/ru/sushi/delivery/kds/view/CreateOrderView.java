@@ -46,8 +46,9 @@ import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
 import ru.sushi.delivery.kds.model.OrderType;
 import ru.sushi.delivery.kds.model.PaymentType;
+import ru.sushi.delivery.kds.service.CascadeNotificationResult;
+import ru.sushi.delivery.kds.service.CascadeNotificationService;
 import ru.sushi.delivery.kds.service.OrderTextParserService;
-import ru.sushi.delivery.kds.service.TelegramNotificationService;
 import ru.sushi.delivery.kds.service.ViewService;
 import ru.sushi.delivery.kds.service.YandexDeliveryService;
 import ru.sushi.delivery.kds.service.listeners.CashListener;
@@ -213,7 +214,7 @@ public class CreateOrderView extends VerticalLayout {
     }
 
     @Autowired(required = false)
-    private TelegramNotificationService telegramNotificationService;
+    private CascadeNotificationService cascadeNotificationService;
 
     @Autowired(required = false)
     private YandexDeliveryService yandexDeliveryService;
@@ -1050,7 +1051,11 @@ public class CreateOrderView extends VerticalLayout {
                 : order.getDeliveryTime().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("HH:mm dd.MM")))
                 .setHeader("Время доставки").setAutoWidth(true);
         deliveriesGrid.addColumn(order -> {
-            if (order.getTelegramNotifiedAt() != null) return "Наш курьер";
+            if (order.getTelegramNotifiedAt() != null || order.getVkNotifiedAt() != null) {
+                if (order.getTelegramNotifiedAt() != null && order.getVkNotifiedAt() != null) return "Наш курьер: ТГ+VK";
+                if (order.getTelegramNotifiedAt() != null) return "Наш курьер: ТГ";
+                return "Наш курьер: VK";
+            }
             if (order.getYandexClaimId() != null) {
                 String status = deliveryStatusByOrderId.get(order.getId());
                 return status != null ? "Яндекс: " + status : "Яндекс";
@@ -1096,16 +1101,29 @@ public class CreateOrderView extends VerticalLayout {
         }).setHeader("Адрес").setAutoWidth(true);
         deliveriesGrid.addComponentColumn(order -> {
             HorizontalLayout btns = new HorizontalLayout();
-            Button tgBtn = new Button("Отправить ТГ");
+            Button tgBtn = new Button("Уведомить курьера");
             tgBtn.addClickListener(e -> {
-                if (telegramNotificationService == null) {
-                    Notification.show("Telegram не настроен", 3000, Notification.Position.MIDDLE);
+                if (cascadeNotificationService == null) {
+                    Notification.show("Каналы уведомлений не настроены", 3000, Notification.Position.MIDDLE);
                     return;
                 }
                 try {
-                    telegramNotificationService.notifyExistingOrder(order, cityProperties.getCity());
-                    viewService.updateOrderTelegramNotified(order.getId());
-                    Notification.show("Уведомление отправлено в Telegram", 3000, Notification.Position.MIDDLE);
+                    CascadeNotificationResult result = cascadeNotificationService.notifyExistingOrder(order, cityProperties.getCity());
+                    if (result.telegramSent()) {
+                        viewService.updateOrderTelegramNotified(order.getId());
+                    }
+                    if (result.vkSent()) {
+                        viewService.updateOrderVkNotified(order.getId());
+                    }
+                    if (!result.anySent()) {
+                        Notification.show("Не удалось отправить уведомление: проверьте настройки Telegram/VK", 4000, Notification.Position.MIDDLE);
+                    } else if (result.telegramSent() && result.vkSent()) {
+                        Notification.show("Уведомление отправлено в Telegram и VK", 3000, Notification.Position.MIDDLE);
+                    } else if (result.telegramSent()) {
+                        Notification.show("Уведомление отправлено только в Telegram", 3000, Notification.Position.MIDDLE);
+                    } else {
+                        Notification.show("Уведомление отправлено только в VK", 3000, Notification.Position.MIDDLE);
+                    }
                     refreshDeliveriesGrid();
                 } catch (Exception ex) {
                     Notification.show("Ошибка: " + ex.getMessage(), 5000, Notification.Position.MIDDLE);
