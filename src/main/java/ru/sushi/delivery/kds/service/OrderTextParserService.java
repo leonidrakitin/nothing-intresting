@@ -1586,8 +1586,8 @@ public class OrderTextParserService {
             builder.floor(floor);
         }
         
-        // Парсим домофон (Домофон: 83, 83 домофон)
-        Pattern doorphonePattern = Pattern.compile("(?iu)(?:домофон\\s*[:№\\-]?\\s*(\\d+)|(\\d+)[ \\t]+домофон)");
+        // Парсим домофон (Домофон: 83 / Домофон: В1930В / В1930В домофон)
+        Pattern doorphonePattern = Pattern.compile("(?iu)(?:домофон\\s*[:№\\-]?\\s*([\\p{L}\\d\\-]+)|([\\p{L}\\d\\-]+)[ \\t]+домофон)");
         Matcher doorphoneMatcher = doorphonePattern.matcher(text);
         if (doorphoneMatcher.find()) {
             String doorphone = doorphoneMatcher.group(1) != null ? doorphoneMatcher.group(1) : doorphoneMatcher.group(2);

@@ -180,6 +180,7 @@ public class VkNotificationService {
             if (address.getFlat() != null) sb.append("       кв. ").append(address.getFlat()).append("\n");
             if (address.getFloor() != null) sb.append("       эт. ").append(address.getFloor()).append("\n");
             if (address.getEntrance() != null) sb.append("       под. ").append(address.getEntrance()).append("\n");
+            if (address.getDoorphone() != null) sb.append("       домофон ").append(address.getDoorphone()).append("\n");
         }
 
         if (address != null && address.getComment() != null && !address.getComment().isBlank()) {
@@ -238,6 +239,7 @@ public class VkNotificationService {
             if (address.getFlat() != null) sb.append("       кв. ").append(address.getFlat()).append("\n");
             if (address.getFloor() != null) sb.append("       эт. ").append(address.getFloor()).append("\n");
             if (address.getEntrance() != null) sb.append("       под. ").append(address.getEntrance()).append("\n");
+            if (address.getDoorphone() != null) sb.append("       домофон ").append(address.getDoorphone()).append("\n");
         }
 
         if (address != null && address.getComment() != null && !address.getComment().isBlank()) {

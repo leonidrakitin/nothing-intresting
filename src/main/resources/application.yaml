@@ -8,7 +8,8 @@ vaadin:
   servlet:
     productionMode: ${VAADIN_PRODUCTION_MODE:false}
   frontend:
-    hotdeploy: true
+    # hotdeploy может провоцировать цикл reload в dev при частой регенерации frontend-артефактов
+    hotdeploy: ${VAADIN_FRONTEND_HOTDEPLOY:false}
     compatibilityMode: false
 server:
   port: ${SERVER_PORT:8000}
@@ -56,9 +57,9 @@ telegram:
 # VK-бот для уведомлений курьеров (каскад после Telegram)
 vk:
   bot:
-    token: ${VK_BOT_TOKEN:}
-    group-id: ${VK_GROUP_ID:0}
-    peer-id: ${VK_PEER_ID:}
+    token: ${VK_BOT_TOKEN:vk1.a.wDs_jVALFzRwD0szUrHXJNKbxmxEEybVsF_LdxSuB1tAyaUfNfzuNAijuS4p0PgverkCs1hJ1RWWpgYbxmteJzPROCRQNGxqS_jqpaHoKVTDFNyQX5svA7eM0LPGuADhIVyScr_vhTrUyCFYM2L71NEU8ccy3MtRLMqEntgq_-4YMjzaqzzH21HqxbRr7XmjSrudwmzHcZ6ZtoYxwVyohw}
+    group-id: ${VK_GROUP_ID:227903142}
+    peer-id: ${VK_PEER_ID:2000000001}
     peer-ids: ${VK_PEER_IDS:}
 
 # Яндекс Доставка — API для вызова курьера

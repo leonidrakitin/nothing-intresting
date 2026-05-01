@@ -96,6 +96,28 @@ class OrderTextParserServiceTest {
             Доставка: 100 P
             """;
 
+    private static final String ORDER_12021_STARTER_ALNUM_DOORPHONE =
+            """
+            🚙Оформлен заказ 12021 (https://crm.starterapp.ru/yaestsushi/admin/order?code=12021) · Starter ID 12021
+            Доставка · Кухня Я Есть Суши Парнас
+            Зона: Ближайшие дома
+
+            🕒К 18:07 – 18:27, 30.04.2026
+            улица Валерия Гаврилина, 11к1, 5 подъезд, В1930В домофон, 11 этаж, кв. 630 (https://yandex.com/navi/?whatshere%5Bpoint%5D=30.337149,60.078666&whatshere%5Bzoom%5D=18&from=navi)
+
+            · 1× Филадельфия с угрем – 750 P
+            · 1× Лава с креветкой – 575 P
+            · 1× Темпура креветка – 465 P
+
+            +79313471059
+            Анастасия
+
+            🟢Оплачено онлайн: 1590 P
+            Сумма заказа: 1790 P
+            Доставка: 100 P
+            Баллами: 300
+            """;
+
     private static final String CHIBBIS_DELIVERY_PLAIN_FORMAT =
             """
             Новый заказ № 0HNK8M3QH4MG1
@@ -234,6 +256,17 @@ class OrderTextParserServiceTest {
         assertEquals(60.085209, parsed.getAddress().getLatitude(), 1e-6);
         assertEquals(30.354927, parsed.getAddress().getLongitude(), 1e-6);
         assertEquals("оставить у двери", parsed.getComment());
+    }
+
+    @Test
+    void parseStarterDoorphone_allowsAlphaNumericToken() {
+        var parsed = parser.parseOrderText(ORDER_12021_STARTER_ALNUM_DOORPHONE, Collections.emptyList(), Collections.emptyList());
+
+        assertNotNull(parsed.getAddress());
+        assertEquals("5", parsed.getAddress().getEntrance());
+        assertEquals("В1930В", parsed.getAddress().getDoorphone());
+        assertEquals("630", parsed.getAddress().getFlat());
+        assertEquals("11", parsed.getAddress().getFloor());
     }
 
     @Test

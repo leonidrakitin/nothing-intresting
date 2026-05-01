@@ -4,6 +4,7 @@ import { injectGlobalCss } from 'Frontend/generated/jar-resources/theme-util.js'
 
 import { css, unsafeCSS, registerStyles } from '@vaadin/vaadin-themable-mixin';
 import $cssFromFile_0 from 'Frontend/styles/cart-view.css?inline';
+import $cssFromFile_1 from 'Frontend/styles/menu-price-view.css?inline';
 import '@vaadin/field-highlighter/theme/lumo/vaadin-field-highlighter.js';
 import '@vaadin-component-factory/vcf-date-range-picker/vcf-date-range-picker.js';
 import '@vaadin/common-frontend/ConnectionIndicator.js';
@@ -95,6 +96,9 @@ import 'Frontend/generated/jar-resources/enhancedDateRangePickerConnector.js';
 
 injectGlobalCss($cssFromFile_0.toString(), 'CSSImport end', document);
 injectGlobalWebcomponentCss($cssFromFile_0.toString());
+
+injectGlobalCss($cssFromFile_1.toString(), 'CSSImport end', document);
+injectGlobalWebcomponentCss($cssFromFile_1.toString());
 const loadOnDemand = (key) => { return Promise.resolve(0); }
 window.Vaadin = window.Vaadin || {};
 window.Vaadin.Flow = window.Vaadin.Flow || {};
