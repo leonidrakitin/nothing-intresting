@@ -291,7 +291,7 @@ public class TelegramNotificationService {
 
     /**
      * Ссылка «Проложить маршрут» в Яндекс.Карты.
-     * Если в адресе есть координаты (сохранённые при создании заказа) — используем rtext=~lat,lon (маршрут до точки).
+     * Если в адресе есть координаты — rtext в веб-картах: ~широта,долгота (см. launch maps).
      * Иначе — поиск по тексту адреса (?text=...).
      */
     private static String buildYandexMapsRouteUrl(OrderAddressDto address, String fallbackAddressText) {

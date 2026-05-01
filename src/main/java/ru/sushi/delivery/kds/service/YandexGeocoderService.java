@@ -63,9 +63,9 @@ public class YandexGeocoderService {
             if (pos == null) return null;
             String[] parts = pos.trim().split("\\s+");
             if (parts.length != 2) return null;
-            // Yandex Geocoder 1.x возвращает "широта долгота"; для API доставки нужны [долгота, широта]
-            double lat = Double.parseDouble(parts[0]);
-            double lon = Double.parseDouble(parts[1]);
+            // Yandex Geocoder 1.x: Point.pos — «долгота широта» (см. доку). Возвращаем [долгота, широта].
+            double lon = Double.parseDouble(parts[0]);
+            double lat = Double.parseDouble(parts[1]);
             return new double[]{lon, lat};
         } catch (Exception e) {
             log.warn("Yandex Geocoder failed for {}: {}", address, e.getMessage());

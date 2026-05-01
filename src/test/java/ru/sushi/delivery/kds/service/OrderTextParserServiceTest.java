@@ -23,6 +23,29 @@ class OrderTextParserServiceTest {
      * Текст заказа из Starter в формате "💵Наличными курьеру: 2310 P".
      * Раньше парсер не распознавал этот вид оплаты и подставлял CASHLESS по умолчанию.
      */
+    /**
+     * Starter: строка «Доставка: 100 P» в конце не должна подменять адрес строкой после времени;
+     * координаты — из ссылки Навигатора при наличии.
+     */
+    private static final String ORDER_19905_STARTER_DELIVERY_FEE_LINE =
+            """
+            🚙Оформлен заказ 19905 · Starter ID 19905
+            Доставка · Кухня Я Есть Суши Парнас
+            Зона: Ближайшие дома
+
+            🕒К 17:30 – 17:50, 01.05.2026
+            улица Валерия Гаврилина, 3к1, посёлок Парголово, 1 подъезд, 267 домофон, 21 этаж, кв. 267 (https://yandex.com/navi/?whatshere%5Bpoint%5D=30.331777,60.074513&whatshere%5Bzoom%5D=18)
+
+            · 1× Сет Я есть суши – 2230 P
+
+            +79119992125
+            Александр
+
+            🟢Оплачено онлайн: 2330 P
+            Сумма заказа: 2230 P
+            Доставка: 100 P
+            """;
+
     private static final String ORDER_8627_STARTER_CASH =
             """
             🚙Оформлен заказ 8627 · Starter ID 8627
@@ -117,6 +140,19 @@ class OrderTextParserServiceTest {
             Комментарий: 4 этаж на право .
             Клиент указал, что перезванивать для проверки заказа не требуется.
             """;
+
+    @Test
+    void parseStarterFormat_skipsDeliveryFeeLineUsesAddressAndCoordsFromNavi() {
+        var parsed = parser.parseOrderText(ORDER_19905_STARTER_DELIVERY_FEE_LINE, Collections.emptyList(), Collections.emptyList());
+
+        assertNotNull(parsed.getAddress());
+        assertEquals("улица Валерия Гаврилина", parsed.getAddress().getStreet());
+        assertEquals("3к1", parsed.getAddress().getHouse());
+        assertEquals("267", parsed.getAddress().getFlat());
+        assertEquals("Парнас", parsed.getAddress().getCity());
+        assertEquals(60.074513, parsed.getAddress().getLatitude(), 1e-6);
+        assertEquals(30.331777, parsed.getAddress().getLongitude(), 1e-6);
+    }
 
     @Test
     void parsePaymentType_cashWhenNalichnymiKurieru() {

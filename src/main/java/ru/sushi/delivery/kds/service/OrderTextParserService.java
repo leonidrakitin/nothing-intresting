@@ -1276,6 +1276,35 @@ public class OrderTextParserService {
         return firstWord.matches("\\d+[a-zA-Zа-яА-ЯкК]*");
     }
 
+    /**
+     * Строка только с суммой («100 P», «2 330 Р»), без адреса — часто попадается после префикса «Доставка:» в чеках Starter.
+     */
+    private boolean looksLikeStandalonePriceLine(String s) {
+        if (s == null || s.isBlank()) return false;
+        String t = s.trim();
+        return t.matches("(?iu)^\\d{1,3}(?:[\\s\u00a0]\\d{3})*(?:[.,]\\d+)?\\s*[PР₽]\\s*$");
+    }
+
+    /**
+     * Координаты из ссылки Яндекс.Навигатора (whatshere[point]=долгота,широта).
+     */
+    private void applyCoordsFromYandexLinks(String text, OrderAddressDto.OrderAddressDtoBuilder builder) {
+        Pattern naviPoint = Pattern.compile(
+                "[?&#]whatshere(?:%5B|\\[)point(?:%5D|\\])=(\\d+(?:\\.\\d+)?),(\\d+(?:\\.\\d+)?)",
+                Pattern.CASE_INSENSITIVE);
+        Matcher m = naviPoint.matcher(text);
+        if (!m.find()) {
+            return;
+        }
+        try {
+            double lon = Double.parseDouble(m.group(1));
+            double lat = Double.parseDouble(m.group(2));
+            builder.latitude(lat).longitude(lon);
+        } catch (@SuppressWarnings("unused") NumberFormatException ignored) {
+            // оставляем координаты из геокодера
+        }
+    }
+
     private OrderType parseOrderType(String text) {
         // Паттерны для определения типа заказа
         Pattern[] deliveryPatterns = {
@@ -1396,16 +1425,22 @@ public class OrderTextParserService {
         // Формат 4: "Доставка: посёлок Парголово, улица Михаила Дудина 25к2"
         // Формат 5: "улица Дзержинского, 6, 2 подъезд, 18 домофон, 2 этаж, кв. 18"
         
+        // «Доставка:» встречается и в блоке оплаты («Доставка: 100 P») — не путать с адресом.
         Pattern addressPattern = Pattern.compile(
             "(?:Адрес доставки\\s*[—-]?\\s*|Доставка:\\s*)([^\\n]+)",
             Pattern.CASE_INSENSITIVE
         );
         Matcher addressMatcher = addressPattern.matcher(text);
-        
+
         String addressLine = null;
-        if (addressMatcher.find()) {
-            addressLine = addressMatcher.group(1).trim();
-        } else {
+        while (addressMatcher.find()) {
+            String candidate = addressMatcher.group(1).trim();
+            if (!looksLikeStandalonePriceLine(candidate)) {
+                addressLine = candidate;
+                break;
+            }
+        }
+        if (addressLine == null) {
             // Формат Starter: ищем строку после эмодзи времени (🕒К или ⏰Предзаказ)
             Pattern[] starterAddressPatterns = {
                 Pattern.compile(
@@ -1426,7 +1461,7 @@ public class OrderTextParserService {
                 }
             }
         }
-        
+
         if (addressLine != null) {
             // Парсим компоненты адреса
             // Формат может быть:
@@ -1551,7 +1586,9 @@ public class OrderTextParserService {
         if (doorphoneMatcher.find()) {
             builder.doorphone(doorphoneMatcher.group(1));
         }
-        
+
+        applyCoordsFromYandexLinks(text, builder);
+
         return builder.build();
     }
 }

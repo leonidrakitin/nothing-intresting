@@ -99,9 +99,9 @@ public class YandexDeliveryService {
             if (pos == null) return null;
             String[] parts = pos.trim().split("\\s+");
             if (parts.length != 2) return null;
-            // Yandex Geocoder 1.x возвращает "широта долгота"; API доставки ждёт [долгота, широта]
-            double lat = Double.parseDouble(parts[0]);
-            double lon = Double.parseDouble(parts[1]);
+            // Point.pos — «долгота широта»; координаты в JSON заявки — [lon, lat]
+            double lon = Double.parseDouble(parts[0]);
+            double lat = Double.parseDouble(parts[1]);
             return new double[]{lon, lat};
         } catch (Exception e) {
             log.warn("Yandex Geocoder failed for {}: {}", address, e.getMessage());
