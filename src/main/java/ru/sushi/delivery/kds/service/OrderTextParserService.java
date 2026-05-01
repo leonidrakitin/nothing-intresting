@@ -1563,34 +1563,35 @@ public class OrderTextParserService {
             }
         }
         
-        // Парсим квартиру (Квартира: 62 или кв. 62)
-        Pattern flatPattern = Pattern.compile("(?:кв\\.|квартира)[:\\s]*(\\d+)", Pattern.CASE_INSENSITIVE);
+        // Парсим квартиру (Квартира: 62, Квартира-62, кв. 62)
+        Pattern flatPattern = Pattern.compile("(?iu)(?:кв\\.?|квартира)\\s*[:№\\-]?\\s*(\\d+[a-zа-я]?)");
         Matcher flatMatcher = flatPattern.matcher(text);
         if (flatMatcher.find()) {
             builder.flat(flatMatcher.group(1));
         }
         
-        // Парсим подъезд (15 подъезд или Подъезд: 15)
-        Pattern entrancePattern = Pattern.compile("(?:подъезд[:\\s]+(\\d+)|(\\d+)\\s+подъезд)", Pattern.CASE_INSENSITIVE);
+        // Парсим подъезд (Подъезд: 15, 15 подъезд)
+        Pattern entrancePattern = Pattern.compile("(?iu)(?:под[ъь]?езд\\s*[:№\\-]?\\s*(\\d+)|(\\d+)[ \\t]+под[ъь]?езд)");
         Matcher entranceMatcher = entrancePattern.matcher(text);
         if (entranceMatcher.find()) {
             String entrance = entranceMatcher.group(1) != null ? entranceMatcher.group(1) : entranceMatcher.group(2);
             builder.entrance(entrance);
         }
         
-        // Парсим этаж (1 этаж или Этаж: 1)
-        Pattern floorPattern = Pattern.compile("(?:этаж[:\\s]+(\\d+)|(\\d+)\\s+этаж)", Pattern.CASE_INSENSITIVE);
+        // Парсим этаж (Этаж: 1, 1 этаж)
+        Pattern floorPattern = Pattern.compile("(?iu)(?:этаж\\s*[:№\\-]?\\s*(\\d+)|(\\d+)[ \\t]+этаж)");
         Matcher floorMatcher = floorPattern.matcher(text);
         if (floorMatcher.find()) {
             String floor = floorMatcher.group(1) != null ? floorMatcher.group(1) : floorMatcher.group(2);
             builder.floor(floor);
         }
         
-        // Парсим домофон
-        Pattern doorphonePattern = Pattern.compile("(\\d+)\\s+домофон", Pattern.CASE_INSENSITIVE);
+        // Парсим домофон (Домофон: 83, 83 домофон)
+        Pattern doorphonePattern = Pattern.compile("(?iu)(?:домофон\\s*[:№\\-]?\\s*(\\d+)|(\\d+)[ \\t]+домофон)");
         Matcher doorphoneMatcher = doorphonePattern.matcher(text);
         if (doorphoneMatcher.find()) {
-            builder.doorphone(doorphoneMatcher.group(1));
+            String doorphone = doorphoneMatcher.group(1) != null ? doorphoneMatcher.group(1) : doorphoneMatcher.group(2);
+            builder.doorphone(doorphone);
         }
 
         applyCoordsFromYandexLinks(text, builder);

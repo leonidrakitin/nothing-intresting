@@ -121,6 +121,31 @@ class OrderTextParserServiceTest {
             Комментарий: Клиент указал, что перезванивать для проверки заказа не требуется.
             """;
 
+    private static final String CHIBBIS_DELIVERY_WITH_COLON_ADDRESS_DETAILS =
+            """
+            Новый заказ № 0HNL406A0CK0L
+
+            Заведение: Я есть суши, Ухта, улица Оплеснина, 10
+
+            Состав:
+            Лава с курицей  550 x 1шт. = 550 балл
+            Сет Ранчо  1400 x 1шт. = 1400 руб
+
+            Стоимость заказа: 1400
+            Итого: 1400
+
+            Телефон: +79125618106
+            Доставка: улица М.К. Сидорова 9
+            Квартира: 83
+            Подъезд: 2
+            Домофон: 83
+            Этаж: 6
+
+            Оплата: оплачено онлайн
+            Количество персон: 0
+            Комментарий: Клиент указал, что перезванивать для проверки заказа не требуется.
+            """;
+
     private static final String CHIBBIS_PICKUP_PLAIN_FORMAT =
             """
             Новый заказ № 0HNK8M4327KBE
@@ -229,6 +254,23 @@ class OrderTextParserServiceTest {
         assertNotNull(parsed.getAddress());
         assertEquals("30 лет Октября", parsed.getAddress().getStreet());
         assertEquals("16", parsed.getAddress().getHouse());
+    }
+
+    @Test
+    void parseChibbisColonAddressDetails_extractsFlatEntranceFloorDoorphone() {
+        var parsed = parser.parseOrderText(CHIBBIS_DELIVERY_WITH_COLON_ADDRESS_DETAILS, Collections.emptyList(), Collections.emptyList());
+
+        assertEquals("0HNL406A0CK0L", parsed.getOrderNumber());
+        assertEquals(OrderType.DELIVERY, parsed.getOrderType());
+        assertEquals(PaymentType.CASHLESS, parsed.getPaymentType());
+        assertEquals("+79125618106", parsed.getCustomerPhone());
+        assertNotNull(parsed.getAddress());
+        assertEquals("М.К. Сидорова", parsed.getAddress().getStreet());
+        assertEquals("9", parsed.getAddress().getHouse());
+        assertEquals("83", parsed.getAddress().getFlat());
+        assertEquals("2", parsed.getAddress().getEntrance());
+        assertEquals("6", parsed.getAddress().getFloor());
+        assertEquals("83", parsed.getAddress().getDoorphone());
     }
 
     @Test
