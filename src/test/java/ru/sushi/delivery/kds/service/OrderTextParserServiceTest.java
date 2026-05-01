@@ -70,6 +70,32 @@ class OrderTextParserServiceTest {
             Сумма заказа: 2310 P
             """;
 
+    private static final String ORDER_23678_STARTER_PREORDER =
+            """
+            🚙Оформлен заказ 23678 (https://crm.starterapp.ru/yaestsushi/admin/order?code=23678) · Starter ID 23678
+            Доставка · Кухня Я Есть Суши Парнас
+            Зона: Ближайшие дома
+
+            ⏰Предзаказ к 18:50 – 19:10, 01.05.2026
+            Толубеевский проезд, 34к3, посёлок Парголово, 1 подъезд, 12345 домофон, 24 этаж, кв. 115 (https://yandex.com/navi/?whatshere%5Bpoint%5D=30.354927,60.085209&whatshere%5Bzoom%5D=18&from=navi) «оставить у двери»
+
+            · 1× Лава с курицей – Подарок*
+            · 1× Сет Морская Лагуна – 1310 P
+            · 1× Лава с креветкой – 575 P
+
+            · 2× Палочки – Бесплатно
+            · 1× Соевый соус  – Бесплатно
+
+            Комментарий: оставить у двери
+
+            +79294598080
+            Анастасия · 1й заказ · iOS
+
+            🟢Оплачено онлайн: 1985 P
+            Сумма заказа: 1885 P
+            Доставка: 100 P
+            """;
+
     private static final String CHIBBIS_DELIVERY_PLAIN_FORMAT =
             """
             Новый заказ № 0HNK8M3QH4MG1
@@ -163,6 +189,26 @@ class OrderTextParserServiceTest {
 
         assertEquals(PaymentType.CASH, parsed.getPaymentType(),
                 "Формат «💵Наличными курьеру: 2310 P» из Starter должен парситься как наличные");
+    }
+
+    @Test
+    void parseStarterPreorderWithDrivewayAndInlineQuotedComment() {
+        var parsed = parser.parseOrderText(ORDER_23678_STARTER_PREORDER, Collections.emptyList(), Collections.emptyList());
+
+        assertEquals(OrderType.DELIVERY, parsed.getOrderType());
+        assertEquals("+79294598080", parsed.getCustomerPhone());
+        assertEquals(PaymentType.CASHLESS, parsed.getPaymentType());
+        assertNotNull(parsed.getAddress());
+        assertEquals("Толубеевский проезд", parsed.getAddress().getStreet());
+        assertEquals("34к3", parsed.getAddress().getHouse());
+        assertEquals("1", parsed.getAddress().getEntrance());
+        assertEquals("115", parsed.getAddress().getFlat());
+        assertEquals("24", parsed.getAddress().getFloor());
+        assertEquals("12345", parsed.getAddress().getDoorphone());
+        assertEquals("Парнас", parsed.getAddress().getCity());
+        assertEquals(60.085209, parsed.getAddress().getLatitude(), 1e-6);
+        assertEquals(30.354927, parsed.getAddress().getLongitude(), 1e-6);
+        assertEquals("оставить у двери", parsed.getComment());
     }
 
     @Test

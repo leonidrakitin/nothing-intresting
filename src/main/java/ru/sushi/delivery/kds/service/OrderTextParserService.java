@@ -233,6 +233,9 @@ public class OrderTextParserService {
         if (addressLineComment == null || addressLineComment.isBlank()) {
             return mainComment;
         }
+        if (mainComment.trim().equalsIgnoreCase(addressLineComment.trim())) {
+            return mainComment.trim();
+        }
         return mainComment.trim() + " " + addressLineComment.trim();
     }
 
@@ -243,8 +246,11 @@ public class OrderTextParserService {
             Pattern.CASE_INSENSITIVE
         );
         Matcher addressMatcher = addressPattern.matcher(text);
-        if (addressMatcher.find()) {
-            return addressMatcher.group(1).trim();
+        while (addressMatcher.find()) {
+            String candidate = addressMatcher.group(1).trim();
+            if (!looksLikeStandalonePriceLine(candidate)) {
+                return candidate;
+            }
         }
         Pattern[] starterAddressPatterns = {
             Pattern.compile(
@@ -1255,8 +1261,8 @@ public class OrderTextParserService {
     private boolean isCityPart(String part) {
         String trimmed = part.trim();
         if (isKnownCity(trimmed)) return true;
-        if (trimmed.toLowerCase().startsWith("посёлок")) {
-            String cityName = trimmed.replaceFirst("^посёлок\\s+", "").trim();
+        if (trimmed.toLowerCase().startsWith("посёлок") || trimmed.toLowerCase().startsWith("поселок")) {
+            String cityName = trimmed.replaceFirst("^(посёлок|поселок)\\s+", "").trim();
             return isKnownCity(cityName);
         }
         return false;
@@ -1264,8 +1270,8 @@ public class OrderTextParserService {
 
     /** Извлекает название города из части адреса; "Парголово" нормализует в "Парнас" для единообразия с parseCity(). */
     private String extractCityFromPart(String part) {
-        String city = part.toLowerCase().startsWith("посёлок")
-                ? part.replaceFirst("^посёлок\\s+", "").trim()
+        String city = (part.toLowerCase().startsWith("посёлок") || part.toLowerCase().startsWith("поселок"))
+                ? part.replaceFirst("^(посёлок|поселок)\\s+", "").trim()
                 : part.trim();
         if (city.equalsIgnoreCase("Парголово")) return "Парнас";
         return city;
@@ -1474,8 +1480,8 @@ public class OrderTextParserService {
             if (parts.length >= 2) {
                 // Первая часть - может быть город или улица (тип в начале: "улица X", или в конце: "X улица")
                 String firstPart = parts[0].trim();
-                boolean isStreetPrefix = firstPart.toLowerCase().matches("^(улица|проспект|пр\\.|переулок|пер\\.|бульвар|шоссе)\\s+.+");
-                boolean isStreetSuffix = firstPart.toLowerCase().matches(".+\\s+(улица|проспект|пр\\.|переулок|пер\\.|бульвар|шоссе)\\s*$");
+                boolean isStreetPrefix = firstPart.toLowerCase().matches("^(улица|проспект|пр\\.|переулок|пер\\.|проезд|пр-д|бульвар|шоссе)\\s+.+");
+                boolean isStreetSuffix = firstPart.toLowerCase().matches(".+\\s+(улица|проспект|пр\\.|переулок|пер\\.|проезд|пр-д|бульвар|шоссе)\\s*$");
                 
                 // Если тип улицы в начале или в конце — это улица, второй токен — дом, город из текста (Кухня Парнас и т.д.)
                 if (isStreetPrefix || isStreetSuffix) {
