@@ -89,7 +89,8 @@ public class MultiCityOrderService {
     }
 
     /**
-     * Создает заказ в БД выбранного города
+     * Создает заказ в БД выбранного города.
+     * Уведомления ВК/Telegram — см. перегрузку с флагом {@code notifyCourierMessengers}.
      */
     public Long createOrder(
             City city,
@@ -103,6 +104,33 @@ public class MultiCityOrderService {
             PaymentType paymentType,
             Instant deliveryTime,
             String cardToCourierMessage
+    ) {
+        return createOrder(
+                city, name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
+                orderType, address, customerPhone, paymentType, deliveryTime, cardToCourierMessage,
+                true
+        );
+    }
+
+    /**
+     * Создает заказ в БД выбранного города.
+     *
+     * @param notifyCourierMessengers если {@code false}, не отправляет уведомления в Telegram/VK при создании
+     *                               (игнорируется при включённой Яндекс Доставке — как и раньше).
+     */
+    public Long createOrder(
+            City city,
+            String name,
+            List<MenuItem> menuItems,
+            Instant shouldBeFinishedAt,
+            Instant kitchenShouldGetOrderAt,
+            OrderType orderType,
+            OrderAddressDto address,
+            String customerPhone,
+            PaymentType paymentType,
+            Instant deliveryTime,
+            String cardToCourierMessage,
+            boolean notifyCourierMessengers
     ) {
         JdbcTemplate template = getTemplate(city);
 
@@ -201,6 +229,8 @@ public class MultiCityOrderService {
 
         if (yandexDeliveryEnabled) {
             log.debug("Яндекс Доставка включена — дефолтные уведомления курьерам не отправляем.");
+        } else if (!notifyCourierMessengers) {
+            log.debug("Уведомления ВК/Telegram при создании заказа отключены (флаг интерфейса).");
         } else if (cascadeNotificationService == null) {
             log.info("Каскадные уведомления отключены (сервис не создан).");
         } else {

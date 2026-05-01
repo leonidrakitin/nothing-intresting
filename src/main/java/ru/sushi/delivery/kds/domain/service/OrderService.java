@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.sushi.delivery.kds.domain.persist.entity.Order;
 import ru.sushi.delivery.kds.domain.persist.entity.OrderAddress;
@@ -28,7 +29,11 @@ import ru.sushi.delivery.kds.model.OrderItemStationStatus;
 import ru.sushi.delivery.kds.model.OrderStatus;
 import ru.sushi.delivery.kds.model.OrderType;
 import ru.sushi.delivery.kds.model.PaymentType;
+import ru.sushi.delivery.kds.config.CityProperties;
 import ru.sushi.delivery.kds.dto.OrderAddressDto;
+import ru.sushi.delivery.kds.service.CascadeNotificationResult;
+import ru.sushi.delivery.kds.service.CascadeNotificationService;
+import ru.sushi.delivery.kds.service.MultiCityOrderService;
 import ru.sushi.delivery.kds.service.YandexGeocoderService;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessage;
 import ru.sushi.delivery.kds.service.dto.BroadcastMessageType;
@@ -71,6 +76,15 @@ public class OrderService {
     @Autowired(required = false)
     private YandexGeocoderService yandexGeocoderService;
 
+    @Autowired(required = false)
+    private CascadeNotificationService cascadeNotificationService;
+
+    @Autowired(required = false)
+    private CityProperties cityProperties;
+
+    @Value("${yandex.delivery.enabled:false}")
+    private boolean yandexDeliveryEnabled;
+
     public void calculateOrderBalance(Order order) {
         List<Long> orderMenuItemIds = order.getOrderItems().stream()
                 .map(OrderItem::getMenuItem)
@@ -100,6 +114,25 @@ public class OrderService {
             String customerPhone,
             PaymentType paymentType,
             Instant deliveryTime
+    ) {
+        createOrder(
+                name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
+                orderType, address, customerPhone, paymentType, deliveryTime, true
+        );
+    }
+
+    @Transactional
+    public void createOrder(
+            String name,
+            List<MenuItem> menuItems,
+            Instant shouldBeFinishedAt,
+            Instant kitchenShouldGetOrderAt,
+            OrderType orderType,
+            OrderAddress address,
+            String customerPhone,
+            PaymentType paymentType,
+            Instant deliveryTime,
+            boolean notifyCourierMessengers
     ) {
         // Проверяем, является ли заказ предзаказом (время начала больше чем на 15 минут от текущего времени)
         Instant now = ZonedDateTime.now().toInstant();
@@ -144,7 +177,66 @@ public class OrderService {
             ));
         }
         this.orderItemRepository.saveAll(orderItems);
-        List<PackageDto> packageDtos = this.productPackageService.calculatePackages(order);
+        this.productPackageService.calculatePackages(order);
+
+        if (!notifyCourierMessengers) {
+            return;
+        }
+        if (yandexDeliveryEnabled) {
+            log.debug("Яндекс Доставка включена — дефолтные уведомления курьерам при создании не отправляем.");
+            return;
+        }
+        if (cascadeNotificationService == null) {
+            log.debug("CascadeNotificationService не задан — уведомления ВК/Telegram при создании пропускаются.");
+            return;
+        }
+
+        MultiCityOrderService.City notifyCity = resolveNotifyCity(order.getAddress());
+        OrderAddressDto addressDto = OrderAddressDto.of(order.getAddress());
+        try {
+            CascadeNotificationResult result = cascadeNotificationService.notifyNewOrder(
+                    notifyCity,
+                    order.getName(),
+                    menuItems,
+                    order.getShouldBeFinishedAt(),
+                    order.getKitchenShouldGetOrderAt(),
+                    order.getOrderType(),
+                    addressDto,
+                    customerPhone,
+                    paymentType,
+                    deliveryTime,
+                    null
+            );
+            if (!result.telegramSent() && !result.vkSent()) {
+                return;
+            }
+            var patch = order.toBuilder();
+            if (result.telegramSent()) {
+                patch.telegramNotifiedAt(Instant.now());
+            }
+            if (result.vkSent()) {
+                patch.vkNotifiedAt(Instant.now());
+            }
+            this.orderRepository.save(patch.build());
+        } catch (Exception e) {
+            log.warn("Не удалось отправить уведомление ВК/Telegram для нового заказа {}", name, e);
+        }
+    }
+
+    private MultiCityOrderService.City resolveNotifyCity(OrderAddress address) {
+        if (address != null && address.getCity() != null) {
+            String c = address.getCity().trim();
+            if (c.equalsIgnoreCase("Ухта") || c.equalsIgnoreCase("UKHTA")) {
+                return MultiCityOrderService.City.UKHTA;
+            }
+        }
+        if (cityProperties != null && cityProperties.getCity() != null) {
+            String c = cityProperties.getCity().trim();
+            if (c.equalsIgnoreCase("Ухта") || c.equalsIgnoreCase("UKHTA")) {
+                return MultiCityOrderService.City.UKHTA;
+            }
+        }
+        return MultiCityOrderService.City.PARNAS;
     }
 
     public List<OrderShortDto> getAllItemsByStationId(Screen screen) {

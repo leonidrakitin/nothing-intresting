@@ -85,6 +85,8 @@ public class CreateOrderView extends VerticalLayout {
     private final DateTimePicker finishPicker = new DateTimePicker("Время готовности");
     private final DateTimePicker deliveryTimePicker = new DateTimePicker("Доставить к");
     private final Checkbox isYandexOrder = new Checkbox("Заказ Яндекс");
+    /** Вкл.: при «Создать заказ» отправить уведомление курьерам в Telegram и VK (доставка). */
+    private final Checkbox notifyMessengersOnCreateCheckbox = createNotifyMessengersCheckbox();
     private final ComboBox<OrderType> orderTypeCombo = new ComboBox<>("Тип заказа");
     private final TextField customerPhoneField = new TextField("Телефон клиента");
     private final ComboBox<PaymentType> paymentTypeCombo = new ComboBox<>("Тип оплаты");
@@ -125,6 +127,12 @@ public class CreateOrderView extends VerticalLayout {
     private final EnhancedDateRangePicker datePicker = new EnhancedDateRangePicker("Диапазон дат");
     private final ComboBox<OrderStatus> statusFilter = new ComboBox<>("Статус");
     private final Button applyDateFilterButton = new Button("Применить", VaadinIcon.CALENDAR.create());
+
+    private static Checkbox createNotifyMessengersCheckbox() {
+        Checkbox c = new Checkbox("ВК / Telegram");
+        c.setValue(true);
+        return c;
+    }
 
     private static class NotAddedEntry {
         private final ParsedOrderDto.ParsedItem parsedItem;
@@ -704,7 +712,8 @@ public class CreateOrderView extends VerticalLayout {
         Button createOrderButton = new Button("Создать заказ");
         Button importButton = new Button("Импорт", VaadinIcon.UPLOAD.create());
         Button clearCartButton = new Button("Очистить корзину");
-        HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, importButton, clearCartButton);
+        HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, notifyMessengersOnCreateCheckbox, importButton, clearCartButton);
+        buttonBar.setAlignItems(Alignment.CENTER);
         
         importButton.addClickListener(e -> openImportDialog());
 
@@ -1669,7 +1678,8 @@ public class CreateOrderView extends VerticalLayout {
             }
         }
         viewService.createOrder(orderNumber, itemsToCreate, shouldBeFinishedAt, kitchenShouldGetOrderAt,
-                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue(), deliveryTime);
+                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue(), deliveryTime,
+                notifyMessengersOnCreateCheckbox.getValue());
         Notification.show("Заказ создан! Номер: " + orderNumber + ", Позиции: " + itemsToCreate.size() +
                 (yandexOrder ? ", Яндекс заказ" : ""));
 

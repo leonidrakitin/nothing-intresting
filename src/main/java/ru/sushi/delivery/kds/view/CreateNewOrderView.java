@@ -82,6 +82,12 @@ import com.vaadin.flow.data.provider.ListDataProvider;
 @CssImport("./styles/cart-view.css")
 public class CreateNewOrderView extends VerticalLayout {
 
+    private static Checkbox createNotifyMessengersOnCreateCheckbox() {
+        Checkbox c = new Checkbox("ВК / Telegram");
+        c.setValue(true);
+        return c;
+    }
+
     private final List<CartItem> cartItems = new ArrayList<>();
     private final ViewService viewService;
     private final CashListener cashListener;
@@ -97,6 +103,7 @@ public class CreateNewOrderView extends VerticalLayout {
     private final DateTimePicker finishPicker = new DateTimePicker("Время готовности");
     private final DateTimePicker deliveryTimePicker = new DateTimePicker("Доставить к");
     private final Checkbox isYandexOrder = new Checkbox("Заказ Яндекс");
+    private final Checkbox notifyMessengersOnCreateCheckbox = createNotifyMessengersOnCreateCheckbox();
     private final ComboBox<OrderType> orderTypeCombo = new ComboBox<>("Тип заказа");
     private final TextField customerPhoneField = new TextField("Телефон клиента");
     private final ComboBox<PaymentType> paymentTypeCombo = new ComboBox<>("Тип оплаты");
@@ -737,8 +744,9 @@ public class CreateNewOrderView extends VerticalLayout {
         createOrderButton.addClassName("cart-summary-btn");
         Button importButton = new Button("Импорт", VaadinIcon.UPLOAD.create());
         Button clearCartButton = new Button("Очистить корзину");
-        HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, importButton, clearCartButton);
+        HorizontalLayout buttonBar = new HorizontalLayout(createOrderButton, notifyMessengersOnCreateCheckbox, importButton, clearCartButton);
         buttonBar.addClassName("cart-button-bar");
+        buttonBar.setAlignItems(Alignment.CENTER);
 
         importButton.addClickListener(e -> openImportDialog());
         totalPay.addClassName("cart-total-price");
@@ -1837,7 +1845,8 @@ public class CreateNewOrderView extends VerticalLayout {
         }
         String cityName = currentCity == MultiCityViewService.City.PARNAS ? "Парнас" : "Ухта";
         multiCityOrderService.createOrder(getOrderCity(), orderNumber, itemsToCreate, shouldBeFinishedAt, kitchenShouldGetOrderAt,
-                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue(), deliveryTime, cardToCourierMessageFromImport);
+                orderType, address, customerPhoneField.getValue(), paymentTypeCombo.getValue(), deliveryTime, cardToCourierMessageFromImport,
+                notifyMessengersOnCreateCheckbox.getValue());
         
         Notification notification = Notification.show(
                 "✓ Заказ создан в городе " + cityName + "! Номер: " + orderNumber + ", Позиции: " + itemsToCreate.size() +

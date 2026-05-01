@@ -55,11 +55,13 @@ public class ViewService {
             OrderAddressDto address,
             String customerPhone,
             PaymentType paymentType,
-            Instant deliveryTime
+            Instant deliveryTime,
+            boolean notifyCourierMessengers
     ) {
         OrderAddress addressEntity = address != null ? address.toEntity() : null;
         this.orderService.createOrder(name, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
-                orderType != null ? orderType : OrderType.PICKUP, addressEntity, customerPhone, paymentType, deliveryTime);
+                orderType != null ? orderType : OrderType.PICKUP, addressEntity, customerPhone, paymentType, deliveryTime,
+                notifyCourierMessengers);
     }
 
     public List<MenuItem> getAllMenuItems() {
