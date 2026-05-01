@@ -92,6 +92,7 @@ public class VkNotificationService {
         }
 
         String message = buildOrderMessage(
+                actor,
                 city, orderName, menuItems, shouldBeFinishedAt, kitchenShouldGetOrderAt,
                 orderType, address, customerPhone, paymentType, deliveryTime, cardToCourierMessage
         );
@@ -114,7 +115,7 @@ public class VkNotificationService {
             return false;
         }
 
-        String message = buildOrderMessageFromDto(order, cityLabel);
+        String message = buildOrderMessageFromDto(order, cityLabel, actor);
         boolean sent = false;
         for (Long peerId : peerIds) {
             sent = sendMessage(actor, peerId, message) || sent;
@@ -151,7 +152,7 @@ public class VkNotificationService {
         }
     }
 
-    private String buildOrderMessageFromDto(OrderShortDto order, String cityLabel) {
+    private String buildOrderMessageFromDto(OrderShortDto order, String cityLabel, GroupActor actor) {
         OrderAddressDto address = order.getAddress();
         String cityName = cityLabel != null && !cityLabel.isBlank()
                 ? cityLabel
@@ -169,6 +170,7 @@ public class VkNotificationService {
             if (address.getEntrance() != null) addrFull.append(", под. ").append(address.getEntrance());
             String fullAddr = addrFull.toString().replaceFirst("^, ", "").trim();
             String yandexUrl = buildYandexMapsRouteUrl(address, (cityName + " " + fullAddr).trim());
+            yandexUrl = shortenUrlIfPossible(actor, yandexUrl);
             sb.append("Проложить маршрут: ").append(yandexUrl).append("\n");
 
             sb.append("Адрес: ");
@@ -199,6 +201,7 @@ public class VkNotificationService {
     }
 
     private String buildOrderMessage(
+            GroupActor actor,
             City city,
             String orderName,
             List<MenuItem> menuItems,
@@ -225,6 +228,7 @@ public class VkNotificationService {
             String fullAddr = addrFull.toString().replaceFirst("^, ", "").trim();
             String cityPart = cityName.equals("Парнас") ? "Санкт-Петербург" : cityName;
             String yandexUrl = buildYandexMapsRouteUrl(address, (cityPart + " " + fullAddr).trim());
+            yandexUrl = shortenUrlIfPossible(actor, yandexUrl);
             sb.append("Проложить маршрут: ").append(yandexUrl).append("\n");
 
             sb.append("Адрес: ");
@@ -265,6 +269,20 @@ public class VkNotificationService {
                     + "&text=" + encodedText;
         }
         return "https://yandex.ru/maps/?text=" + encodedText;
+    }
+
+    private String shortenUrlIfPossible(GroupActor actor, String url) {
+        if (url == null || url.isBlank() || actor == null) {
+            return url;
+        }
+        try {
+            var shortUrl = vkApiClient.utils().getShortLink(actor, url).execute().getShortUrl();
+            String shortUrlString = shortUrl != null ? shortUrl.toString() : null;
+            return (shortUrlString == null || shortUrlString.isBlank()) ? url : shortUrlString;
+        } catch (ApiException | ClientException e) {
+            log.warn("VK: не удалось сократить ссылку, используем длинную: {}", e.getMessage());
+            return url;
+        }
     }
 
     private boolean sendMessage(GroupActor actor, Long peerId, String text) {
