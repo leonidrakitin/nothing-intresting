@@ -258,11 +258,13 @@ public class VkNotificationService {
     }
 
     private static String buildYandexMapsRouteUrl(OrderAddressDto address, String fallbackAddressText) {
+        String encodedText = URLEncoder.encode(fallbackAddressText != null ? fallbackAddressText : "", StandardCharsets.UTF_8);
         if (address != null && address.getLatitude() != null && address.getLongitude() != null) {
             String rtext = "~" + address.getLatitude() + "," + address.getLongitude();
-            return "https://yandex.ru/maps/?rtext=" + URLEncoder.encode(rtext, StandardCharsets.UTF_8);
+            return "https://yandex.ru/maps/?rtext=" + URLEncoder.encode(rtext, StandardCharsets.UTF_8)
+                    + "&text=" + encodedText;
         }
-        return "https://yandex.ru/maps/?text=" + URLEncoder.encode(fallbackAddressText != null ? fallbackAddressText : "", StandardCharsets.UTF_8);
+        return "https://yandex.ru/maps/?text=" + encodedText;
     }
 
     private boolean sendMessage(GroupActor actor, Long peerId, String text) {
