@@ -96,6 +96,32 @@ class OrderTextParserServiceTest {
             Доставка: 100 P
             """;
 
+    private static final String ORDER_25681_STARTER_RUBLE_PRICE =
+            """
+            🚙Оформлен заказ 25681 · Starter ID 25681
+            Доставка · Кухня Я Есть Суши Парнас
+            Зона: Ближайшие дома
+
+            🕒К 20:50 – 21:10, 27.05.2026
+            Заречная улица, 40к2, посёлок Парголово,
+
+            · 1× Жюльен – Подарок*
+            · 1× Сет Запеченный – 1970 ₽
+            · 1× Краб-моцарелла – 505 ₽
+
+            · 5× Палочки – Бесплатно
+            · 5× Соевый соус  – Бесплатно
+            · 4× Имбирь – Бесплатно
+            · 4× Васаби – Бесплатно
+
+            +79042042806
+            Екатерина  · 6й заказ · iOS
+
+            🟢Оплачено онлайн: 2552 ₽
+            Сумма заказа: 2475 ₽
+            Доставка: 100 ₽
+            """;
+
     private static final String ORDER_12021_STARTER_ALNUM_DOORPHONE =
             """
             🚙Оформлен заказ 12021 (https://crm.starterapp.ru/yaestsushi/admin/order?code=12021) · Starter ID 12021
@@ -256,6 +282,17 @@ class OrderTextParserServiceTest {
         assertEquals(60.085209, parsed.getAddress().getLatitude(), 1e-6);
         assertEquals(30.354927, parsed.getAddress().getLongitude(), 1e-6);
         assertEquals("оставить у двери", parsed.getComment());
+    }
+
+    @Test
+    void parseStarterOrder25681_rublePrice_noDuplicateItems() {
+        var parsed = parser.parseOrderText(ORDER_25681_STARTER_RUBLE_PRICE, Collections.emptyList(), Collections.emptyList());
+
+        assertEquals(1, parsed.getCombos().size());
+        assertEquals("Сет Запеченный", parsed.getCombos().get(0).getName());
+        assertEquals(2, parsed.getItems().size());
+        assertHasItem(parsed.getItems(), "Жюльен", 1);
+        assertHasItem(parsed.getItems(), "Краб-моцарелла", 1);
     }
 
     @Test

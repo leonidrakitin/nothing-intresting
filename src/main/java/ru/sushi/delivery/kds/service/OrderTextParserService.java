@@ -552,7 +552,7 @@ public class OrderTextParserService {
         
         // Также ищем сеты в формате Starter (· 1× Сет Все включено – 2350 P) или (• 1 x Сет Атлантика)
         Pattern starterComboPattern = Pattern.compile(
-            "[•·]\\s*(\\d+)\\s*[х×x]\\s*Сет\\s+([^\\n]+?)(?:\\s*–\\s*\\d+\\s*P|\\s*\\n|$)",
+            "[•·]\\s*(\\d+)\\s*[х×x]\\s*Сет\\s+([^\\n]+?)(?:\\s*–\\s*\\d+\\s*(?:P|₽|руб)|\\s*\\n|$)",
             Pattern.CASE_INSENSITIVE
         );
         Matcher starterComboMatcher = starterComboPattern.matcher(text);
@@ -561,8 +561,7 @@ public class OrderTextParserService {
             int quantity = Integer.parseInt(starterComboMatcher.group(1));
             String name = "Сет " + starterComboMatcher.group(2).trim();
             
-            // Убираем цену
-            name = name.replaceAll("\\s*–\\s*\\d+\\s*P", "").trim();
+            name = stripStarterLineSuffix(name);
             name = name.replaceAll("\\s+", " ").trim(); // Нормализуем пробелы
             
             // Проверяем, не добавлен ли уже этот сет
@@ -623,10 +622,7 @@ public class OrderTextParserService {
             }
             
             // Убираем цену и лишнее
-            name = name.replaceAll("\\s*–\\s*[^\\n]+?P", "").trim();
-            name = name.replaceAll("\\s*–\\s*Подарок.*", "").trim();
-            name = name.replaceAll("\\s*–\\s*Бесплатно", "").trim();
-            name = name.replaceAll("\\*$", "").trim(); // Убираем звездочку в конце
+            name = stripStarterLineSuffix(name);
             String normalizedName = normalizeName(name);
             
             // Проверяем, не обрабатывали ли мы уже эту позицию
@@ -652,7 +648,7 @@ public class OrderTextParserService {
         
         // Формат "• 1 x Сет Жар-птица" (Telegram) - только если не обработали в Starter формате
         Pattern telegramItemPattern = Pattern.compile(
-            "[•·]\\s*(\\d+)\\s*[х×x]\\s*([^\\n]+?)(?:\\s*–\\s*\\d+\\s*P|\\s*\\d+\\s*₽|$)",
+            "[•·]\\s*(\\d+)\\s*[х×x]\\s*([^\\n]+?)(?:\\s*–\\s*\\d+\\s*(?:P|₽|руб)|$)",
             Pattern.CASE_INSENSITIVE
         );
         Matcher telegramItemMatcher = telegramItemPattern.matcher(text);
@@ -677,9 +673,7 @@ public class OrderTextParserService {
                 continue;
             }
             
-            // Убираем лишнее
-            name = name.replaceAll("\\s*–\\s*\\d+\\s*P", "").trim();
-            name = name.replaceAll("\\s*\\d+\\s*₽", "").trim();
+            name = stripStarterLineSuffix(name);
             String normalizedName = normalizeName(name);
             
             // Проверяем, не обрабатывали ли мы уже эту позицию другим паттерном
@@ -1185,6 +1179,22 @@ public class OrderTextParserService {
         if (name == null) return "";
         return name.toLowerCase()
             .replaceAll("\\s+", " ")
+            .replaceAll("[–-]\\s*$", "")
+            .trim();
+    }
+
+    /** Убирает цену, «Подарок», «Бесплатно» и хвостовое тире в строках Starter (· N× … – …). */
+    private String stripStarterLineSuffix(String name) {
+        if (name == null) {
+            return "";
+        }
+        return name
+            .replaceAll("\\s*–\\s*Подарок.*", "")
+            .replaceAll("\\s*–\\s*Бесплатно.*", "")
+            .replaceAll("\\s*–\\s*[\\d\\s.,]+\\s*(?:P|₽|руб|балл).*$", "")
+            .replaceAll("\\s*\\d+\\s*₽", "")
+            .replaceAll("\\*$", "")
+            .replaceAll("\\s*–\\s*$", "")
             .trim();
     }
 
