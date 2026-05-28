@@ -144,6 +144,32 @@ class OrderTextParserServiceTest {
             Баллами: 300
             """;
 
+    private static final String ORDER_19751_STARTER_EXTRAS_WITH_RUBLE_PRICES =
+            """
+            🚙Оформлен заказ 19751 · Starter ID 19751
+            Доставка · Кухня Я Есть Суши Парнас
+            Зона: Ближайшие дома
+
+            ⏰Предзаказ к 14:40 – 15:00, 28.05.2026
+            улица Фёдора Абрамова, 15, посёлок Парголово, 3 подъезд, 25 этаж, кв. 457
+
+            · 1× Сет Я есть суши – 2230 ₽
+            · 1× Сет Морская Лагуна – 1310 ₽
+
+            · 5× Палочки – 10 ₽
+            · 5× Соевый соус  – 30 ₽
+            · 4× Васаби – 15 ₽
+            · 4× Имбирь – 15 ₽
+
+            +79118219321
+            Виктория · 2й заказ · iOS
+
+            🟢Оплачено онлайн (SberPay): 3676 ₽
+            Сумма заказа: 3610 ₽
+            Доставка: 100 ₽
+            Баллами: 34
+            """;
+
     private static final String CHIBBIS_DELIVERY_PLAIN_FORMAT =
             """
             Новый заказ № 0HNK8M3QH4MG1
@@ -304,6 +330,16 @@ class OrderTextParserServiceTest {
         assertEquals("В1930В", parsed.getAddress().getDoorphone());
         assertEquals("630", parsed.getAddress().getFlat());
         assertEquals("11", parsed.getAddress().getFloor());
+    }
+
+    @Test
+    void parseStarterExtrasWithRublePrices_extractsAllExtras() {
+        var parsed = parser.parseOrderText(ORDER_19751_STARTER_EXTRAS_WITH_RUBLE_PRICES, Collections.emptyList(), Collections.emptyList());
+
+        assertEquals(5, parsed.getExtras().getOrDefault("Палочки", 0));
+        assertEquals(5, parsed.getExtras().getOrDefault("Соевый соус", 0));
+        assertEquals(4, parsed.getExtras().getOrDefault("Васаби", 0));
+        assertEquals(4, parsed.getExtras().getOrDefault("Имбирь", 0));
     }
 
     @Test

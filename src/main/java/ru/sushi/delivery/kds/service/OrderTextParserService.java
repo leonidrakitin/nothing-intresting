@@ -1090,7 +1090,7 @@ public class OrderTextParserService {
         
         // Также ищем отдельные строки с допами (для формата Starter)
         Pattern starterExtrasPattern = Pattern.compile(
-            "·\\s*(\\d+)×\\s*([^\\n]+?)(?:\\s*–\\s*(?:Бесплатно|\\d+\\s*P)|$)",
+            "[•·]\\s*(\\d+)\\s*[х×x]\\s*([^\\n]+?)(?:\\s*[–-]\\s*(?:Бесплатно|\\d+[\\d\\s.,]*\\s*(?:P|Р|₽|руб))|$)",
             Pattern.CASE_INSENSITIVE
         );
         Matcher starterMatcher = starterExtrasPattern.matcher(text);
@@ -1100,8 +1100,8 @@ public class OrderTextParserService {
             String name = starterMatcher.group(2).trim();
             
             // Убираем цену
-            name = name.replaceAll("\\s*–\\s*\\d+\\s*P", "").trim();
-            name = name.replaceAll("\\s*–\\s*Бесплатно", "").trim();
+            name = name.replaceAll("\\s*[–-]\\s*[\\d\\s.,]+\\s*(?:P|Р|₽|руб)", "").trim();
+            name = name.replaceAll("\\s*[–-]\\s*Бесплатно", "").trim();
             
             // Пропускаем основные позиции (они уже обработаны)
             if (!name.toLowerCase().contains("васаби") && 
